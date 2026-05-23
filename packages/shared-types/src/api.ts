@@ -1,0 +1,44 @@
+import type { AuthTokens } from './auth.js';
+import type { HealthProfile, User } from './user.js';
+
+/**
+ * Request/response DTOs for API endpoints. One type per endpoint; this file
+ * grows phase-by-phase as endpoints are implemented. Phase 0 covers the
+ * health check and the auth/profile contract shapes that Phase 1 will fill in.
+ */
+
+// --- Health (Phase 0) ---
+export type ServiceStatus = 'up' | 'down';
+
+export interface HealthResponse {
+  status: 'ok' | 'degraded';
+  db: ServiceStatus;
+  redis: ServiceStatus;
+}
+
+// --- Auth (Phase 1) ---
+export interface OtpRequestResponse {
+  ok: true;
+  expiresIn: number;
+}
+
+export interface OtpVerifyResponse extends AuthTokens {
+  user: User;
+  isNewUser: boolean;
+}
+
+export interface RefreshResponse extends AuthTokens {}
+
+// --- Profile (Phase 1) ---
+export interface MeResponse {
+  user: User;
+  healthProfile: HealthProfile | null;
+}
+
+/** Generic paginated envelope used by list endpoints. */
+export interface Paginated<T> {
+  items: T[];
+  page: number;
+  limit: number;
+  total: number;
+}

@@ -1,0 +1,37 @@
+{
+  "name": "medical-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Medical Tracking Application — MVP (local prototype)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "db:up": "docker compose up -d postgres redis",
+    "db:down": "docker compose down",
+    "db:reset": "node scripts/db-reset.mjs",
+    "db:migrate": "npm -w apps/api run prisma:migrate",
+    "db:seed": "npm -w apps/api run seed",
+    "phi-scan": "node scripts/phi-scan.mjs",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "eslint": "^8.57.0",
+    "eslint-config-custom": "*",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.0",
+    "turbo": "^2.1.0",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@11.6.2"
+}

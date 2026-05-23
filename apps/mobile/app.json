@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Medical Tracker",
+    "slug": "medical-tracker",
+    "scheme": "medicaltracker",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.starklabs.medicaltracker"
+    },
+    "android": {
+      "package": "com.starklabs.medicaltracker"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

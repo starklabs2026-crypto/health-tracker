@@ -1,0 +1,239 @@
+// Medical Tracker — Prisma schema (PRD §11, playbook §0.1.8).
+// UUID primary keys. Cascade deletes from a user to their owned data, but NOT
+// to AuditLog (which is decoupled and retained). Enum-like fields are stored as
+// String and validated via Zod schemas in @medical-tracker/shared-types — one
+// source of truth, and avoids Prisma enum-identifier limits (e.g. blood group "A+").
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String?   @unique
+  phone           String?   @unique
+  name            String
+  dob             DateTime
+  sex             String
+  unitsPreference String
+  bloodGroup      String?
+  residencyRegion String
+  createdAt       DateTime  @default(now())
+  deletedAt       DateTime?
+
+  healthProfile     HealthProfile?
+  devices           Device[]
+  refreshTokens     RefreshToken[]
+  ownedDocuments    Document[]         @relation("DocumentOwner")
+  uploadedDocuments Document[]         @relation("DocumentUploader")
+  readings          ParameterReading[] @relation("ReadingOwner")
+  createdReadings   ParameterReading[] @relation("ReadingCreator")
+  ownedFamilyLinks  FamilyLink[]       @relation("FamilyOwner")
+  memberFamilyLinks FamilyLink[]       @relation("FamilyMember")
+  shares            DoctorShare[]
+  exports           Export[]
+}
+
+model HealthProfile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  height             Float?
+  weight             Float?
+  knownConditions    String[]
+  allergies          String[]
+  currentMedications String[]
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OtpCode {
+  id                String    @id @default(uuid())
+  identifier        String
+  codeHash          String
+  expiresAt         DateTime
+  attemptsRemaining Int       @default(3)
+  consumedAt        DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([identifier, expiresAt])
+}
+
+model Device {
+  id                String    @id @default(uuid())
+  userId            String
+  deviceId          String
+  platform          String
+  biometricEnrolled Boolean   @default(false)
+  lastSeenAt        DateTime  @default(now())
+  revokedAt         DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  deviceId  String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model FamilyLink {
+  id           String    @id @default(uuid())
+  ownerUserId  String
+  memberUserId String
+  role         String
+  permissions  Json
+  status       String
+  invitedAt    DateTime  @default(now())
+  acceptedAt   DateTime?
+  revokedAt    DateTime?
+  inviteToken  String?   @unique
+
+  owner  User @relation("FamilyOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  member User @relation("FamilyMember", fields: [memberUserId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId, status])
+  @@index([memberUserId, status])
+}
+
+model Document {
+  id                String    @id @default(uuid())
+  ownerUserId       String
+  uploadedByUserId  String
+  fileUrl           String?
+  fileType          String
+  docType           String
+  sourceDate        DateTime
+  labName           String?
+  orderingPhysician String?
+  notes             String?
+  ocrStatus         String    @default("pending_upload")
+  ocrAttempts       Int       @default(0)
+  createdAt         DateTime  @default(now())
+  deletedAt         DateTime?
+
+  owner      User               @relation("DocumentOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  uploadedBy User               @relation("DocumentUploader", fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+  readings   ParameterReading[]
+
+  @@index([ownerUserId, sourceDate(sort: Desc)])
+  @@index([ocrStatus])
+}
+
+model ParameterCatalog {
+  id            String   @id
+  canonicalName String   @unique
+  aliases       String[]
+  unit          String
+  panel         String
+  rangeDefault  Json
+  criticalLow   Float?
+  criticalHigh  Float?
+
+  readings ParameterReading[]
+}
+
+model ParameterReading {
+  id              String    @id @default(uuid())
+  userId          String
+  documentId      String?
+  parameterId     String
+  value           Decimal
+  unit            String
+  recordedAt      DateTime
+  status          String    @default("pending")
+  isUserVerified  Boolean   @default(false)
+  confidenceScore Float     @default(0)
+  rangeFlag       String    @default("unknown")
+  sourceRegion    Json?
+  createdByUserId String
+  createdAt       DateTime  @default(now())
+  lastEditedAt    DateTime?
+
+  user      User             @relation("ReadingOwner", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User             @relation("ReadingCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  document  Document?        @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  parameter ParameterCatalog @relation(fields: [parameterId], references: [id])
+
+  @@index([userId, parameterId, recordedAt(sort: Desc)])
+}
+
+model DoctorShare {
+  id             String    @id @default(uuid())
+  ownerUserId    String
+  profileUserId  String
+  shareToken     String    @unique
+  dateRangeStart DateTime
+  dateRangeEnd   DateTime
+  parameterSet   Json
+  includeDocuments Boolean @default(true)
+  expiresAt      DateTime
+  singleUse      Boolean   @default(false)
+  revokedAt      DateTime?
+  customNote     String?
+  createdAt      DateTime  @default(now())
+
+  owner    User                 @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  accesses DoctorShareAccess[]
+
+  @@index([ownerUserId, revokedAt])
+}
+
+model DoctorShareAccess {
+  id         String   @id @default(uuid())
+  shareId    String
+  accessedAt DateTime @default(now())
+  ipCity     String?
+  ipCountry  String?
+  userAgent  String?
+
+  share DoctorShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+
+  @@index([shareId])
+}
+
+// Decoupled from User on purpose — NO cascade. Audit history outlives the actor.
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorUserId  String
+  targetUserId String
+  action       String
+  entityType   String
+  entityId     String
+  timestamp    DateTime @default(now())
+  ip           String?
+  userAgent    String?
+
+  @@index([actorUserId, timestamp(sort: Desc)])
+  @@index([targetUserId, timestamp(sort: Desc)])
+}
+
+model Export {
+  id            String    @id @default(uuid())
+  userId        String
+  profileUserId String
+  config        Json
+  fileUrl       String?
+  status        String    @default("queued")
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

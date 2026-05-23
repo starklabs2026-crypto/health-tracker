@@ -1,0 +1,27 @@
+{
+  "name": "@medical-tracker/phi-scrubber",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "pino": "^9.3.2"
+  },
+  "devDependencies": {
+    "eslint-config-custom": "*",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  }
+}
