@@ -1,6 +1,7 @@
 import type {
   CreateDocumentRequest,
   CreateDocumentResponse,
+  CreateReadingRequest,
   DevicePlatform,
   DocumentDetail,
   DocumentSummary,
@@ -9,7 +10,10 @@ import type {
   OtpRequestResponse,
   OtpVerifyResponse,
   Paginated,
+  ParameterReading,
   PatchDocumentRequest,
+  PatchReadingRequest,
+  TrendResponse,
   UpdateHealthProfileRequest,
   UpdateMeRequest,
 } from '@medical-tracker/shared-types';
@@ -116,4 +120,45 @@ export async function getDownloadUrl(
     `/documents/${id}/download-url`,
   );
   return data;
+}
+
+// --- Readings (Phase 3) ---
+
+export async function listReadings(params: {
+  parameterId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}): Promise<Paginated<ParameterReading>> {
+  const { data } = await api.get<Paginated<ParameterReading>>('/readings', { params });
+  return data;
+}
+
+export async function createReading(body: CreateReadingRequest): Promise<ParameterReading> {
+  const { data } = await api.post<ParameterReading>('/readings', body);
+  return data;
+}
+
+export async function getTrend(
+  parameterId: string,
+  opts?: { dateFrom?: string; dateTo?: string },
+): Promise<TrendResponse> {
+  const { data } = await api.get<TrendResponse>('/readings/trend', {
+    params: { parameterId, ...opts },
+  });
+  return data;
+}
+
+export async function patchReading(
+  id: string,
+  body: PatchReadingRequest,
+): Promise<ParameterReading> {
+  const { data } = await api.patch<ParameterReading>(`/readings/${id}`, body);
+  return data;
+}
+
+export async function deleteReading(id: string): Promise<void> {
+  await api.delete(`/readings/${id}`);
 }

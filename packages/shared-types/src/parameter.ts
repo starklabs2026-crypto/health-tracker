@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const isoDateOrDatetime = z.string().datetime({ offset: true }).or(z.string().date());
+
 /** Range classification for a single reading (PRD §7.3 stage 3). */
 export enum RangeFlag {
   Low = 'low',
@@ -78,3 +80,24 @@ export interface BoundingBox {
   width: number;
   height: number;
 }
+
+// --- API boundary schemas (R.1) ---
+
+export const createReadingSchema = z.object({
+  parameterId: z.string().min(1),
+  value: z.number().finite(),
+  unit: z.string().min(1).max(50),
+  recordedAt: isoDateOrDatetime,
+  ownerProfileId: z.string().uuid().optional(),
+});
+export type CreateReadingRequest = z.infer<typeof createReadingSchema>;
+
+export const patchReadingSchema = z
+  .object({
+    status: readingStatusSchema,
+    isUserVerified: z.boolean(),
+    value: z.number().finite(),
+    unit: z.string().min(1).max(50),
+  })
+  .partial();
+export type PatchReadingRequest = z.infer<typeof patchReadingSchema>;

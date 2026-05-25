@@ -1,6 +1,6 @@
 import type { AuthTokens } from './auth.js';
 import type { Document, DocType, OcrStatus } from './document.js';
-import type { ParameterReading } from './parameter.js';
+import type { ParameterReading, RangeFlag } from './parameter.js';
 import type { HealthProfile, User } from './user.js';
 
 /**
@@ -64,4 +64,25 @@ export interface DocumentSummary {
 export interface DocumentDetail {
   document: Document;
   readings: ParameterReading[];
+}
+
+// --- Readings (Phase 3) ---
+
+export interface TrendPoint {
+  readingId: string;
+  value: number;
+  unit: string;
+  recordedAt: string;
+  rangeFlag: RangeFlag;
+  isUserVerified: boolean;
+  confidenceScore: number;
+}
+
+export interface TrendResponse {
+  parameterId: string;
+  canonicalName: string;
+  unit: string;
+  /** Human-readable range label, e.g. "13.5–17.5" or "< 200", for the user's sex/age. */
+  rangeLabel: string;
+  data: TrendPoint[];
 }

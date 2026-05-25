@@ -12,6 +12,7 @@ import { DocumentsModule } from './documents/documents.module.js';
 import { HealthModule } from './health/health.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { ProfileModule } from './profile/profile.module.js';
+import { ReadingsModule } from './readings/readings.module.js';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ProfileModule } from './profile/profile.module.js';
     ProfileModule,
     HealthModule,
     DocumentsModule,
+    ReadingsModule,
   ],
   providers: [
     // Order matters: throttle first, then authenticate.
