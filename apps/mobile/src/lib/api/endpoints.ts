@@ -1,11 +1,19 @@
 import type {
+  CreateDocumentRequest,
+  CreateDocumentResponse,
   DevicePlatform,
+  DocumentDetail,
+  DocumentSummary,
+  DocType,
   MeResponse,
   OtpRequestResponse,
   OtpVerifyResponse,
+  Paginated,
+  PatchDocumentRequest,
   UpdateHealthProfileRequest,
   UpdateMeRequest,
 } from '@medical-tracker/shared-types';
+import axios from 'axios';
 
 import { api } from './client';
 
@@ -41,4 +49,71 @@ export async function updateHealthProfile(body: UpdateHealthProfileRequest): Pro
 
 export async function pairBiometric(): Promise<void> {
   await api.post('/auth/biometric/pair');
+}
+
+// --- Documents (Phase 2) ---
+
+export async function createDocument(
+  body: CreateDocumentRequest,
+): Promise<CreateDocumentResponse> {
+  const { data } = await api.post<CreateDocumentResponse>('/documents', body);
+  return data;
+}
+
+/** Upload the actual file bytes to the presigned URL returned by createDocument. */
+export async function uploadToPresignedUrl(
+  uploadUrl: string,
+  file: { uri: string; mimeType: string },
+): Promise<void> {
+  const form = new FormData();
+  form.append('file', { uri: file.uri, type: file.mimeType, name: 'upload' } as unknown as Blob);
+  // Use bare axios — presigned URL is token-gated, no Bearer needed
+  await axios.post(uploadUrl, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60_000,
+  });
+}
+
+export async function markUploaded(
+  documentId: string,
+  fileKey: string,
+): Promise<void> {
+  await api.post(`/documents/${documentId}/mark-uploaded`, { fileKey });
+}
+
+export async function listDocuments(params: {
+  docType?: DocType;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  limit?: number;
+}): Promise<Paginated<DocumentSummary>> {
+  const { data } = await api.get<Paginated<DocumentSummary>>('/documents', { params });
+  return data;
+}
+
+export async function getDocument(id: string): Promise<DocumentDetail> {
+  const { data } = await api.get<DocumentDetail>(`/documents/${id}`);
+  return data;
+}
+
+export async function patchDocument(
+  id: string,
+  body: PatchDocumentRequest,
+): Promise<DocumentDetail> {
+  const { data } = await api.patch<DocumentDetail>(`/documents/${id}`, body);
+  return data;
+}
+
+export async function deleteDocument(id: string): Promise<void> {
+  await api.delete(`/documents/${id}`);
+}
+
+export async function getDownloadUrl(
+  id: string,
+): Promise<{ downloadUrl: string; expiresAt: string }> {
+  const { data } = await api.get<{ downloadUrl: string; expiresAt: string }>(
+    `/documents/${id}/download-url`,
+  );
+  return data;
 }

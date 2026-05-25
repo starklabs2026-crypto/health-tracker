@@ -41,3 +41,33 @@ export interface Document {
   createdAt: string;
   deletedAt: string | null;
 }
+
+// --- API boundary schemas (R.1) ---
+
+const isoDate = z.string().datetime({ offset: true }).or(z.string().date());
+
+export const createDocumentSchema = z.object({
+  ownerProfileId: z.string().uuid().optional(),
+  docType: docTypeSchema,
+  sourceDate: isoDate,
+  labName: z.string().max(200).optional(),
+  orderingPhysician: z.string().max(200).optional(),
+  notes: z.string().max(2000).optional(),
+  fileSize: z.number().int().positive().max(25 * 1024 * 1024),
+  fileType: z.string().min(1),
+});
+export type CreateDocumentRequest = z.infer<typeof createDocumentSchema>;
+
+export const markUploadedSchema = z.object({ fileKey: z.string().min(1) });
+export type MarkUploadedRequest = z.infer<typeof markUploadedSchema>;
+
+export const patchDocumentSchema = z
+  .object({
+    docType: docTypeSchema,
+    sourceDate: isoDate,
+    labName: z.string().max(200).nullable(),
+    orderingPhysician: z.string().max(200).nullable(),
+    notes: z.string().max(2000).nullable(),
+  })
+  .partial();
+export type PatchDocumentRequest = z.infer<typeof patchDocumentSchema>;

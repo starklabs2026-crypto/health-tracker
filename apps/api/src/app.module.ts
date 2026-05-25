@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard.js';
 import { AuditInterceptor } from './common/audit.interceptor.js';
 import { PhiExceptionFilter } from './common/phi-exception.filter.js';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware.js';
+import { DocumentsModule } from './documents/documents.module.js';
 import { HealthModule } from './health/health.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { ProfileModule } from './profile/profile.module.js';
@@ -24,6 +25,7 @@ import { ProfileModule } from './profile/profile.module.js';
     AuthModule,
     ProfileModule,
     HealthModule,
+    DocumentsModule,
   ],
   providers: [
     // Order matters: throttle first, then authenticate.

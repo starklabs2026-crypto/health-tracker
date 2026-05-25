@@ -1,4 +1,6 @@
 import type { AuthTokens } from './auth.js';
+import type { Document, DocType, OcrStatus } from './document.js';
+import type { ParameterReading } from './parameter.js';
 import type { HealthProfile, User } from './user.js';
 
 /**
@@ -41,4 +43,25 @@ export interface Paginated<T> {
   page: number;
   limit: number;
   total: number;
+}
+
+// --- Documents (Phase 2) ---
+export interface CreateDocumentResponse {
+  documentId: string;
+  uploadUrl: string;
+  fileKey: string;
+}
+
+export interface DocumentSummary {
+  id: string;
+  docType: DocType;
+  sourceDate: string;
+  labName: string | null;
+  ocrStatus: OcrStatus;
+  createdAt: string;
+}
+
+export interface DocumentDetail {
+  document: Document;
+  readings: ParameterReading[];
 }

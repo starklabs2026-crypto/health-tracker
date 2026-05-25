@@ -31,7 +31,8 @@ web-build/
 
 # Local prototype substitutes (DEV ONLY — never commit keys or stored PHI)
 .dev-keys/
-storage/
+# Root-level uploads dir only — NOT apps/api/src/storage/ (source code)
+/storage/
 
 # Prisma
 apps/api/prisma/*.db

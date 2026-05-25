@@ -18,9 +18,9 @@ export default function Home() {
         <>
           <Text style={styles.greeting}>{greeting}</Text>
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>No documents yet</Text>
+            <Text style={styles.cardTitle}>Getting started</Text>
             <Text style={styles.cardBody}>
-              Upload a document to start tracking your health. Capture and OCR arrive next (Phase 2).
+              Go to the Documents tab to upload and OCR your lab reports, prescriptions, and more.
             </Text>
           </View>
         </>
