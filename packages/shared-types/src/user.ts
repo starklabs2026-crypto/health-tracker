@@ -58,3 +58,29 @@ export interface HealthProfile {
   allergies: string[];
   currentMedications: string[];
 }
+
+// --- API boundary schemas (R.1: one source of truth, client + server) ---
+
+/** PUT /me — update basic profile fields. All optional to support partial edits. */
+export const updateMeSchema = z
+  .object({
+    name: z.string().min(1).max(120),
+    dob: z.string().datetime({ offset: true }).or(z.string().date()),
+    sex: sexSchema,
+    unitsPreference: unitsPreferenceSchema,
+    bloodGroup: bloodGroupSchema.nullable(),
+  })
+  .partial();
+export type UpdateMeRequest = z.infer<typeof updateMeSchema>;
+
+/** PUT /me/health-profile — upsert the extended health profile. */
+export const updateHealthProfileSchema = z
+  .object({
+    height: z.number().positive().nullable(),
+    weight: z.number().positive().nullable(),
+    knownConditions: z.array(z.string()),
+    allergies: z.array(z.string()),
+    currentMedications: z.array(z.string()),
+  })
+  .partial();
+export type UpdateHealthProfileRequest = z.infer<typeof updateHealthProfileSchema>;

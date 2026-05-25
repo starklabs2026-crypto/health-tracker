@@ -34,6 +34,16 @@ export const otpVerifySchema = z.object({
 });
 export type OtpVerify = z.infer<typeof otpVerifySchema>;
 
+export const refreshSchema = z.object({
+  refreshToken: z.string().min(1),
+});
+export type RefreshRequest = z.infer<typeof refreshSchema>;
+
+export const logoutSchema = z.object({
+  refreshToken: z.string().min(1),
+});
+export type LogoutRequest = z.infer<typeof logoutSchema>;
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
