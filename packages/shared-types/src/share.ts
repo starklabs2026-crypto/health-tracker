@@ -37,6 +37,23 @@ export interface DoctorShareAccess {
   userAgent: string | null;
 }
 
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+export const createShareSchema = z.object({
+  profileUserId: z.string().uuid().optional(),
+  dateRangeStart: isoDate,
+  dateRangeEnd: isoDate,
+  parameterSet: z.array(z.string()).default([]),
+  includeDocuments: z.boolean().default(true),
+  expiry: shareExpirySchema.default(ShareExpiry.OneWeek),
+  singleUse: z.boolean().default(false),
+  customNote: z.string().max(500).optional(),
+});
+export type CreateShareRequest = z.input<typeof createShareSchema>;
+
+export const revokeShareSchema = z.object({ shareId: z.string().uuid() });
+export type RevokeShareRequest = z.infer<typeof revokeShareSchema>;
+
 /** Public, privacy-scoped payload rendered by the doctor-share web view. */
 export interface PublicShareView {
   patient: {

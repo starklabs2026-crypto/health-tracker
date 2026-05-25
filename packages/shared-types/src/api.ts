@@ -88,6 +88,13 @@ export interface TrendResponse {
   data: TrendPoint[];
 }
 
+// --- Doctor Share (Phase 5) ---
+
+export interface CreateShareResponse {
+  share: import('./share.js').DoctorShare;
+  shareUrl: string;
+}
+
 // --- Family (Phase 4) ---
 
 export interface FamilyMemberView {

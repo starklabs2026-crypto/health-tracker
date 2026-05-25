@@ -106,6 +106,12 @@ export default function Profile() {
         </View>
       </View>
 
+      <Button
+        label="Share with doctor"
+        variant="secondary"
+        onPress={() => router.push('/shares')}
+      />
+
       <Button label="Sign out" variant="danger" onPress={() => void onSignOut()} />
 
       <Modal visible={editing} animationType="slide" onRequestClose={() => setEditing(false)}>

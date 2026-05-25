@@ -5,10 +5,13 @@ import type {
   CreateInviteRequest,
   CreateInviteResponse,
   CreateReadingRequest,
+  CreateShareRequest,
+  CreateShareResponse,
   DevicePlatform,
   DocumentDetail,
   DocumentSummary,
   DocType,
+  DoctorShare,
   FamilyLink,
   FamilyMembershipView,
   FamilyMemberView,
@@ -201,4 +204,20 @@ export async function patchFamilyLink(id: string, body: PatchFamilyLinkRequest):
 
 export async function revokeFamilyLink(id: string): Promise<void> {
   await api.delete(`/family/${id}`);
+}
+
+// --- Shares (Phase 5) ---
+
+export async function createShare(body: CreateShareRequest): Promise<CreateShareResponse> {
+  const { data } = await api.post<CreateShareResponse>('/shares', body);
+  return data;
+}
+
+export async function listShares(): Promise<DoctorShare[]> {
+  const { data } = await api.get<DoctorShare[]>('/shares');
+  return data;
+}
+
+export async function revokeShare(id: string): Promise<void> {
+  await api.delete(`/shares/${id}`);
 }
