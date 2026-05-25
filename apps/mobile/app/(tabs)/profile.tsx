@@ -2,10 +2,10 @@ import { Sex, UnitsPreference } from '@medical-tracker/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Button, Segmented, TextField } from '../../src/components/ui';
-import { getMe, pairBiometric, updateMe } from '../../src/lib/api/endpoints';
+import { getMe, getPdfExportUrl, pairBiometric, updateMe } from '../../src/lib/api/endpoints';
 import { useAuthStore } from '../../src/lib/auth/authStore';
 import { signOut } from '../../src/lib/auth/session';
 import { colors, radius, spacing } from '../../src/theme/tokens';
@@ -110,6 +110,11 @@ export default function Profile() {
         label="Share with doctor"
         variant="secondary"
         onPress={() => router.push('/shares')}
+      />
+      <Button
+        label="Export PDF"
+        variant="secondary"
+        onPress={() => void Linking.openURL(getPdfExportUrl())}
       />
 
       <Button label="Sign out" variant="danger" onPress={() => void onSignOut()} />

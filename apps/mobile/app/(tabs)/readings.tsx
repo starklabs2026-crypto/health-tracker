@@ -2,6 +2,7 @@ import { PARAMETER_SEED, PANELS } from '@medical-tracker/parameter-catalog';
 import { RangeFlag, type ParameterReading } from '@medical-tracker/shared-types';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { memo, useCallback } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -40,6 +41,49 @@ function buildLatestMap(readings: ParameterReading[]): Map<string, ParameterRead
 /** All unique panel labels in seed order. */
 const PANEL_ORDER = Object.values(PANELS);
 
+const ParamRow = memo(function ParamRow({
+  param,
+  reading,
+}: {
+  param: (typeof PARAMETER_SEED)[number];
+  reading: ParameterReading | undefined;
+}) {
+  const flagColor = reading
+    ? (FLAG_COLORS[reading.rangeFlag as RangeFlag] ?? colors.textSecondary)
+    : colors.border;
+  const a11yLabel = reading
+    ? `${param.canonicalName} ${reading.value} ${reading.unit} ${reading.rangeFlag}`
+    : `${param.canonicalName} no data`;
+  return (
+    <Pressable
+      style={styles.row}
+      accessibilityRole="button"
+      accessibilityLabel={a11yLabel}
+      onPress={() => router.push(`/readings/${param.id}`)}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={styles.paramName}>{param.canonicalName}</Text>
+        <Text style={styles.paramUnit}>{param.unit}</Text>
+      </View>
+      <View style={styles.valueCol}>
+        {reading ? (
+          <>
+            <Text style={[styles.value, { color: flagColor }]}>
+              {reading.value} {reading.unit}
+            </Text>
+            <Text style={[styles.flag, { color: flagColor }]}>
+              {reading.rangeFlag.toUpperCase()}
+            </Text>
+          </>
+        ) : (
+          <Text style={styles.dash}>—</Text>
+        )}
+      </View>
+      <Text style={styles.chevron}>›</Text>
+    </Pressable>
+  );
+});
+
 export default function ReadingsScreen() {
   const { activeProfileId } = useProfileStore();
 
@@ -53,6 +97,7 @@ export default function ReadingsScreen() {
   });
 
   const latest = buildLatestMap(data?.items ?? []);
+  const onRefresh = useCallback(() => void refetch(), [refetch]);
 
   if (isLoading) {
     return (
@@ -67,7 +112,7 @@ export default function ReadingsScreen() {
       <ProfileSwitcher />
       <ScrollView
         contentContainerStyle={styles.container}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
       >
         {PANEL_ORDER.map((panel) => {
           const params = PARAMETER_SEED.filter((p) => p.panel === panel);
@@ -77,36 +122,8 @@ export default function ReadingsScreen() {
               <Text style={styles.panelTitle}>{panel}</Text>
               {params.map((param) => {
                 const reading = latest.get(param.id);
-                const flagColor = reading
-                  ? (FLAG_COLORS[reading.rangeFlag as RangeFlag] ?? colors.textSecondary)
-                  : colors.border;
                 return (
-                  <Pressable
-                    key={param.id}
-                    style={styles.row}
-                    accessibilityRole="button"
-                    onPress={() => router.push(`/readings/${param.id}`)}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.paramName}>{param.canonicalName}</Text>
-                      <Text style={styles.paramUnit}>{param.unit}</Text>
-                    </View>
-                    <View style={styles.valueCol}>
-                      {reading ? (
-                        <>
-                          <Text style={[styles.value, { color: flagColor }]}>
-                            {reading.value} {reading.unit}
-                          </Text>
-                          <Text style={[styles.flag, { color: flagColor }]}>
-                            {reading.rangeFlag.toUpperCase()}
-                          </Text>
-                        </>
-                      ) : (
-                        <Text style={styles.dash}>—</Text>
-                      )}
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                  </Pressable>
+                  <ParamRow key={param.id} param={param} reading={reading} />
                 );
               })}
             </View>

@@ -1,6 +1,7 @@
 import { DocType, OcrStatus, type DocumentSummary } from '@medical-tracker/shared-types';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { memo, useCallback } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -41,12 +42,13 @@ const STATUS_COLORS: Record<OcrStatus, string> = {
   [OcrStatus.Failed]: colors.danger,
 };
 
-function DocCard({ item }: { item: DocumentSummary }) {
+const DocCard = memo(function DocCard({ item }: { item: DocumentSummary }) {
   const statusColor = STATUS_COLORS[item.ocrStatus as OcrStatus] ?? colors.textSecondary;
   return (
     <Pressable
       style={styles.card}
       accessibilityRole="button"
+      accessibilityLabel={`${DOC_TYPE_LABELS[item.docType as DocType] ?? item.docType}, ${STATUS_LABELS[item.ocrStatus as OcrStatus] ?? item.ocrStatus}, ${new Date(item.sourceDate).toLocaleDateString()}`}
       onPress={() => router.push(`/documents/${item.id}`)}
     >
       <View style={styles.cardRow}>
@@ -63,7 +65,7 @@ function DocCard({ item }: { item: DocumentSummary }) {
       </Text>
     </Pressable>
   );
-}
+});
 
 export default function DocumentsScreen() {
   const { activeProfileId } = useProfileStore();
@@ -74,13 +76,18 @@ export default function DocumentsScreen() {
       listDocuments({ ...(activeProfileId ? { profileId: activeProfileId } : {}) }),
   });
 
+  const renderItem = useCallback(
+    ({ item }: { item: DocumentSummary }) => <DocCard item={item} />,
+    [],
+  );
+
   return (
     <View style={styles.container}>
       <ProfileSwitcher />
       <FlatList
         data={data?.items ?? []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <DocCard item={item} />}
+        renderItem={renderItem}
         contentContainerStyle={styles.list}
         refreshing={isRefetching}
         onRefresh={() => void refetch()}

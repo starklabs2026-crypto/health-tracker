@@ -221,3 +221,13 @@ export async function listShares(): Promise<DoctorShare[]> {
 export async function revokeShare(id: string): Promise<void> {
   await api.delete(`/shares/${id}`);
 }
+
+// --- Exports (Phase 6) ---
+
+/** Returns the full PDF download URL for opening in a browser/share sheet. */
+export function getPdfExportUrl(profileId?: string): string {
+  const base = api.defaults.baseURL ?? '';
+  return profileId
+    ? `${base}/exports/pdf?profileId=${encodeURIComponent(profileId)}`
+    : `${base}/exports/pdf`;
+}

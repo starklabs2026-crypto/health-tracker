@@ -9,6 +9,8 @@ import { AuditInterceptor } from './common/audit.interceptor.js';
 import { PhiExceptionFilter } from './common/phi-exception.filter.js';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware.js';
 import { DocumentsModule } from './documents/documents.module.js';
+import { EventsModule } from './events/events.module.js';
+import { ExportsModule } from './exports/exports.module.js';
 import { FamilyModule } from './family/family.module.js';
 import { SharesModule } from './shares/shares.module.js';
 import { HealthModule } from './health/health.module.js';
@@ -32,6 +34,8 @@ import { ReadingsModule } from './readings/readings.module.js';
     ReadingsModule,
     FamilyModule,
     SharesModule,
+    EventsModule,
+    ExportsModule,
   ],
   providers: [
     // Order matters: throttle first, then authenticate.
