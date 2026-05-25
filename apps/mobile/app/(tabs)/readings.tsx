@@ -12,7 +12,9 @@ import {
   View,
 } from 'react-native';
 
+import { ProfileSwitcher } from '../../src/components/ProfileSwitcher';
 import { listReadings } from '../../src/lib/api/endpoints';
+import { useProfileStore } from '../../src/lib/profile/profileStore';
 import { colors, radius, spacing } from '../../src/theme/tokens';
 
 const FLAG_COLORS: Record<RangeFlag, string> = {
@@ -39,9 +41,15 @@ function buildLatestMap(readings: ParameterReading[]): Map<string, ParameterRead
 const PANEL_ORDER = Object.values(PANELS);
 
 export default function ReadingsScreen() {
+  const { activeProfileId } = useProfileStore();
+
   const { data, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ['readings'],
-    queryFn: () => listReadings({ limit: 200 }),
+    queryKey: ['readings', activeProfileId],
+    queryFn: () =>
+      listReadings({
+        limit: 200,
+        ...(activeProfileId ? { profileId: activeProfileId } : {}),
+      }),
   });
 
   const latest = buildLatestMap(data?.items ?? []);
@@ -55,55 +63,57 @@ export default function ReadingsScreen() {
   }
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.container}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
-    >
-      {PANEL_ORDER.map((panel) => {
-        const params = PARAMETER_SEED.filter((p) => p.panel === panel);
-        if (params.length === 0) return null;
-        return (
-          <View key={panel} style={styles.panel}>
-            <Text style={styles.panelTitle}>{panel}</Text>
-            {params.map((param) => {
-              const reading = latest.get(param.id);
-              const flagColor = reading
-                ? (FLAG_COLORS[reading.rangeFlag as RangeFlag] ?? colors.textSecondary)
-                : colors.border;
-              return (
-                <Pressable
-                  key={param.id}
-                  style={styles.row}
-                  accessibilityRole="button"
-                  onPress={() => router.push(`/readings/${param.id}`)}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.paramName}>{param.canonicalName}</Text>
-                    <Text style={styles.paramUnit}>{param.unit}</Text>
-                  </View>
-                  <View style={styles.valueCol}>
-                    {reading ? (
-                      <>
-                        <Text style={[styles.value, { color: flagColor }]}>
-                          {reading.value} {reading.unit}
-                        </Text>
-                        <Text style={[styles.flag, { color: flagColor }]}>
-                          {reading.rangeFlag.toUpperCase()}
-                        </Text>
-                      </>
-                    ) : (
-                      <Text style={styles.dash}>—</Text>
-                    )}
-                  </View>
-                  <Text style={styles.chevron}>›</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        );
-      })}
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ProfileSwitcher />
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+      >
+        {PANEL_ORDER.map((panel) => {
+          const params = PARAMETER_SEED.filter((p) => p.panel === panel);
+          if (params.length === 0) return null;
+          return (
+            <View key={panel} style={styles.panel}>
+              <Text style={styles.panelTitle}>{panel}</Text>
+              {params.map((param) => {
+                const reading = latest.get(param.id);
+                const flagColor = reading
+                  ? (FLAG_COLORS[reading.rangeFlag as RangeFlag] ?? colors.textSecondary)
+                  : colors.border;
+                return (
+                  <Pressable
+                    key={param.id}
+                    style={styles.row}
+                    accessibilityRole="button"
+                    onPress={() => router.push(`/readings/${param.id}`)}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.paramName}>{param.canonicalName}</Text>
+                      <Text style={styles.paramUnit}>{param.unit}</Text>
+                    </View>
+                    <View style={styles.valueCol}>
+                      {reading ? (
+                        <>
+                          <Text style={[styles.value, { color: flagColor }]}>
+                            {reading.value} {reading.unit}
+                          </Text>
+                          <Text style={[styles.flag, { color: flagColor }]}>
+                            {reading.rangeFlag.toUpperCase()}
+                          </Text>
+                        </>
+                      ) : (
+                        <Text style={styles.dash}>—</Text>
+                      )}
+                    </View>
+                    <Text style={styles.chevron}>›</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 

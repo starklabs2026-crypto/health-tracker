@@ -1,5 +1,6 @@
 import type { AuthTokens } from './auth.js';
 import type { Document, DocType, OcrStatus } from './document.js';
+import type { FamilyLink } from './family.js';
 import type { ParameterReading, RangeFlag } from './parameter.js';
 import type { HealthProfile, User } from './user.js';
 
@@ -85,4 +86,24 @@ export interface TrendResponse {
   /** Human-readable range label, e.g. "13.5–17.5" or "< 200", for the user's sex/age. */
   rangeLabel: string;
   data: TrendPoint[];
+}
+
+// --- Family (Phase 4) ---
+
+export interface FamilyMemberView {
+  link: FamilyLink;
+  memberName: string;
+  memberEmail: string | null;
+  memberPhone: string | null;
+}
+
+export interface FamilyMembershipView {
+  link: FamilyLink;
+  ownerName: string;
+  ownerEmail: string | null;
+}
+
+export interface CreateInviteResponse {
+  link: FamilyLink;
+  inviteToken: string;
 }

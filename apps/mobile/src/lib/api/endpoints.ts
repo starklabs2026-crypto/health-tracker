@@ -1,17 +1,24 @@
 import type {
+  AcceptInviteRequest,
   CreateDocumentRequest,
   CreateDocumentResponse,
+  CreateInviteRequest,
+  CreateInviteResponse,
   CreateReadingRequest,
   DevicePlatform,
   DocumentDetail,
   DocumentSummary,
   DocType,
+  FamilyLink,
+  FamilyMembershipView,
+  FamilyMemberView,
   MeResponse,
   OtpRequestResponse,
   OtpVerifyResponse,
   Paginated,
   ParameterReading,
   PatchDocumentRequest,
+  PatchFamilyLinkRequest,
   PatchReadingRequest,
   TrendResponse,
   UpdateHealthProfileRequest,
@@ -89,6 +96,7 @@ export async function listDocuments(params: {
   docType?: DocType;
   dateFrom?: string;
   dateTo?: string;
+  profileId?: string;
   page?: number;
   limit?: number;
 }): Promise<Paginated<DocumentSummary>> {
@@ -129,6 +137,7 @@ export async function listReadings(params: {
   dateFrom?: string;
   dateTo?: string;
   status?: string;
+  profileId?: string;
   page?: number;
   limit?: number;
 }): Promise<Paginated<ParameterReading>> {
@@ -161,4 +170,35 @@ export async function patchReading(
 
 export async function deleteReading(id: string): Promise<void> {
   await api.delete(`/readings/${id}`);
+}
+
+// --- Family (Phase 4) ---
+
+export async function inviteMember(body: CreateInviteRequest): Promise<CreateInviteResponse> {
+  const { data } = await api.post<CreateInviteResponse>('/family/invite', body);
+  return data;
+}
+
+export async function acceptInvite(body: AcceptInviteRequest): Promise<FamilyLink> {
+  const { data } = await api.post<FamilyLink>('/family/accept', body);
+  return data;
+}
+
+export async function listFamilyMembers(): Promise<FamilyMemberView[]> {
+  const { data } = await api.get<FamilyMemberView[]>('/family/members');
+  return data;
+}
+
+export async function listFamilyMemberships(): Promise<FamilyMembershipView[]> {
+  const { data } = await api.get<FamilyMembershipView[]>('/family/memberships');
+  return data;
+}
+
+export async function patchFamilyLink(id: string, body: PatchFamilyLinkRequest): Promise<FamilyLink> {
+  const { data } = await api.patch<FamilyLink>(`/family/${id}`, body);
+  return data;
+}
+
+export async function revokeFamilyLink(id: string): Promise<void> {
+  await api.delete(`/family/${id}`);
 }

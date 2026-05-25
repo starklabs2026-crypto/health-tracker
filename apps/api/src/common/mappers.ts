@@ -3,9 +3,13 @@ import type {
   BoundingBox,
   DocType,
   Document as DocumentDto,
+  FamilyLink as FamilyLinkDto,
+  FamilyLinkStatus,
+  FamilyRole,
   HealthProfile as HealthProfileDto,
   OcrStatus,
   ParameterReading as ParameterReadingDto,
+  Permissions,
   RangeFlag,
   ReadingStatus,
   ResidencyRegion,
@@ -13,7 +17,7 @@ import type {
   UnitsPreference,
   User as UserDto,
 } from '@medical-tracker/shared-types';
-import type { Document, HealthProfile, ParameterReading, User } from '@prisma/client';
+import type { Document, FamilyLink, HealthProfile, ParameterReading, User } from '@prisma/client';
 
 /** Map a Prisma User row to the shared-types User DTO (Dates -> ISO strings). */
 export function mapUser(user: User): UserDto {
@@ -78,5 +82,19 @@ export function mapReading(r: ParameterReading): ParameterReadingDto {
     sourceRegion: (r.sourceRegion as BoundingBox | null) ?? null,
     createdByUserId: r.createdByUserId,
     lastEditedAt: r.lastEditedAt ? r.lastEditedAt.toISOString() : null,
+  };
+}
+
+export function mapFamilyLink(link: FamilyLink): FamilyLinkDto {
+  return {
+    id: link.id,
+    ownerUserId: link.ownerUserId,
+    memberUserId: link.memberUserId,
+    role: link.role as FamilyRole,
+    permissions: link.permissions as unknown as Permissions,
+    status: link.status as FamilyLinkStatus,
+    invitedAt: link.invitedAt.toISOString(),
+    acceptedAt: link.acceptedAt ? link.acceptedAt.toISOString() : null,
+    revokedAt: link.revokedAt ? link.revokedAt.toISOString() : null,
   };
 }

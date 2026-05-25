@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { FamilyLinkStatus } from '@medical-tracker/shared-types';
 import type { Request } from 'express';
 
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -11,9 +12,9 @@ import type { AuthUser } from './current-user.decorator.js';
 
 /**
  * Resolves the target profile for a document/reading request and enforces
- * access. PHASE 2: ownership only (actor must own the resource). PHASE 4 will
- * extend this with family-link role/permission checks. On no access we throw
- * 404 (not 403) so existence isn't leaked (playbook §4.1.2).
+ * access. Phase 4: owners access their own resources; members with an active
+ * family link may also access. Returns 404 (not 403) on no access so resource
+ * existence is not leaked (playbook §4.1.2).
  */
 @Injectable()
 export class ResourceAccessGuard implements CanActivate {
@@ -30,10 +31,21 @@ export class ResourceAccessGuard implements CanActivate {
 
     const targetUserId = await this.resolveTargetUserId(req, actor.id);
 
-    // Phase 2: only the owner may access. (Family links handled in Phase 4.)
-    if (targetUserId !== actor.id) {
-      throw new NotFoundException();
+    if (targetUserId === actor.id) {
+      req.targetUserId = targetUserId;
+      return true;
     }
+
+    // Check active family link (Phase 4)
+    const link = await this.prisma.familyLink.findFirst({
+      where: {
+        ownerUserId: targetUserId,
+        memberUserId: actor.id,
+        status: FamilyLinkStatus.Active,
+      },
+    });
+    if (!link) throw new NotFoundException();
+
     req.targetUserId = targetUserId;
     return true;
   }

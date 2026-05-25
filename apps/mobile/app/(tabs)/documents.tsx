@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 
 import { Button } from '../../src/components/ui';
+import { ProfileSwitcher } from '../../src/components/ProfileSwitcher';
 import { listDocuments } from '../../src/lib/api/endpoints';
+import { useProfileStore } from '../../src/lib/profile/profileStore';
 import { colors, radius, spacing } from '../../src/theme/tokens';
 
 const DOC_TYPE_LABELS: Record<DocType, string> = {
@@ -64,13 +66,17 @@ function DocCard({ item }: { item: DocumentSummary }) {
 }
 
 export default function DocumentsScreen() {
+  const { activeProfileId } = useProfileStore();
+
   const { data, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ['documents'],
-    queryFn: () => listDocuments({}),
+    queryKey: ['documents', activeProfileId],
+    queryFn: () =>
+      listDocuments({ ...(activeProfileId ? { profileId: activeProfileId } : {}) }),
   });
 
   return (
     <View style={styles.container}>
+      <ProfileSwitcher />
       <FlatList
         data={data?.items ?? []}
         keyExtractor={(item) => item.id}

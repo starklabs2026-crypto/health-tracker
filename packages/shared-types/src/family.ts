@@ -43,3 +43,18 @@ export interface FamilyLink {
   acceptedAt: string | null;
   revokedAt: string | null;
 }
+
+export const createInviteSchema = z.object({
+  memberIdentifier: z.string().min(1), // email or phone
+  role: familyRoleSchema.default(FamilyRole.Viewer),
+  permissions: permissionsSchema.default({ docTypes: Object.values(DocType) }),
+});
+export type CreateInviteRequest = z.input<typeof createInviteSchema>;
+
+export const acceptInviteSchema = z.object({ inviteToken: z.string().min(1) });
+export type AcceptInviteRequest = z.infer<typeof acceptInviteSchema>;
+
+export const patchFamilyLinkSchema = z
+  .object({ role: familyRoleSchema, permissions: permissionsSchema })
+  .partial();
+export type PatchFamilyLinkRequest = z.infer<typeof patchFamilyLinkSchema>;
