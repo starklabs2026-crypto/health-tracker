@@ -1,131 +1,130 @@
 import { DocType, OcrStatus, type DocumentSummary } from '@medical-tracker/shared-types';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { memo, useCallback } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { Button } from '../../src/components/ui';
-import { ProfileSwitcher } from '../../src/components/ProfileSwitcher';
+import { AppScroll, Button, Card, EmptyState, Pill, Row, TopBar, typography } from '../../src/components/healthfolio';
 import { listDocuments } from '../../src/lib/api/endpoints';
 import { useProfileStore } from '../../src/lib/profile/profileStore';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { colors, spacing } from '../../src/theme/tokens';
 
 const DOC_TYPE_LABELS: Record<DocType, string> = {
-  [DocType.LabReport]: 'Lab Report',
+  [DocType.LabReport]: 'Lab report',
   [DocType.Prescription]: 'Prescription',
-  [DocType.ImagingReport]: 'Imaging Report',
-  [DocType.DischargeSummary]: 'Discharge Summary',
-  [DocType.VaccinationRecord]: 'Vaccination Record',
-  [DocType.Other]: 'Other',
+  [DocType.ImagingReport]: 'Imaging report',
+  [DocType.DischargeSummary]: 'Discharge summary',
+  [DocType.VaccinationRecord]: 'Vaccination record',
+  [DocType.Other]: 'Document',
 };
 
 const STATUS_LABELS: Record<OcrStatus, string> = {
   [OcrStatus.PendingUpload]: 'Pending',
   [OcrStatus.Queued]: 'Queued',
-  [OcrStatus.Processing]: 'Processing…',
+  [OcrStatus.Processing]: 'Processing',
   [OcrStatus.ReadyForReview]: 'Ready',
   [OcrStatus.Failed]: 'Failed',
 };
 
-const STATUS_COLORS: Record<OcrStatus, string> = {
-  [OcrStatus.PendingUpload]: colors.textSecondary,
-  [OcrStatus.Queued]: '#4285F4',
-  [OcrStatus.Processing]: '#F4B400',
-  [OcrStatus.ReadyForReview]: colors.rangeNormal,
-  [OcrStatus.Failed]: colors.danger,
-};
-
-const DocCard = memo(function DocCard({ item }: { item: DocumentSummary }) {
-  const statusColor = STATUS_COLORS[item.ocrStatus as OcrStatus] ?? colors.textSecondary;
-  return (
-    <Pressable
-      style={styles.card}
-      accessibilityRole="button"
-      accessibilityLabel={`${DOC_TYPE_LABELS[item.docType as DocType] ?? item.docType}, ${STATUS_LABELS[item.ocrStatus as OcrStatus] ?? item.ocrStatus}, ${new Date(item.sourceDate).toLocaleDateString()}`}
-      onPress={() => router.push(`/documents/${item.id}`)}
-    >
-      <View style={styles.cardRow}>
-        <Text style={styles.cardTitle}>
-          {DOC_TYPE_LABELS[item.docType as DocType] ?? item.docType}
-        </Text>
-        <Text style={[styles.badge, { color: statusColor }]}>
-          {STATUS_LABELS[item.ocrStatus as OcrStatus] ?? item.ocrStatus}
-        </Text>
-      </View>
-      <Text style={styles.cardMeta}>
-        {new Date(item.sourceDate).toLocaleDateString()}
-        {item.labName ? `  ·  ${item.labName}` : ''}
-      </Text>
-    </Pressable>
-  );
-});
+function statusTone(status: OcrStatus): 'green' | 'amber' | 'blue' | 'red' | 'neutral' {
+  if (status === OcrStatus.ReadyForReview) return 'amber';
+  if (status === OcrStatus.Failed) return 'red';
+  if (status === OcrStatus.Queued || status === OcrStatus.Processing) return 'blue';
+  if (status === OcrStatus.PendingUpload) return 'neutral';
+  return 'green';
+}
 
 export default function DocumentsScreen() {
-  const { activeProfileId } = useProfileStore();
-
+  const { activeProfileId, activeProfileName } = useProfileStore();
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['documents', activeProfileId],
-    queryFn: () =>
-      listDocuments({ ...(activeProfileId ? { profileId: activeProfileId } : {}) }),
+    queryFn: () => listDocuments({ ...(activeProfileId ? { profileId: activeProfileId } : {}), limit: 100 }),
   });
 
-  const renderItem = useCallback(
-    ({ item }: { item: DocumentSummary }) => <DocCard item={item} />,
-    [],
-  );
+  const docs = data?.items ?? [];
 
   return (
-    <View style={styles.container}>
-      <ProfileSwitcher />
-      <FlatList
-        data={data?.items ?? []}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-        refreshing={isRefetching}
-        onRefresh={() => void refetch()}
-        ListHeaderComponent={
-          <Button label="Add Document" onPress={() => router.push('/documents/new')} />
-        }
-        ListEmptyComponent={
-          isLoading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
-          ) : (
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>No documents yet.</Text>
-              <Text style={styles.emptySubtext}>
-                Tap "Add Document" to capture and OCR a lab report.
-              </Text>
-            </View>
-          )
-        }
+    <AppScroll
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+    >
+      <TopBar
+        eyebrow={activeProfileName ? `Selected profile: ${activeProfileName}` : 'Selected profile'}
+        title="Documents"
+        action={<Button label="Add" onPress={() => router.push('/documents/new')} style={styles.addButton} />}
       />
-    </View>
+
+      <TextInput
+        editable={false}
+        placeholder="Search document, lab, or date"
+        placeholderTextColor={colors.textSecondary}
+        style={styles.search}
+      />
+
+      <View style={styles.chips}>
+        <Pill label="All" tone="active" />
+        <Pill label="Review" tone="amber" />
+        <Pill label="Processing" tone="blue" />
+        <Pill label="Reviewed" tone="green" />
+      </View>
+
+      {isLoading ? (
+        <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
+      ) : docs.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon="file-plus"
+            title="No documents yet"
+            body="Upload a lab report to extract readings and organize your timeline."
+            action={<Button label="Add document" onPress={() => router.push('/documents/new')} />}
+          />
+        </Card>
+      ) : (
+        <Card>
+          {docs.map((doc) => (
+            <DocumentRow key={doc.id} item={doc} />
+          ))}
+        </Card>
+      )}
+
+      {docs.length > 0 ? (
+        <Card>
+          <Text style={typography.h3}>Status mix</Text>
+          <View style={styles.statusBar}>
+            <View style={[styles.statusSegment, { flex: Math.max(1, docs.filter((d) => d.ocrStatus === OcrStatus.ReadyForReview).length), backgroundColor: colors.amber }]} />
+            <View style={[styles.statusSegment, { flex: Math.max(1, docs.filter((d) => d.ocrStatus === OcrStatus.Processing || d.ocrStatus === OcrStatus.Queued).length), backgroundColor: colors.blue }]} />
+            <View style={[styles.statusSegment, { flex: Math.max(1, docs.filter((d) => d.ocrStatus !== OcrStatus.ReadyForReview && d.ocrStatus !== OcrStatus.Failed).length), backgroundColor: colors.primary }]} />
+            <View style={[styles.statusSegment, { flex: Math.max(1, docs.filter((d) => d.ocrStatus === OcrStatus.Failed).length), backgroundColor: colors.danger }]} />
+          </View>
+        </Card>
+      ) : null}
+    </AppScroll>
+  );
+}
+
+function DocumentRow({ item }: { item: DocumentSummary }) {
+  const status = item.ocrStatus as OcrStatus;
+  return (
+    <Row
+      title={DOC_TYPE_LABELS[item.docType as DocType] ?? item.docType}
+      subtitle={`${item.labName ?? 'Unknown source'}, ${new Date(item.sourceDate).toLocaleDateString()}`}
+      right={<Pill label={STATUS_LABELS[status] ?? status} tone={statusTone(status)} />}
+      onPress={() => router.push(`/documents/${item.id}`)}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  list: { padding: spacing.lg, gap: spacing.md },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    padding: spacing.md,
+  addButton: { width: 60, minHeight: 36, marginTop: 0 },
+  search: {
+    minHeight: 44,
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: 9,
+    backgroundColor: colors.surface,
+    color: colors.textPrimary,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
   },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-  badge: { fontSize: 12, fontWeight: '600' },
-  cardMeta: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.xs },
-  empty: { alignItems: 'center', marginTop: spacing.xl },
-  emptyText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginBottom: spacing.xs },
-  emptySubtext: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
+  statusBar: { height: 18, flexDirection: 'row', overflow: 'hidden', gap: 6, marginTop: spacing.md },
+  statusSegment: { borderRadius: 9 },
 });

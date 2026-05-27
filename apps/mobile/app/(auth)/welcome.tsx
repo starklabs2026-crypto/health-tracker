@@ -1,24 +1,55 @@
 import { router } from 'expo-router';
-import { View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { Button, Screen, Subtitle, Title } from '../../src/components/ui';
+import {
+  BrandLockup,
+  Button,
+  CenteredScreen,
+  DocumentVisual,
+  HeroCard,
+  typography,
+} from '../../src/components/healthfolio';
+import { spacing } from '../../src/theme/tokens';
 
 export default function Welcome() {
   return (
-    <Screen>
-      <Title>Medical Tracker</Title>
-      <Subtitle>Your medical records, unified and always with you.</Subtitle>
-      <View>
+    <CenteredScreen>
+      <BrandLockup logoSize={54} textStyle={styles.brandText} />
+      <HeroCard tone="light" style={styles.introCard}>
+        <Text style={typography.eyebrow}>Private health record</Text>
+        <Text style={[typography.h1, styles.introTitle]}>
+          Your reports, readings, and doctor-ready summary.
+        </Text>
+        <Text style={[typography.body, styles.introCopy]}>
+          Organize health records without turning them into medical advice.
+        </Text>
+        <DocumentVisual />
+      </HeroCard>
+      <View style={styles.actions}>
         <Button
-          label="Continue with Email"
-          onPress={() => router.push('/(auth)/identifier?mode=email')}
+          label="I'm new"
+          onPress={() => router.push('/(auth)/onboarding/basics?mode=signup')}
+          style={styles.welcomeButton}
+          textStyle={styles.welcomeButtonText}
         />
         <Button
-          label="Continue with Phone"
+          label="I have an account"
           variant="secondary"
-          onPress={() => router.push('/(auth)/identifier?mode=phone')}
+          onPress={() => router.push('/(auth)/identifier?mode=signin')}
+          style={styles.welcomeButton}
+          textStyle={styles.welcomeButtonText}
         />
       </View>
-    </Screen>
+    </CenteredScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  brandText: { fontSize: 26, lineHeight: 31 },
+  introCard: { minHeight: 196, marginBottom: spacing.md },
+  introTitle: { maxWidth: 268, marginTop: spacing.sm, fontSize: 28, lineHeight: 34 },
+  introCopy: { maxWidth: 252, marginTop: spacing.sm, fontSize: 15, lineHeight: 21 },
+  actions: { gap: spacing.sm },
+  welcomeButton: { minHeight: 50 },
+  welcomeButtonText: { fontSize: 15 },
+});

@@ -2,25 +2,16 @@ import type { DoctorShare } from '@medical-tracker/shared-types';
 import { ShareExpiry } from '@medical-tracker/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
-import { Button, TextField } from '../src/components/ui';
+import { AppScroll, Button, Card, HeroCard, Pill, Row, TopBar, typography } from '../src/components/healthfolio';
+import { TextField } from '../src/components/ui';
 import { createShare, listShares, revokeShare } from '../src/lib/api/endpoints';
-import { colors, radius, spacing } from '../src/theme/tokens';
+import { colors, spacing } from '../src/theme/tokens';
 
 const EXPIRY_OPTIONS = [
-  { label: '1 hour', value: ShareExpiry.OneHour },
-  { label: '1 day', value: ShareExpiry.OneDay },
-  { label: '1 week', value: ShareExpiry.OneWeek },
+  { label: '24 hr', value: ShareExpiry.OneDay },
+  { label: '7 days', value: ShareExpiry.OneWeek },
   { label: '30 days', value: ShareExpiry.OneMonth },
 ];
 
@@ -28,10 +19,10 @@ export default function SharesScreen() {
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0] ?? '');
+  const [dateTo, setDateTo] = useState('');
   const [expiry, setExpiry] = useState<ShareExpiry>(ShareExpiry.OneWeek);
   const [note, setNote] = useState('');
-  const [singleUse, setSingleUse] = useState(false);
+  const [singleUse, setSingleUse] = useState(true);
 
   const { data: shares, isLoading } = useQuery<DoctorShare[]>({
     queryKey: ['shares'],
@@ -62,10 +53,10 @@ export default function SharesScreen() {
 
   function resetForm() {
     setDateFrom('');
-    setDateTo(new Date().toISOString().split('T')[0] ?? '');
+    setDateTo('');
     setExpiry(ShareExpiry.OneWeek);
     setNote('');
-    setSingleUse(false);
+    setSingleUse(true);
   }
 
   function confirmRevoke(share: DoctorShare) {
@@ -75,67 +66,65 @@ export default function SharesScreen() {
     ]);
   }
 
-  const active = (shares ?? []).filter((s) => !s.revokedAt && new Date(s.expiresAt) > new Date());
+  const active = (shares ?? []).filter((share) => !share.revokedAt && new Date(share.expiresAt) > new Date());
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-      <Button label="+ New share link" onPress={() => setShowCreate(true)} />
+    <AppScroll>
+      <TopBar
+        eyebrow="Doctor access"
+        title="Share summary"
+        action={<Button label="New" onPress={() => setShowCreate(true)} style={styles.newButton} />}
+      />
+      <HeroCard tone="dark">
+        <Text style={[typography.h3, { color: '#FFFFFF' }]}>Temporary read-only link</Text>
+        <Text style={[typography.bodySmall, { color: 'rgba(255,255,255,0.78)', marginTop: spacing.xs }]}>
+          Confirmed readings for selected date range.
+        </Text>
+      </HeroCard>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Active share links</Text>
+      <Card>
+        <Text style={typography.h3}>Active share links</Text>
         {isLoading ? (
-          <Text style={styles.dimText}>Loading…</Text>
+          <Text style={[typography.body, { marginTop: spacing.sm }]}>Loading...</Text>
         ) : active.length === 0 ? (
-          <Text style={styles.dimText}>No active share links.</Text>
+          <Text style={[typography.body, { marginTop: spacing.sm }]}>No active share links.</Text>
         ) : (
-          active.map((s) => (
-            <View key={s.id} style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowDate}>
-                  {new Date(s.dateRangeStart).toLocaleDateString()} –{' '}
-                  {new Date(s.dateRangeEnd).toLocaleDateString()}
-                </Text>
-                <Text style={styles.rowExpiry}>
-                  Expires {new Date(s.expiresAt).toLocaleString()}
-                  {s.singleUse ? '  ·  Single use' : ''}
-                </Text>
-                {s.customNote ? (
-                  <Text style={styles.rowNote} numberOfLines={1}>{s.customNote}</Text>
-                ) : null}
-              </View>
-              <Pressable
-                onPress={() => confirmRevoke(s)}
-                style={styles.revokeBtn}
-                accessibilityLabel="Revoke share"
-              >
-                <Text style={styles.revokeBtnText}>Revoke</Text>
-              </Pressable>
-            </View>
+          active.map((share) => (
+            <Row
+              key={share.id}
+              title={`${new Date(share.dateRangeStart).toLocaleDateString()} to ${new Date(share.dateRangeEnd).toLocaleDateString()}`}
+              subtitle={`Expires ${new Date(share.expiresAt).toLocaleString()}${share.singleUse ? ' · Single use' : ''}`}
+              right={
+                <Pressable onPress={() => confirmRevoke(share)}>
+                  <Text style={styles.revokeText}>Revoke</Text>
+                </Pressable>
+              }
+            />
           ))
         )}
-      </View>
+      </Card>
 
-      {/* Create modal */}
       <Modal visible={showCreate} animationType="slide" onRequestClose={() => setShowCreate(false)}>
-        <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-          <Text style={styles.modalTitle}>New share link</Text>
-
+        <AppScroll contentStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+          <Text style={typography.h2}>Create share link</Text>
+          <Text style={[typography.body, { marginTop: spacing.xs, marginBottom: spacing.md }]}>
+            Share confirmed readings in a temporary doctor view.
+          </Text>
           <TextField
             label="Date from (YYYY-MM-DD)"
             value={dateFrom}
             onChangeText={setDateFrom}
-            placeholder="2024-01-01"
+            placeholder="YYYY-MM-DD"
             keyboardType="numeric"
           />
           <TextField
             label="Date to (YYYY-MM-DD)"
             value={dateTo}
             onChangeText={setDateTo}
-            placeholder="2024-12-31"
+            placeholder="YYYY-MM-DD"
             keyboardType="numeric"
           />
-
-          <Text style={styles.fieldLabel}>Expiry</Text>
+          <Text style={styles.label}>Expiry</Text>
           <View style={styles.expiryRow}>
             {EXPIRY_OPTIONS.map((opt) => (
               <Pressable
@@ -149,77 +138,55 @@ export default function SharesScreen() {
               </Pressable>
             ))}
           </View>
-
-          <View style={styles.toggleRow}>
-            <Text style={styles.fieldLabel}>Single use (auto-revoke after first view)</Text>
-            <Pressable
-              style={[styles.toggle, singleUse && styles.toggleOn]}
-              onPress={() => setSingleUse(!singleUse)}
-            >
-              <Text style={styles.toggleText}>{singleUse ? 'ON' : 'OFF'}</Text>
-            </Pressable>
-          </View>
-
+          <Row
+            title="Single-use link"
+            subtitle="Expires after first view."
+            right={<Pill label={singleUse ? 'On' : 'Off'} tone={singleUse ? 'active' : 'neutral'} />}
+            onPress={() => setSingleUse(!singleUse)}
+          />
           <TextField
-            label="Note for doctor (optional)"
+            label="Note for doctor"
             value={note}
             onChangeText={setNote}
-            placeholder="e.g. Please review CBC results"
+            placeholder="Optional"
+            multiline
           />
-
           <Button
-            label="Create link"
+            label="Create share link"
             loading={createMutation.isPending}
             disabled={!dateFrom || !dateTo}
             onPress={() => createMutation.mutate()}
           />
-          <Button label="Cancel" variant="secondary" onPress={() => { setShowCreate(false); resetForm(); }} />
-        </ScrollView>
+          <Button
+            label="Cancel"
+            variant="secondary"
+            onPress={() => {
+              setShowCreate(false);
+              resetForm();
+            }}
+          />
+        </AppScroll>
       </Modal>
-    </ScrollView>
+    </AppScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: spacing.md,
-  },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.sm },
-  dimText: { fontSize: 14, color: colors.textSecondary },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  rowDate: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-  rowExpiry: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  rowNote: { fontSize: 12, color: colors.textSecondary, fontStyle: 'italic', marginTop: 2 },
-  revokeBtn: { paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
-  revokeBtnText: { fontSize: 13, color: colors.danger, fontWeight: '600' },
-  modalTitle: { fontSize: 22, fontWeight: '700', color: colors.primary, marginBottom: spacing.lg, marginTop: spacing.xl },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.sm },
-  expiryRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap', marginBottom: spacing.sm },
+  newButton: { minWidth: 78, minHeight: 38, marginTop: 0, paddingHorizontal: spacing.md },
+  revokeText: { color: colors.danger, fontSize: 12, fontWeight: '800' },
+  label: { color: colors.textSecondary, fontSize: 13, fontWeight: '800', marginBottom: spacing.xs },
+  expiryRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   expiryChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.card,
+    flex: 1,
+    minHeight: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 9,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   expiryChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  expiryChipText: { fontSize: 13, color: colors.textSecondary },
-  expiryChipTextActive: { color: '#fff', fontWeight: '600' },
-  toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
-  toggle: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background },
-  toggleOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  toggleText: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
+  expiryChipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '800' },
+  expiryChipTextActive: { color: '#FFFFFF' },
 });

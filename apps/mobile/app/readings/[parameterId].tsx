@@ -1,92 +1,54 @@
 import { findById, formatRange } from '@medical-tracker/parameter-catalog';
-import {
-  RangeFlag,
-  ReadingStatus,
-  type TrendResponse,
-} from '@medical-tracker/shared-types';
+import { RangeFlag, ReadingStatus, type TrendResponse } from '@medical-tracker/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+
 import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+  AppScroll,
+  Button,
+  Card,
+  CenteredScreen,
+  HeroCard,
+  LoadingScreen,
+  Pill,
+  Row,
+  TopBar,
+  typography,
+} from '../../src/components/healthfolio';
+import { TextField } from '../../src/components/ui';
+import { createReading, deleteReading, getTrend, patchReading } from '../../src/lib/api/endpoints';
+import { colors, spacing } from '../../src/theme/tokens';
 
-import { Button, TextField } from '../../src/components/ui';
-import {
-  createReading,
-  deleteReading,
-  getTrend,
-  patchReading,
-} from '../../src/lib/api/endpoints';
-import { colors, radius, spacing } from '../../src/theme/tokens';
-
-const FLAG_COLORS: Record<RangeFlag, string> = {
-  [RangeFlag.Normal]: colors.rangeNormal,
-  [RangeFlag.Low]: colors.rangeLow,
-  [RangeFlag.High]: colors.rangeHigh,
-  [RangeFlag.Critical]: colors.rangeCritical,
-  [RangeFlag.Unknown]: colors.textSecondary,
-};
-
-/** Simple sparkline: colored bars proportional to value within the dataset. */
-function Sparkline({ data }: { data: TrendResponse['data'] }) {
-  if (data.length < 2) return null;
-  const values = data.map((d) => d.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-
-  return (
-    <View style={spark.container}>
-      {data.map((pt) => {
-        const heightPct = ((pt.value - min) / range) * 0.7 + 0.15; // 15–85% height
-        const color = FLAG_COLORS[pt.rangeFlag] ?? colors.textSecondary;
-        return (
-          <View key={pt.readingId} style={spark.barWrapper}>
-            <View style={[spark.bar, { height: `${Math.round(heightPct * 100)}%`, backgroundColor: color }]} />
-          </View>
-        );
-      })}
-    </View>
-  );
+function flagTone(flag?: RangeFlag): 'green' | 'amber' | 'red' | 'neutral' {
+  if (!flag || flag === RangeFlag.Unknown) return 'neutral';
+  if (flag === RangeFlag.Normal) return 'green';
+  if (flag === RangeFlag.Critical) return 'red';
+  return 'amber';
 }
-
-const spark = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 60,
-    gap: 3,
-    marginVertical: spacing.sm,
-  },
-  barWrapper: { flex: 1, height: '100%', justifyContent: 'flex-end' },
-  bar: { borderRadius: 2, minHeight: 4 },
-});
 
 function trendArrow(data: TrendResponse['data']): string {
   if (data.length < 2) return '';
   const last = data[data.length - 1]?.value;
   const prev = data[data.length - 2]?.value;
   if (last === undefined || prev === undefined) return '';
-  if (last > prev * 1.02) return ' ↑';
-  if (last < prev * 0.98) return ' ↓';
-  return ' →';
+  if (last > prev * 1.02) return 'up';
+  if (last < prev * 0.98) return 'down';
+  return 'stable';
+}
+
+function isDateInput(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 export default function ParameterHistoryScreen() {
   const { parameterId } = useLocalSearchParams<{ parameterId: string }>();
   const qc = useQueryClient();
   const entry = findById(parameterId);
-
   const [adding, setAdding] = useState(false);
   const [newValue, setNewValue] = useState('');
-  const [newDate, setNewDate] = useState(new Date().toISOString().split('T')[0] ?? '');
+  const [newDate, setNewDate] = useState('');
   const [newUnit, setNewUnit] = useState(entry?.unit ?? '');
 
   const { data: trend, isLoading } = useQuery<TrendResponse>({
@@ -108,13 +70,12 @@ export default function ParameterHistoryScreen() {
       await qc.invalidateQueries({ queryKey: ['readings'] });
       setAdding(false);
       setNewValue('');
-      setNewDate(new Date().toISOString().split('T')[0] ?? '');
+      setNewDate('');
     },
   });
 
   const confirmMutation = useMutation({
-    mutationFn: (id: string) =>
-      patchReading(id, { status: ReadingStatus.Confirmed, isUserVerified: true }),
+    mutationFn: (id: string) => patchReading(id, { status: ReadingStatus.Confirmed, isUserVerified: true }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['trend', parameterId] });
       await qc.invalidateQueries({ queryKey: ['readings'] });
@@ -138,161 +99,140 @@ export default function ParameterHistoryScreen() {
 
   if (!entry) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>Unknown parameter.</Text>
-      </View>
+      <CenteredScreen>
+        <Text style={styles.error}>Unknown parameter.</Text>
+      </CenteredScreen>
     );
   }
+  if (isLoading) return <LoadingScreen />;
 
-  const rangeLabel = formatRange(entry);
   const data = trend?.data ?? [];
   const latest = data[data.length - 1];
-  const latestFlagColor =
-    latest ? (FLAG_COLORS[latest.rangeFlag] ?? colors.textSecondary) : colors.textSecondary;
+  const rangeLabel = formatRange(entry);
+  const canSaveReading = !!newValue && !Number.isNaN(parseFloat(newValue)) && isDateInput(newDate);
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-      {/* Header card */}
-      <View style={styles.card}>
-        <Text style={styles.paramName}>{entry.canonicalName}</Text>
-        <Text style={styles.unit}>{entry.unit}</Text>
-        <Text style={styles.range}>Reference: {rangeLabel}</Text>
+    <AppScroll>
+      <TopBar
+        eyebrow={entry.panel}
+        title={entry.canonicalName}
+        action={latest ? <Pill label={latest.rangeFlag} tone={flagTone(latest.rangeFlag)} /> : undefined}
+      />
+      <HeroCard tone="light">
+        <Text style={typography.bodySmall}>Latest value</Text>
         {latest ? (
-          <Text style={[styles.latestValue, { color: latestFlagColor }]}>
+          <Text style={styles.latest}>
             {latest.value} {latest.unit}
-            {trendArrow(data)}
           </Text>
         ) : (
-          <Text style={styles.noData}>No readings yet</Text>
+          <Text style={styles.latest}>No data</Text>
         )}
-      </View>
+        <Text style={typography.bodySmall}>Normal range: {rangeLabel}</Text>
+      </HeroCard>
 
-      {/* Sparkline */}
-      {data.length >= 2 ? (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Trend ({data.length} readings)</Text>
-          <Sparkline data={data} />
-        </View>
-      ) : null}
+      <Card>
+        <Text style={typography.h3}>Trend</Text>
+        <TrendBars data={data} />
+        <Text style={typography.bodySmall}>Direction: {trendArrow(data) || 'not enough data'}</Text>
+      </Card>
 
-      {/* Reading history */}
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.sectionTitle}>History</Text>
-          <Button label="+ Add" variant="secondary" onPress={() => setAdding(true)} />
+      <Card>
+        <View style={styles.historyHeader}>
+          <Text style={typography.h3}>History</Text>
+          <Button label="Add" variant="secondary" onPress={() => setAdding(true)} style={styles.addButton} />
         </View>
-        {isLoading ? (
-          <Text style={styles.loadingText}>Loading…</Text>
-        ) : data.length === 0 ? (
-          <Text style={styles.emptyText}>No readings recorded.</Text>
+        {data.length === 0 ? (
+          <Text style={typography.body}>No readings recorded.</Text>
         ) : (
-          [...data].reverse().map((pt) => {
-            const flagColor = FLAG_COLORS[pt.rangeFlag] ?? colors.textSecondary;
-            return (
-              <View key={pt.readingId} style={styles.readingRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.readingDate}>
-                    {new Date(pt.recordedAt).toLocaleDateString()}
-                  </Text>
-                  {pt.isUserVerified ? (
-                    <Text style={styles.verifiedBadge}>Verified</Text>
-                  ) : (
-                    <Pressable onPress={() => confirmMutation.mutate(pt.readingId)}>
-                      <Text style={styles.confirmBadge}>Tap to confirm</Text>
+          [...data].reverse().map((point) => (
+            <Row
+              key={point.readingId}
+              title={`${point.value} ${point.unit}`}
+              subtitle={new Date(point.recordedAt).toLocaleDateString()}
+              right={
+                <View style={styles.historyRight}>
+                  <Pill label={point.rangeFlag} tone={flagTone(point.rangeFlag)} />
+                  {!point.isUserVerified ? (
+                    <Pressable onPress={() => confirmMutation.mutate(point.readingId)}>
+                      <Text style={styles.confirmText}>Confirm</Text>
                     </Pressable>
-                  )}
+                  ) : null}
+                  <Pressable onPress={() => confirmDelete(point.readingId)}>
+                    <Text style={styles.deleteText}>Delete</Text>
+                  </Pressable>
                 </View>
-                <Text style={[styles.readingValue, { color: flagColor }]}>
-                  {pt.value} {pt.unit}
-                </Text>
-                <Pressable
-                  onPress={() => confirmDelete(pt.readingId)}
-                  style={styles.deleteBtn}
-                  accessibilityLabel="Delete reading"
-                >
-                  <Text style={styles.deleteBtnText}>✕</Text>
-                </Pressable>
-              </View>
-            );
-          })
+              }
+            />
+          ))
         )}
-      </View>
+      </Card>
 
-      {/* Manual entry modal */}
       <Modal visible={adding} animationType="slide" onRequestClose={() => setAdding(false)}>
-        <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-          <Text style={styles.modalTitle}>Add {entry.canonicalName}</Text>
-          <TextField
-            label={`Value (${entry.unit})`}
-            value={newValue}
-            onChangeText={setNewValue}
-            keyboardType="decimal-pad"
-            placeholder="e.g. 13.5"
-          />
-          <TextField
-            label="Unit (pre-filled)"
-            value={newUnit}
-            onChangeText={setNewUnit}
-            placeholder={entry.unit}
-          />
-          <TextField
-            label="Date (YYYY-MM-DD)"
-            value={newDate}
-            onChangeText={setNewDate}
-            placeholder="2024-01-15"
-            keyboardType="numeric"
-          />
+        <AppScroll contentStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+          <Text style={typography.h2}>Add {entry.canonicalName}</Text>
+          <View style={{ marginTop: spacing.md }}>
+            <TextField
+              label={`Value (${entry.unit})`}
+              value={newValue}
+              onChangeText={setNewValue}
+              keyboardType="decimal-pad"
+              placeholder=""
+            />
+            <TextField label="Unit" value={newUnit} onChangeText={setNewUnit} placeholder={entry.unit} />
+            <TextField
+              label="Date (YYYY-MM-DD)"
+              value={newDate}
+              onChangeText={setNewDate}
+              placeholder="YYYY-MM-DD"
+              keyboardType="numeric"
+            />
+          </View>
           <Button
             label="Save"
             loading={addMutation.isPending}
-            disabled={!newValue || isNaN(parseFloat(newValue))}
+            disabled={!canSaveReading}
             onPress={() => addMutation.mutate()}
           />
           <Button label="Cancel" variant="secondary" onPress={() => setAdding(false)} />
-        </ScrollView>
+        </AppScroll>
       </Modal>
-    </ScrollView>
+    </AppScroll>
+  );
+}
+
+function TrendBars({ data }: { data: TrendResponse['data'] }) {
+  if (data.length < 2) {
+    return <Text style={[typography.body, { marginTop: spacing.sm }]}>At least two readings are needed for a trend.</Text>;
+  }
+  const values = data.map((point) => point.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  return (
+    <View style={styles.chart}>
+      {data.map((point) => {
+        const height = ((point.value - min) / range) * 0.65 + 0.2;
+        const tone = flagTone(point.rangeFlag);
+        const color = tone === 'green' ? colors.rangeNormal : tone === 'red' ? colors.danger : tone === 'amber' ? colors.amber : colors.textSecondary;
+        return (
+          <View key={point.readingId} style={styles.barWrap}>
+            <View style={[styles.bar, { height: `${height * 100}%`, backgroundColor: color }]} />
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  errorText: { fontSize: 16, color: colors.danger },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  paramName: { fontSize: 20, fontWeight: '700', color: colors.primary },
-  unit: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  range: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.xs },
-  latestValue: { fontSize: 28, fontWeight: '700', marginTop: spacing.sm },
-  noData: { fontSize: 15, color: colors.textSecondary, marginTop: spacing.sm },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.sm },
-  loadingText: { fontSize: 14, color: colors.textSecondary },
-  emptyText: { fontSize: 14, color: colors.textSecondary },
-  readingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  readingDate: { fontSize: 13, color: colors.textSecondary },
-  verifiedBadge: { fontSize: 11, color: colors.rangeNormal, fontWeight: '600', marginTop: 2 },
-  confirmBadge: { fontSize: 11, color: '#F4B400', fontWeight: '600', marginTop: 2 },
-  readingValue: { fontSize: 15, fontWeight: '600', marginRight: spacing.sm },
-  deleteBtn: { padding: spacing.xs },
-  deleteBtnText: { fontSize: 14, color: colors.textSecondary },
-  modalTitle: { fontSize: 22, fontWeight: '700', color: colors.primary, marginBottom: spacing.lg, marginTop: spacing.xl },
+  error: { color: colors.danger, fontSize: 16 },
+  latest: { color: colors.textPrimary, fontSize: 24, lineHeight: 30, fontWeight: '800', marginVertical: spacing.xs },
+  chart: { height: 145, flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: spacing.md, marginBottom: spacing.sm },
+  barWrap: { flex: 1, height: '100%', justifyContent: 'flex-end' },
+  bar: { borderRadius: 8, minHeight: 8 },
+  historyHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  addButton: { width: 72, marginTop: 0 },
+  historyRight: { alignItems: 'flex-end', gap: 4 },
+  confirmText: { color: colors.amber, fontSize: 11, fontWeight: '800' },
+  deleteText: { color: colors.textSecondary, fontSize: 11, fontWeight: '800' },
 });

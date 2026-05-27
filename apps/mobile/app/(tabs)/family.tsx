@@ -1,28 +1,13 @@
-import type {
-  FamilyLink,
-  FamilyMemberView,
-} from '@medical-tracker/shared-types';
+import type { FamilyLink, FamilyMemberView } from '@medical-tracker/shared-types';
 import { FamilyLinkStatus, FamilyRole } from '@medical-tracker/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Modal, StyleSheet, Text, View } from 'react-native';
 
-import { Button, TextField } from '../../src/components/ui';
-import {
-  acceptInvite,
-  inviteMember,
-  listFamilyMembers,
-  revokeFamilyLink,
-} from '../../src/lib/api/endpoints';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { AppScroll, Avatar, Button, Card, EmptyState, FamilyProfilesVisual, Pill, Row, TopBar, typography } from '../../src/components/healthfolio';
+import { TextField } from '../../src/components/ui';
+import { inviteMember, listFamilyMembers, revokeFamilyLink } from '../../src/lib/api/endpoints';
+import { colors, spacing } from '../../src/theme/tokens';
 
 const ROLE_LABELS: Record<FamilyRole, string> = {
   [FamilyRole.Viewer]: 'Viewer',
@@ -30,19 +15,17 @@ const ROLE_LABELS: Record<FamilyRole, string> = {
   [FamilyRole.Guardian]: 'Guardian',
 };
 
-const STATUS_COLORS: Record<FamilyLinkStatus, string> = {
-  [FamilyLinkStatus.Pending]: '#F4B400',
-  [FamilyLinkStatus.Active]: colors.rangeNormal,
-  [FamilyLinkStatus.Declined]: colors.danger,
-  [FamilyLinkStatus.Revoked]: colors.textSecondary,
-};
+function statusTone(status: FamilyLinkStatus): 'green' | 'amber' | 'red' | 'neutral' {
+  if (status === FamilyLinkStatus.Active) return 'green';
+  if (status === FamilyLinkStatus.Pending) return 'amber';
+  if (status === FamilyLinkStatus.Declined) return 'red';
+  return 'neutral';
+}
 
 export default function FamilyScreen() {
   const qc = useQueryClient();
   const [showInvite, setShowInvite] = useState(false);
-  const [showAccept, setShowAccept] = useState(false);
   const [identifier, setIdentifier] = useState('');
-  const [inviteToken, setInviteToken] = useState('');
 
   const { data: members, isLoading } = useQuery<FamilyMemberView[]>({
     queryKey: ['family', 'members'],
@@ -50,26 +33,12 @@ export default function FamilyScreen() {
   });
 
   const inviteMutation = useMutation({
-    mutationFn: () =>
-      inviteMember({ memberIdentifier: identifier, role: FamilyRole.Viewer }),
+    mutationFn: () => inviteMember({ memberIdentifier: identifier, role: FamilyRole.Viewer }),
     onSuccess: async (res) => {
       await qc.invalidateQueries({ queryKey: ['family'] });
       setShowInvite(false);
       setIdentifier('');
-      Alert.alert(
-        'Invite sent',
-        `Share this token with ${identifier}:\n\n${res.inviteToken}`,
-      );
-    },
-  });
-
-  const acceptMutation = useMutation({
-    mutationFn: () => acceptInvite({ inviteToken }),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['family'] });
-      setShowAccept(false);
-      setInviteToken('');
-      Alert.alert('Joined!', 'You now have access to their health data.');
+      Alert.alert('Invite created', `Share this token:\n\n${res.inviteToken}`);
     },
   });
 
@@ -81,76 +50,84 @@ export default function FamilyScreen() {
   function confirmRevoke(link: FamilyLink, name: string): void {
     Alert.alert('Remove member', `Remove ${name}?`, [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => revokeMutation.mutate(link.id),
-      },
+      { text: 'Remove', style: 'destructive', onPress: () => revokeMutation.mutate(link.id) },
     ]);
   }
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.container}
-    >
-      {/* Actions */}
-      <View style={styles.actionRow}>
-        <Button label="+ Invite member" onPress={() => setShowInvite(true)} />
-        <Button
-          label="Join with token"
-          variant="secondary"
-          onPress={() => setShowAccept(true)}
-        />
-      </View>
+    <AppScroll>
+      <TopBar
+        eyebrow="Profiles"
+        title="Family"
+        action={<Button label="Add" onPress={() => setShowInvite(true)} style={styles.addButton} />}
+      />
 
-      {/* Member list */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>People with access to my data</Text>
+      <Card style={styles.currentCard}>
+        <View style={styles.currentRow}>
+          <View>
+            <Text style={typography.bodySmall}>Current profile</Text>
+            <Text style={typography.h3}>My profile</Text>
+            <Text style={typography.bodySmall}>Active health record</Text>
+          </View>
+          <Avatar label="Me" />
+        </View>
+      </Card>
+
+      <Card>
+        <Text style={typography.h3}>Linked members</Text>
         {isLoading ? (
-          <Text style={styles.dimText}>Loading…</Text>
+          <Text style={[typography.body, { marginTop: spacing.sm }]}>Loading...</Text>
         ) : !members || members.length === 0 ? (
-          <Text style={styles.dimText}>No members yet.</Text>
+          <View style={styles.emptyFamily}>
+            <FamilyProfilesVisual />
+            <EmptyState
+              icon="users"
+              title="No linked members"
+              body="Add a family profile when you are ready to track records for someone close."
+              action={<Button label="Add profile" onPress={() => setShowInvite(true)} />}
+            />
+          </View>
         ) : (
-          members.map((m) => (
-            <View key={m.link.id} style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.memberName}>{m.memberName}</Text>
-                <Text style={styles.memberSub}>
-                  {m.memberEmail ?? m.memberPhone ?? ''}
-                </Text>
-                <Text style={[styles.statusBadge, { color: STATUS_COLORS[m.link.status] }]}>
-                  {m.link.status.toUpperCase()} · {ROLE_LABELS[m.link.role]}
-                </Text>
-              </View>
-              {m.link.status !== FamilyLinkStatus.Revoked && (
-                <Pressable
-                  onPress={() => confirmRevoke(m.link, m.memberName)}
-                  style={styles.revokeBtn}
-                  accessibilityLabel="Remove member"
-                >
-                  <Text style={styles.revokeBtnText}>✕</Text>
-                </Pressable>
-              )}
-            </View>
+          members.map((member) => (
+            <Row
+              key={member.link.id}
+              title={member.memberName}
+              subtitle={`${member.memberEmail ?? member.memberPhone ?? 'Family member'} · ${ROLE_LABELS[member.link.role]}`}
+              right={
+                <View style={styles.memberActions}>
+                  <Pill label={member.link.status} tone={statusTone(member.link.status)} />
+                  {member.link.status !== FamilyLinkStatus.Revoked ? (
+                    <Button
+                      label="Remove"
+                      variant="secondary"
+                      onPress={() => confirmRevoke(member.link, member.memberName)}
+                      style={styles.removeButton}
+                    />
+                  ) : null}
+                </View>
+              }
+            />
           ))
         )}
-      </View>
+      </Card>
 
-      {/* Invite modal */}
+      <Card style={styles.noteCard}>
+        <Text style={styles.noteTitle}>Optional setup</Text>
+        <Text style={typography.bodySmall}>Roles and advanced permissions can come later.</Text>
+      </Card>
+
       <Modal visible={showInvite} animationType="slide" onRequestClose={() => setShowInvite(false)}>
-        <ScrollView
-          style={{ backgroundColor: colors.background }}
-          contentContainerStyle={styles.container}
-        >
-          <Text style={styles.modalTitle}>Invite a member</Text>
-          <TextField
-            label="Their email or phone"
-            value={identifier}
-            onChangeText={setIdentifier}
-            keyboardType="email-address"
-            placeholder="user@example.com"
-          />
+        <AppScroll contentStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+          <Text style={typography.h2}>Invite a member</Text>
+          <View style={{ marginTop: spacing.md }}>
+            <TextField
+              label="Their email or phone"
+              value={identifier}
+              onChangeText={setIdentifier}
+              keyboardType="email-address"
+              placeholder="Email or phone"
+            />
+          </View>
           <Button
             label="Send invite"
             loading={inviteMutation.isPending}
@@ -158,70 +135,19 @@ export default function FamilyScreen() {
             onPress={() => inviteMutation.mutate()}
           />
           <Button label="Cancel" variant="secondary" onPress={() => setShowInvite(false)} />
-        </ScrollView>
+        </AppScroll>
       </Modal>
-
-      {/* Accept modal */}
-      <Modal visible={showAccept} animationType="slide" onRequestClose={() => setShowAccept(false)}>
-        <ScrollView
-          style={{ backgroundColor: colors.background }}
-          contentContainerStyle={styles.container}
-        >
-          <Text style={styles.modalTitle}>Join with invite token</Text>
-          <TextField
-            label="Invite token"
-            value={inviteToken}
-            onChangeText={setInviteToken}
-            placeholder="Paste token here"
-          />
-          <Button
-            label="Accept invite"
-            loading={acceptMutation.isPending}
-            disabled={!inviteToken.trim()}
-            onPress={() => acceptMutation.mutate()}
-          />
-          <Button label="Cancel" variant="secondary" onPress={() => setShowAccept(false)} />
-        </ScrollView>
-      </Modal>
-    </ScrollView>
+    </AppScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-  actionRow: { gap: spacing.sm, marginBottom: spacing.md },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  dimText: { fontSize: 14, color: colors.textSecondary },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  memberName: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-  memberSub: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
-  statusBadge: { fontSize: 11, fontWeight: '600', marginTop: 2 },
-  revokeBtn: { padding: spacing.xs },
-  revokeBtnText: { fontSize: 14, color: colors.textSecondary },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.primary,
-    marginBottom: spacing.lg,
-    marginTop: spacing.xl,
-  },
+  addButton: { minWidth: 78, minHeight: 38, marginTop: 0, paddingHorizontal: spacing.md },
+  currentCard: { backgroundColor: colors.softSurface, borderColor: 'rgba(15,118,110,0.24)' },
+  currentRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  memberActions: { alignItems: 'flex-end', gap: spacing.xs },
+  removeButton: { minHeight: 30, marginTop: 0, paddingHorizontal: spacing.sm },
+  noteCard: { backgroundColor: colors.amberBg, borderColor: '#EFD17E' },
+  noteTitle: { color: '#744A09', fontSize: 13, fontWeight: '800', marginBottom: 2 },
+  emptyFamily: { marginTop: spacing.sm },
 });

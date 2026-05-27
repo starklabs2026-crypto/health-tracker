@@ -4,7 +4,12 @@ import { router } from 'expo-router';
 
 import { clearTokens, getTokens, setTokens } from '../auth/tokenStorage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL
+  ?? (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000');
+
+if (!API_URL) {
+  console.warn('EXPO_PUBLIC_API_URL is not set; legacy API-backed features are unavailable.');
+}
 
 export const api = axios.create({ baseURL: API_URL, timeout: 10_000 });
 
@@ -13,12 +18,25 @@ const bare = axios.create({ baseURL: API_URL, timeout: 10_000 });
 
 type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
+function requireApiUrl(): string {
+  if (!API_URL) {
+    throw new Error('EXPO_PUBLIC_API_URL must be set to use this feature.');
+  }
+  return API_URL;
+}
+
 // Attach the Bearer access token to every request.
 api.interceptors.request.use(async (config) => {
+  config.baseURL ??= requireApiUrl();
   const tokens = await getTokens();
   if (tokens) {
     config.headers.Authorization = `Bearer ${tokens.accessToken}`;
   }
+  return config;
+});
+
+bare.interceptors.request.use((config) => {
+  config.baseURL ??= requireApiUrl();
   return config;
 });
 

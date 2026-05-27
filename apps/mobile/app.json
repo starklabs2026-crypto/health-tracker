@@ -1,18 +1,45 @@
 {
   "expo": {
-    "name": "Medical Tracker",
-    "slug": "medical-tracker",
-    "scheme": "medicaltracker",
-    "version": "0.1.0",
+    "name": "HealthFolio",
+    "owner": "starklabs",
+    "slug": "healthfolio",
+    "scheme": "healthfolio",
+    "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F6FBFB"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.starklabs.medicaltracker"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.starklabs.healthfolio",
+      "buildNumber": "16",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "HealthFolio uses the camera to scan lab reports, prescriptions, and other health documents you choose to upload.",
+        "NSPhotoLibraryUsageDescription": "HealthFolio lets you select health document images from your photo library for upload and OCR.",
+        "NSFaceIDUsageDescription": "HealthFolio uses Face ID to help protect access to your health records on this device.",
+        "CFBundleAllowMixedLocalizations": true,
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.starklabs.medicaltracker"
+      "package": "com.starklabs.healthfolio",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A5C68"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -20,10 +47,37 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "HealthFolio uses the camera to scan health documents you choose to upload.",
+          "photosPermission": "HealthFolio lets you select health document images from your photo library."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow HealthFolio to use Face ID to unlock your health records."
+        }
+      ],
+      "expo-apple-authentication",
+      "expo-web-browser",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.249865909043-c2pn0u8jbt4b8sqtso91ggd1fkcbif3q"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b06f1d7e-8692-4995-9a4f-8641dbffadbf"
+      }
     }
   }
 }

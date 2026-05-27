@@ -1,20 +1,42 @@
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
-import { getTokens } from '../src/lib/auth/tokenStorage';
-import { colors } from '../src/theme/tokens';
+import { CenteredScreen, LogoMark, typography } from '../src/components/healthfolio';
+import { signOut } from '../src/lib/auth/session';
+import { hasAppProfile, hasSupabaseSession } from '../src/lib/supabase/auth';
+import { colors, spacing } from '../src/theme/tokens';
 
 // Auth gate / splash. Decides where to send the user on launch:
-//  - tokens present -> /lock (biometric unlock) -> tabs
-//  - no tokens      -> /welcome (sign-up / sign-in)
+//  - Supabase session + app profile -> /lock (biometric unlock) -> tabs
+//  - Supabase session + no profile  -> clear partial auth and return to welcome
+//  - no session                     -> /welcome
 export default function Index() {
   useEffect(() => {
     let active = true;
     void (async () => {
-      const tokens = await getTokens();
-      if (!active) return;
-      router.replace(tokens ? '/lock' : '/welcome');
+      try {
+        const hasSession = await hasSupabaseSession();
+        if (!active) return;
+        if (!hasSession) {
+          router.replace('/welcome');
+          return;
+        }
+
+        const hasProfile = await hasAppProfile();
+        if (!active) return;
+        if (!hasProfile) {
+          await signOut();
+          if (!active) return;
+          router.replace('/welcome');
+          return;
+        }
+
+        router.replace('/lock');
+      } catch {
+        if (!active) return;
+        router.replace('/welcome');
+      }
     })();
     return () => {
       active = false;
@@ -22,8 +44,17 @@ export default function Index() {
   }, []);
 
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}>
-      <ActivityIndicator color={colors.primary} size="large" />
-    </View>
+    <CenteredScreen>
+      <View
+        style={{
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <LogoMark size={64} />
+        <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: spacing.md }} />
+        <Text style={[typography.bodySmall, { marginTop: spacing.sm }]}>Opening HealthFolio</Text>
+      </View>
+    </CenteredScreen>
   );
 }

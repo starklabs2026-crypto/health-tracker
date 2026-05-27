@@ -1,41 +1,71 @@
-import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Sex, UnitsPreference } from '@medical-tracker/shared-types';
-import { router } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Button, Screen, Segmented, Subtitle, TextField, Title } from '../../../src/components/ui';
+import {
+  AppScroll,
+  Button,
+  Card,
+  ProgressBar,
+  typography,
+} from '../../../src/components/healthfolio';
+import { Segmented, TextField } from '../../../src/components/ui';
 import { updateMe } from '../../../src/lib/api/endpoints';
+import { useOnboardingDraftStore } from '../../../src/lib/onboarding/draftStore';
+import { hasSupabaseSession } from '../../../src/lib/supabase/auth';
 import { colors, radius, spacing, tapTarget } from '../../../src/theme/tokens';
 
 export default function Basics() {
+  const { mode } = useLocalSearchParams<{ mode?: 'signup' }>();
+  const setBasicDetails = useOnboardingDraftStore((s) => s.setBasicDetails);
   const [name, setName] = useState('');
   const [dob, setDob] = useState<Date | null>(null);
-  const [showPicker, setShowPicker] = useState(false);
+  const [showDobPicker, setShowDobPicker] = useState(false);
   const [sex, setSex] = useState<Sex | null>(null);
+  const [otherGender, setOtherGender] = useState('');
   const [units, setUnits] = useState<UnitsPreference>(UnitsPreference.Metric);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const fallbackDob = new Date(2000, 0, 1);
 
-  function onPickDate(_e: DateTimePickerEvent, selected?: Date): void {
-    if (Platform.OS !== 'ios') setShowPicker(false);
-    if (selected) setDob(selected);
+  function parseDob(): Date | null {
+    if (!dob || dob > new Date()) return null;
+    return new Date(Date.UTC(dob.getFullYear(), dob.getMonth(), dob.getDate()));
+  }
+
+  function formatDob(date: Date): string {
+    const year = String(date.getFullYear());
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   async function submit(): Promise<void> {
-    if (!name.trim() || !dob || !sex) {
-      setError('Please complete name, date of birth, and sex.');
+    const parsedDob = parseDob();
+    if (!name.trim() || !parsedDob || !sex) {
+      setError('Please complete name, date of birth, and gender.');
       return;
     }
     setError(null);
     setLoading(true);
     try {
-      await updateMe({
+      const details = {
         name: name.trim(),
-        dob: dob.toISOString(),
+        dob: parsedDob.toISOString(),
         sex,
         unitsPreference: units,
-      });
+      };
+
+      if (mode === 'signup' && !(await hasSupabaseSession())) {
+        setBasicDetails(details);
+        router.push('/(auth)/onboarding/health?mode=signup');
+        return;
+      }
+
+      await updateMe(details);
       router.push('/(auth)/onboarding/health');
     } catch {
       setError('Could not save. Please try again.');
@@ -45,57 +75,55 @@ export default function Basics() {
   }
 
   return (
-    <Screen>
-      <Title>About you</Title>
-      <Subtitle>This helps us calculate accurate reference ranges.</Subtitle>
-
-      <TextField label="Full name" value={name} onChangeText={setName} placeholder="Jane Doe" />
-
-      <View style={{ marginBottom: spacing.md }}>
-        <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs }}>
-          Date of birth
+    <AppScroll contentStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+      <Text style={typography.eyebrow}>Step 1 of 3</Text>
+      <ProgressBar value={0.34} />
+      <Card>
+        <Text style={typography.h2}>Health profile</Text>
+        <Text style={[typography.body, { marginTop: spacing.xs }]}>
+          Only the basics needed for a clean summary.
         </Text>
+      </Card>
+
+      <TextField label="Full name" value={name} onChangeText={setName} placeholder="Full name" />
+
+      <View style={styles.dateGroup}>
+        <Text style={styles.label}>Date of birth</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Select date of birth"
-          onPress={() => setShowPicker(true)}
-          style={{
-            minHeight: tapTarget,
-            borderWidth: 1,
-            borderColor: colors.border,
-            borderRadius: radius.input,
-            justifyContent: 'center',
-            paddingHorizontal: spacing.md,
-            backgroundColor: colors.surface,
-          }}
+          onPress={() => setShowDobPicker(true)}
+          style={styles.dateField}
         >
-          <Text style={{ fontSize: 16, color: dob ? colors.textPrimary : colors.textSecondary }}>
-            {dob ? dob.toLocaleDateString() : 'Select date'}
+          <Text style={[styles.dateText, !dob && styles.datePlaceholder]}>
+            {dob ? formatDob(dob) : 'Select date'}
           </Text>
+          <Feather name="calendar" size={17} color={colors.textSecondary} />
         </Pressable>
-        {showPicker ? (
-          <DateTimePicker
-            value={dob ?? new Date(2000, 0, 1)}
-            mode="date"
-            maximumDate={new Date()}
-            onChange={onPickDate}
-          />
-        ) : null}
       </View>
 
       <Segmented
-        label="Sex"
+        label="Gender"
         value={sex}
         onChange={setSex}
         options={[
-          { label: 'Male', value: Sex.Male },
           { label: 'Female', value: Sex.Female },
+          { label: 'Male', value: Sex.Male },
           { label: 'Other', value: Sex.Other },
         ]}
       />
 
+      {sex === Sex.Other ? (
+        <TextField
+          label="Other gender"
+          value={otherGender}
+          onChangeText={setOtherGender}
+          placeholder=""
+        />
+      ) : null}
+
       <Segmented
-        label="Units"
+        label="Unit preference"
         value={units}
         onChange={setUnits}
         options={[
@@ -104,8 +132,85 @@ export default function Basics() {
         ]}
       />
 
-      {error ? <Text style={{ color: colors.danger, marginBottom: spacing.sm }}>{error}</Text> : null}
+      {error ? (
+        <Text style={{ color: colors.danger, marginBottom: spacing.sm }}>{error}</Text>
+      ) : null}
       <Button label="Continue" onPress={() => void submit()} loading={loading} />
-    </Screen>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={showDobPicker}
+        onRequestClose={() => setShowDobPicker(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.dateSheet}>
+            <Text style={styles.sheetTitle}>Date of birth</Text>
+            <DateTimePicker
+              value={dob ?? fallbackDob}
+              mode="date"
+              display="spinner"
+              style={styles.datePicker}
+              maximumDate={new Date()}
+              minimumDate={new Date(1900, 0, 1)}
+              onChange={(_, selectedDate) => {
+                if (selectedDate) setDob(selectedDate);
+              }}
+            />
+            <View style={styles.sheetActions}>
+              <Button
+                label="Cancel"
+                variant="secondary"
+                onPress={() => setShowDobPicker(false)}
+                style={styles.sheetButton}
+              />
+              <Button
+                label="Done"
+                onPress={() => {
+                  setDob((current) => current ?? fallbackDob);
+                  setShowDobPicker(false);
+                }}
+                style={styles.sheetButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </AppScroll>
   );
 }
+
+const styles = StyleSheet.create({
+  dateGroup: { marginBottom: spacing.md },
+  label: { fontSize: 12, color: colors.textSecondary, marginBottom: spacing.xs },
+  dateField: {
+    minHeight: tapTarget,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.input,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  dateText: { color: colors.textPrimary, fontSize: 14 },
+  datePlaceholder: { color: colors.textSecondary },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(16,24,39,0.18)',
+  },
+  dateSheet: {
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  datePicker: { height: 216 },
+  sheetTitle: { color: colors.textPrimary, fontSize: 16, lineHeight: 21, fontWeight: '800' },
+  sheetActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  sheetButton: { flex: 1, marginTop: 0 },
+});

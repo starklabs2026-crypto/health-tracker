@@ -1,271 +1,226 @@
-import { RangeFlag, type ParameterReading, OcrStatus } from '@medical-tracker/shared-types';
+import { Feather } from '@expo/vector-icons';
+import { DocType, OcrStatus, RangeFlag, type ParameterReading } from '@medical-tracker/shared-types';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, type ComponentProps } from 'react';
+import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+
 import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-
+  AppScroll,
+  Button,
+  Card,
+  EmptyState,
+  HeroCard,
+  LoadingScreen,
+  MetricTile,
+  Pill,
+  ProfilePill,
+  Row,
+  TopBar,
+  typography,
+} from '../../src/components/healthfolio';
 import { getMe, listDocuments, listReadings } from '../../src/lib/api/endpoints';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { colors, spacing } from '../../src/theme/tokens';
 
-const FLAG_COLORS: Record<RangeFlag, string> = {
-  [RangeFlag.Normal]: colors.rangeNormal,
-  [RangeFlag.Low]: colors.rangeLow,
-  [RangeFlag.High]: colors.rangeHigh,
-  [RangeFlag.Critical]: colors.rangeCritical,
-  [RangeFlag.Unknown]: colors.textSecondary,
+const DOC_TYPE_LABELS: Record<DocType, string> = {
+  [DocType.LabReport]: 'Lab report',
+  [DocType.Prescription]: 'Prescription',
+  [DocType.ImagingReport]: 'Imaging report',
+  [DocType.DischargeSummary]: 'Discharge summary',
+  [DocType.VaccinationRecord]: 'Vaccination record',
+  [DocType.Other]: 'Document',
 };
 
-function StatCard({
-  label,
-  value,
-  color,
-  onPress,
-}: {
-  label: string;
-  value: string | number;
-  color?: string;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable
-      style={styles.statCard}
-      onPress={onPress}
-      accessibilityRole={onPress ? 'button' : 'text'}
-      accessibilityLabel={`${label}: ${value}`}
-    >
-      <Text style={[styles.statValue, color ? { color } : undefined]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </Pressable>
-  );
-}
+type FeatherName = ComponentProps<typeof Feather>['name'];
 
-/** Pick the 5 most-recent abnormal readings across all parameters. */
 function pickAbnormal(readings: ParameterReading[]): ParameterReading[] {
   return readings
     .filter((r) => r.rangeFlag !== RangeFlag.Normal && r.rangeFlag !== RangeFlag.Unknown)
     .sort((a, b) => b.recordedAt.localeCompare(a.recordedAt))
-    .slice(0, 5);
+    .slice(0, 4);
+}
+
+function statusTone(status: OcrStatus): 'green' | 'amber' | 'blue' | 'red' | 'neutral' {
+  if (status === OcrStatus.ReadyForReview) return 'amber';
+  if (status === OcrStatus.Failed) return 'red';
+  if (status === OcrStatus.Queued || status === OcrStatus.Processing) return 'blue';
+  return 'green';
 }
 
 export default function HomeScreen() {
   const { data: me, isLoading: loadingMe } = useQuery({ queryKey: ['me'], queryFn: getMe });
-  const { data: readings, isLoading: loadingReadings, refetch: refetchReadings, isRefetching } = useQuery({
+  const {
+    data: readings,
+    isLoading: loadingReadings,
+    refetch: refetchReadings,
+    isRefetching,
+  } = useQuery({
     queryKey: ['readings'],
     queryFn: () => listReadings({ limit: 200 }),
   });
   const { data: docs, refetch: refetchDocs } = useQuery({
     queryKey: ['documents'],
-    queryFn: () => listDocuments({}),
+    queryFn: () => listDocuments({ limit: 20 }),
   });
 
   const onRefresh = useCallback(() => {
     void refetchReadings();
     void refetchDocs();
-  }, [refetchReadings, refetchDocs]);
-
-  const name = me?.user.name?.trim();
-  const greeting = name ? `Welcome, ${name.split(' ')[0]}` : 'Welcome';
-
-  const allReadings = readings?.items ?? [];
-  const abnormal = pickAbnormal(allReadings);
-  const pendingDocs = (docs?.items ?? []).filter(
-    (d) => d.ocrStatus === OcrStatus.Queued || d.ocrStatus === OcrStatus.Processing,
-  );
-  const criticalCount = allReadings.filter((r) => r.rangeFlag === RangeFlag.Critical).length;
+  }, [refetchDocs, refetchReadings]);
 
   if (loadingMe || loadingReadings) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
+  const name = me?.user.name?.trim();
+  const firstName = name ? name.split(' ')[0] : 'there';
+  const allReadings = readings?.items ?? [];
+  const allDocs = docs?.items ?? [];
+  const abnormal = pickAbnormal(allReadings);
+  const readyForReview = allDocs.filter((d) => d.ocrStatus === OcrStatus.ReadyForReview);
+  const recentDocs = allDocs.slice(0, 3);
+
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.container}
+    <AppScroll
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
     >
-      <Text style={styles.greeting} accessibilityRole="header">{greeting}</Text>
+      <TopBar eyebrow="Good morning" title={firstName} action={<ProfilePill name="Me" />} />
 
-      {/* Stats row */}
-      <View style={styles.statsRow}>
-        <StatCard
-          label="Total readings"
-          value={allReadings.length}
-          onPress={() => router.push('/(tabs)/readings')}
+      <HeroCard>
+        <Text style={[typography.eyebrow, styles.heroEyebrow]}>Primary action</Text>
+        <Text style={[typography.h3, styles.heroText]}>Add a medical report</Text>
+        <Text style={[typography.bodySmall, styles.heroCopy]}>
+          Upload a report to extract readings for review.
+        </Text>
+        <Button
+          label="Add"
+          onPress={() => router.push('/documents/new')}
+          style={styles.heroButton}
         />
-        <StatCard
-          label="Abnormal"
-          value={abnormal.length}
-          color={abnormal.length > 0 ? colors.rangeHigh : colors.rangeNormal}
-          onPress={() => router.push('/(tabs)/readings')}
-        />
-        <StatCard
-          label="Critical"
-          value={criticalCount}
-          color={criticalCount > 0 ? colors.rangeCritical : colors.textSecondary}
-          onPress={() => router.push('/(tabs)/readings')}
-        />
+      </HeroCard>
+
+      <View style={styles.metricRow}>
+        <MetricTile value={allReadings.length} label="Readings" />
+        <MetricTile value={readyForReview.length} label="Review" tone="amber" />
+        <MetricTile value={allDocs.length} label="Docs" tone="green" />
       </View>
 
-      {/* Pending docs banner */}
-      {pendingDocs.length > 0 && (
-        <Pressable
-          style={styles.banner}
-          onPress={() => router.push('/(tabs)/documents')}
-          accessibilityRole="button"
-          accessibilityLabel={`${pendingDocs.length} document${pendingDocs.length > 1 ? 's' : ''} being processed. Tap to view.`}
-        >
-          <Text style={styles.bannerText}>
-            ⏳ {pendingDocs.length} document{pendingDocs.length > 1 ? 's' : ''} being processed…
-          </Text>
-        </Pressable>
-      )}
+      {readyForReview.length > 0 ? (
+        <Card style={styles.attentionCard}>
+          <Row
+            title={`${readyForReview.length} document${readyForReview.length > 1 ? 's' : ''} need review`}
+            subtitle="Confirm extracted values before they enter history."
+            right={<Pill label="Review" tone="amber" />}
+            onPress={() => router.push('/(tabs)/documents')}
+          />
+        </Card>
+      ) : null}
 
-      {/* Abnormal readings */}
-      {abnormal.length > 0 && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Attention needed</Text>
-          {abnormal.map((r) => {
-            const flagColor = FLAG_COLORS[r.rangeFlag as RangeFlag] ?? colors.textSecondary;
-            return (
-              <Pressable
-                key={r.id}
-                style={styles.readingRow}
-                onPress={() => router.push(`/readings/${r.parameterId}`)}
-                accessibilityRole="button"
-                accessibilityLabel={`${r.parameterId} ${r.value} ${r.unit} ${r.rangeFlag}`}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.readingParam}>{r.parameterId}</Text>
-                  <Text style={styles.readingDate}>
-                    {new Date(r.recordedAt).toLocaleDateString()}
-                  </Text>
-                </View>
-                <Text style={[styles.readingValue, { color: flagColor }]}>
-                  {r.value} {r.unit}
-                </Text>
-                <Text style={[styles.readingFlag, { color: flagColor }]}>
-                  {r.rangeFlag.toUpperCase()}
-                </Text>
-              </Pressable>
-            );
-          })}
+      <Card>
+        <View style={styles.sectionHeader}>
+          <Text style={typography.h3}>Today</Text>
+          <Pill label="View all" tone="active" />
         </View>
-      )}
+        {recentDocs.length > 0 ? (
+          recentDocs.map((doc) => (
+            <Row
+              key={doc.id}
+              title={DOC_TYPE_LABELS[doc.docType as DocType] ?? 'Document'}
+              subtitle={`${doc.labName ?? 'Unknown source'}, ${new Date(doc.sourceDate).toLocaleDateString()}`}
+              right={<Pill label={doc.ocrStatus === OcrStatus.ReadyForReview ? 'Ready' : doc.ocrStatus} tone={statusTone(doc.ocrStatus as OcrStatus)} />}
+              onPress={() => router.push(`/documents/${doc.id}`)}
+            />
+          ))
+        ) : (
+          <EmptyState
+            icon="file-plus"
+            title="No recent documents"
+            body="Upload a lab report to start building your health timeline."
+          />
+        )}
+      </Card>
 
-      {/* Quick actions */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Quick actions</Text>
-        <Pressable
-          style={styles.actionRow}
-          onPress={() => router.push('/(tabs)/documents')}
-          accessibilityRole="button"
-          accessibilityLabel="Upload a document"
-        >
-          <Text style={styles.actionIcon}>📄</Text>
-          <Text style={styles.actionLabel}>Upload a document</Text>
-          <Text style={styles.actionChevron}>›</Text>
-        </Pressable>
-        <Pressable
-          style={styles.actionRow}
-          onPress={() => router.push('/(tabs)/readings')}
-          accessibilityRole="button"
-          accessibilityLabel="View all readings"
-        >
-          <Text style={styles.actionIcon}>📊</Text>
-          <Text style={styles.actionLabel}>View all readings</Text>
-          <Text style={styles.actionChevron}>›</Text>
-        </Pressable>
-        <Pressable
-          style={styles.actionRow}
-          onPress={() => router.push('/shares')}
-          accessibilityRole="button"
-          accessibilityLabel="Share with doctor"
-        >
-          <Text style={styles.actionIcon}>🔗</Text>
-          <Text style={styles.actionLabel}>Share with doctor</Text>
-          <Text style={styles.actionChevron}>›</Text>
-        </Pressable>
+      {abnormal.length > 0 ? (
+        <Card>
+          <Text style={typography.h3}>Attention needed</Text>
+          {abnormal.map((reading) => (
+            <Row
+              key={reading.id}
+              title={reading.parameterId.replace(/-/g, ' ')}
+              subtitle={new Date(reading.recordedAt).toLocaleDateString()}
+              right={<Pill label={reading.rangeFlag} tone={reading.rangeFlag === RangeFlag.Critical ? 'red' : 'amber'} />}
+              onPress={() => router.push(`/readings/${reading.parameterId}`)}
+            />
+          ))}
+        </Card>
+      ) : null}
+
+      <View style={styles.quickGrid}>
+        <QuickAction label="Add report" icon="plus-circle" onPress={() => router.push('/documents/new')} />
+        <QuickAction label="Readings" icon="activity" onPress={() => router.push('/(tabs)/readings')} />
+        <QuickAction label="Share" icon="share-2" onPress={() => router.push('/shares')} />
+        <QuickAction label="Family" icon="users" onPress={() => router.push('/(tabs)/family')} />
       </View>
 
-      {allReadings.length === 0 && (
-        <View style={[styles.card, { alignItems: 'center' }]}>
-          <Text style={styles.emptyTitle}>No data yet</Text>
-          <Text style={styles.emptyBody}>
-            Upload a lab report from the Documents tab to get started.
+      {allDocs.length === 0 ? (
+        <Card style={styles.setupCard}>
+          <Text style={typography.h3}>Start with one report</Text>
+          <Text style={[typography.body, { marginTop: spacing.xs }]}>
+            HealthFolio becomes useful after the first lab report is uploaded and reviewed.
           </Text>
-        </View>
-      )}
-    </ScrollView>
+          <Button label="Upload document" onPress={() => router.push('/documents/new')} />
+        </Card>
+      ) : null}
+    </AppScroll>
+  );
+}
+
+function QuickAction({ label, icon, onPress }: { label: string; icon: FeatherName; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={styles.quickCard}>
+      <View style={styles.quickIcon}>
+        <Feather name={icon} size={18} color={colors.primary} />
+      </View>
+      <Text style={styles.quickLabel}>{label}</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  greeting: { fontSize: 22, fontWeight: '700', color: colors.primary, marginBottom: spacing.md },
-  statsRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
+  heroEyebrow: { color: 'rgba(255,255,255,0.72)' },
+  heroText: { color: '#FFFFFF', marginTop: spacing.xs },
+  heroCopy: { color: 'rgba(255,255,255,0.82)', marginTop: spacing.xs, maxWidth: 210 },
+  heroButton: {
+    alignSelf: 'flex-start',
+    minWidth: 108,
     borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    alignItems: 'center',
+    borderColor: 'rgba(255,255,255,0.28)',
+    backgroundColor: 'rgba(255,255,255,0.16)',
   },
-  statValue: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
-  statLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 2, textAlign: 'center' },
-  banner: {
-    backgroundColor: '#FFF8E1',
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: '#F9A825',
-    padding: spacing.md,
-    marginBottom: spacing.md,
-  },
-  bannerText: { fontSize: 13, color: '#5C4033', fontWeight: '500' },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.sm },
-  readingRow: {
+  metricRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: 10 },
+  attentionCard: { backgroundColor: colors.amberBg, borderColor: '#EFD17E' },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs },
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  quickCard: {
+    width: '48%',
+    minHeight: 76,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
   },
-  readingParam: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
-  readingDate: { fontSize: 11, color: colors.textSecondary, marginTop: 1 },
-  readingValue: { fontSize: 13, fontWeight: '600', marginRight: spacing.xs },
-  readingFlag: { fontSize: 11, fontWeight: '700', minWidth: 50, textAlign: 'right' },
-  actionRow: {
-    flexDirection: 'row',
+  quickIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    justifyContent: 'center',
+    backgroundColor: colors.softSurface,
   },
-  actionIcon: { fontSize: 18, marginRight: spacing.sm },
-  actionLabel: { flex: 1, fontSize: 14, color: colors.textPrimary },
-  actionChevron: { fontSize: 18, color: colors.textSecondary },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginBottom: spacing.xs },
-  emptyBody: { fontSize: 13, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  quickLabel: { flex: 1, color: colors.textPrimary, fontSize: 13, fontWeight: '800' },
+  setupCard: { marginTop: spacing.sm },
 });

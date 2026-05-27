@@ -2,172 +2,123 @@ import { PARAMETER_SEED, PANELS } from '@medical-tracker/parameter-catalog';
 import { RangeFlag, type ParameterReading } from '@medical-tracker/shared-types';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { memo, useCallback } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { ProfileSwitcher } from '../../src/components/ProfileSwitcher';
+import { AppScroll, Button, Card, EmptyState, Pill, Row, TopBar, typography } from '../../src/components/healthfolio';
 import { listReadings } from '../../src/lib/api/endpoints';
 import { useProfileStore } from '../../src/lib/profile/profileStore';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { colors, spacing } from '../../src/theme/tokens';
 
-const FLAG_COLORS: Record<RangeFlag, string> = {
-  [RangeFlag.Normal]: colors.rangeNormal,
-  [RangeFlag.Low]: colors.rangeLow,
-  [RangeFlag.High]: colors.rangeHigh,
-  [RangeFlag.Critical]: colors.rangeCritical,
-  [RangeFlag.Unknown]: colors.textSecondary,
-};
-
-/** Pick the most-recent reading for each parameterId from a flat list. */
 function buildLatestMap(readings: ParameterReading[]): Map<string, ParameterReading> {
   const map = new Map<string, ParameterReading>();
-  for (const r of readings) {
-    const existing = map.get(r.parameterId);
-    if (!existing || r.recordedAt > existing.recordedAt) {
-      map.set(r.parameterId, r);
+  for (const reading of readings) {
+    const existing = map.get(reading.parameterId);
+    if (!existing || reading.recordedAt > existing.recordedAt) {
+      map.set(reading.parameterId, reading);
     }
   }
   return map;
 }
 
-/** All unique panel labels in seed order. */
-const PANEL_ORDER = Object.values(PANELS);
+function flagTone(flag?: RangeFlag): 'green' | 'amber' | 'red' | 'neutral' {
+  if (!flag || flag === RangeFlag.Unknown) return 'neutral';
+  if (flag === RangeFlag.Normal) return 'green';
+  if (flag === RangeFlag.Critical) return 'red';
+  return 'amber';
+}
 
-const ParamRow = memo(function ParamRow({
-  param,
-  reading,
-}: {
-  param: (typeof PARAMETER_SEED)[number];
-  reading: ParameterReading | undefined;
-}) {
-  const flagColor = reading
-    ? (FLAG_COLORS[reading.rangeFlag as RangeFlag] ?? colors.textSecondary)
-    : colors.border;
-  const a11yLabel = reading
-    ? `${param.canonicalName} ${reading.value} ${reading.unit} ${reading.rangeFlag}`
-    : `${param.canonicalName} no data`;
-  return (
-    <Pressable
-      style={styles.row}
-      accessibilityRole="button"
-      accessibilityLabel={a11yLabel}
-      onPress={() => router.push(`/readings/${param.id}`)}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={styles.paramName}>{param.canonicalName}</Text>
-        <Text style={styles.paramUnit}>{param.unit}</Text>
-      </View>
-      <View style={styles.valueCol}>
-        {reading ? (
-          <>
-            <Text style={[styles.value, { color: flagColor }]}>
-              {reading.value} {reading.unit}
-            </Text>
-            <Text style={[styles.flag, { color: flagColor }]}>
-              {reading.rangeFlag.toUpperCase()}
-            </Text>
-          </>
-        ) : (
-          <Text style={styles.dash}>—</Text>
-        )}
-      </View>
-      <Text style={styles.chevron}>›</Text>
-    </Pressable>
-  );
-});
+const PANEL_ORDER = Object.values(PANELS);
 
 export default function ReadingsScreen() {
   const { activeProfileId } = useProfileStore();
-
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['readings', activeProfileId],
-    queryFn: () =>
-      listReadings({
-        limit: 200,
-        ...(activeProfileId ? { profileId: activeProfileId } : {}),
-      }),
+    queryFn: () => listReadings({ limit: 200, ...(activeProfileId ? { profileId: activeProfileId } : {}) }),
   });
 
   const latest = buildLatestMap(data?.items ?? []);
-  const onRefresh = useCallback(() => void refetch(), [refetch]);
-
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
-  }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ProfileSwitcher />
-      <ScrollView
-        contentContainerStyle={styles.container}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
-      >
-        {PANEL_ORDER.map((panel) => {
+    <AppScroll
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+    >
+      <TopBar
+        eyebrow="Confirmed history"
+        title="Readings"
+        action={<Button label="Add" onPress={() => router.push('/documents/new')} style={styles.addButton} />}
+      />
+      <TextInput
+        editable={false}
+        placeholder="Search parameter or panel"
+        placeholderTextColor={colors.textSecondary}
+        style={styles.search}
+      />
+      <View style={styles.chips}>
+        <Pill label="All" tone="active" />
+        <Pill label="CBC" />
+        <Pill label="Lipids" />
+        <Pill label="Diabetes" />
+        <Pill label="Thyroid" />
+      </View>
+
+      {isLoading ? (
+        <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
+      ) : latest.size === 0 ? (
+        <Card>
+          <EmptyState
+            icon="activity"
+            title="No readings yet"
+            body="Upload a lab report to extract readings and build your trend history."
+            action={<Button label="Upload document" onPress={() => router.push('/documents/new')} />}
+          />
+        </Card>
+      ) : (
+        PANEL_ORDER.map((panel) => {
           const params = PARAMETER_SEED.filter((p) => p.panel === panel);
-          if (params.length === 0) return null;
+          const paramsWithData = params.filter((param) => latest.has(param.id));
+          if (paramsWithData.length === 0) return null;
+          const attention = paramsWithData.filter((param) => {
+            const flag = latest.get(param.id)?.rangeFlag;
+            return flag && flag !== RangeFlag.Normal && flag !== RangeFlag.Unknown;
+          }).length;
           return (
-            <View key={panel} style={styles.panel}>
-              <Text style={styles.panelTitle}>{panel}</Text>
-              {params.map((param) => {
+            <Card key={panel}>
+              <View style={styles.panelHeader}>
+                <Text style={typography.h3}>{panel}</Text>
+                {attention > 0 ? <Pill label={`${attention} attention`} tone="amber" /> : <Pill label="Stable" tone="green" />}
+              </View>
+              {paramsWithData.map((param) => {
                 const reading = latest.get(param.id);
                 return (
-                  <ParamRow key={param.id} param={param} reading={reading} />
+                  <Row
+                    key={param.id}
+                    title={param.canonicalName}
+                    subtitle={reading ? `Latest ${reading.value} ${reading.unit}` : param.unit}
+                    right={<Pill label={reading?.rangeFlag ?? 'unknown'} tone={flagTone(reading?.rangeFlag as RangeFlag | undefined)} />}
+                    onPress={() => router.push(`/readings/${param.id}`)}
+                  />
                 );
               })}
-            </View>
+            </Card>
           );
-        })}
-      </ScrollView>
-    </View>
+        })
+      )}
+    </AppScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  panel: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
+  addButton: { width: 60, minHeight: 36, marginTop: 0 },
+  search: {
+    minHeight: 44,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.md,
-    overflow: 'hidden',
-  },
-  panelTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
+    borderRadius: 9,
+    backgroundColor: colors.surface,
+    color: colors.textPrimary,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.background,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  paramName: { fontSize: 14, color: colors.textPrimary, fontWeight: '500' },
-  paramUnit: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
-  valueCol: { alignItems: 'flex-end', marginRight: spacing.sm },
-  value: { fontSize: 14, fontWeight: '600' },
-  flag: { fontSize: 11, fontWeight: '600', marginTop: 1 },
-  dash: { fontSize: 16, color: colors.border },
-  chevron: { fontSize: 18, color: colors.textSecondary, marginLeft: spacing.xs },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
+  panelHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs },
 });
