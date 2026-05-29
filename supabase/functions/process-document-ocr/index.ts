@@ -9,8 +9,11 @@ type AppUser = {
   id: string;
   authUserId: string | null;
   email: string | null;
+  name: string;
   sex: string | null;
   dob: string | null;
+  unitsPreference: string | null;
+  residencyRegion: string | null;
 };
 
 type DocumentRow = {
@@ -54,6 +57,7 @@ type OcrReading = {
 };
 
 type OcrResult = {
+  patient_name: string | null;
   document_date: string | null;
   lab_name: string | null;
   readings: OcrReading[];
@@ -73,6 +77,15 @@ const OPENAI_MODEL = Deno.env.get('OPENAI_OCR_MODEL') ?? 'gpt-4.1-mini';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const DEFAULT_MANAGED_PROFILE_DOB = '1900-01-01T00:00:00.000Z';
+const ALL_DOC_TYPES = [
+  'lab_report',
+  'prescription',
+  'imaging_report',
+  'discharge_summary',
+  'vaccination_record',
+  'other',
+];
 
 function getAdminClient(): SupabaseClient {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -102,7 +115,7 @@ async function getAuthenticatedAppUser(admin: SupabaseClient, req: Request): Pro
 
   let query = admin
     .from('User')
-    .select('id, authUserId, email, sex, dob')
+    .select('id, authUserId, email, name, sex, dob, unitsPreference, residencyRegion')
     .eq('authUserId', authId)
     .maybeSingle();
   let result = await query;
@@ -111,7 +124,7 @@ async function getAuthenticatedAppUser(admin: SupabaseClient, req: Request): Pro
 
   result = await admin
     .from('User')
-    .select('id, authUserId, email, sex, dob')
+    .select('id, authUserId, email, name, sex, dob, unitsPreference, residencyRegion')
     .eq('id', authId)
     .maybeSingle();
   if (result.error) throw result.error;
@@ -120,7 +133,7 @@ async function getAuthenticatedAppUser(admin: SupabaseClient, req: Request): Pro
   if (email) {
     result = await admin
       .from('User')
-      .select('id, authUserId, email, sex, dob')
+      .select('id, authUserId, email, name, sex, dob, unitsPreference, residencyRegion')
       .eq('email', email)
       .maybeSingle();
     if (result.error) throw result.error;
@@ -215,11 +228,186 @@ async function rangeUserForDocument(
 
   const { data, error } = await admin
     .from('User')
-    .select('id, authUserId, email, sex, dob')
+    .select('id, authUserId, email, name, sex, dob, unitsPreference, residencyRegion')
     .eq('id', document.ownerUserId)
     .maybeSingle();
   if (error) throw error;
   return (data as AppUser | null) ?? appUser;
+}
+
+function cleanPatientName(rawName: string | null): string | null {
+  if (!rawName) return null;
+  const cleaned = rawName
+    .replace(/^(?:patient|patient\s+name|name|pt\.?\s+name)\s*[:\-]\s*/i, '')
+    .replace(/\b(?:mr|mrs|ms|miss|master|shri|smt|dr)\.?\s+/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (cleaned.length < 2 || cleaned.length > 120) return null;
+  if (/[0-9@]/.test(cleaned)) return null;
+  return cleaned
+    .split(' ')
+    .map((part) =>
+      part.length <= 2 && part === part.toUpperCase()
+        ? part
+        : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+    )
+    .join(' ');
+}
+
+function nameKey(name: string | null | undefined): string {
+  return (name ?? '')
+    .replace(/\b(?:mr|mrs|ms|miss|master|shri|smt|dr)\.?\b/gi, ' ')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function namesProbablyMatch(a: string, b: string): boolean {
+  const aKey = nameKey(a);
+  const bKey = nameKey(b);
+  if (!aKey || !bKey) return false;
+  if (aKey === bKey) return true;
+
+  const aParts = aKey.split(' ');
+  const bParts = bKey.split(' ');
+  if (aParts[0] !== bParts[0]) return false;
+
+  const aLast = aParts[aParts.length - 1];
+  const bLast = bParts[bParts.length - 1];
+  if (aParts.length > 1 && bParts.length > 1) return aLast === bLast;
+
+  return aParts.length === 1 || bParts.length === 1;
+}
+
+async function loadManagedProfiles(admin: SupabaseClient, ownerUserId: string): Promise<AppUser[]> {
+  const { data: links, error: linksError } = await admin
+    .from('FamilyLink')
+    .select('memberUserId')
+    .eq('ownerUserId', ownerUserId)
+    .eq('status', 'active');
+  if (linksError) throw linksError;
+
+  const memberIds = (links ?? [])
+    .map((link) => (link as { memberUserId?: string }).memberUserId)
+    .filter((id): id is string => Boolean(id));
+  const ids = [...new Set([ownerUserId, ...memberIds])];
+
+  const { data, error } = await admin
+    .from('User')
+    .select('id, authUserId, email, name, sex, dob, unitsPreference, residencyRegion')
+    .in('id', ids);
+  if (error) throw error;
+  return (data ?? []) as AppUser[];
+}
+
+function findNameMatch(profiles: AppUser[], patientName: string): AppUser | null {
+  const exact = profiles.find((profile) => nameKey(profile.name) === nameKey(patientName));
+  if (exact) return exact;
+
+  const loose = profiles.filter((profile) => namesProbablyMatch(profile.name, patientName));
+  return loose.length === 1 ? loose[0] : null;
+}
+
+async function createManagedProfileFromReportName(
+  admin: SupabaseClient,
+  owner: AppUser,
+  patientName: string,
+): Promise<AppUser> {
+  const profileId = crypto.randomUUID();
+  const timestamp = new Date().toISOString();
+  const profile: AppUser = {
+    id: profileId,
+    authUserId: null,
+    email: null,
+    name: patientName,
+    dob: DEFAULT_MANAGED_PROFILE_DOB,
+    sex: 'other',
+    unitsPreference: owner.unitsPreference ?? 'metric',
+    residencyRegion: owner.residencyRegion ?? 'US',
+  };
+
+  const { error: userError } = await admin.from('User').insert({
+    id: profile.id,
+    authUserId: null,
+    email: null,
+    phone: null,
+    name: profile.name,
+    dob: profile.dob,
+    sex: profile.sex,
+    unitsPreference: profile.unitsPreference,
+    bloodGroup: null,
+    residencyRegion: profile.residencyRegion,
+  });
+  if (userError) throw userError;
+
+  const { error: healthError } = await admin.from('HealthProfile').insert({
+    userId: profile.id,
+    height: null,
+    weight: null,
+    knownConditions: [],
+    allergies: [],
+    currentMedications: [],
+    updatedAt: timestamp,
+  });
+  if (healthError) throw healthError;
+
+  const { error: linkError } = await admin.from('FamilyLink').insert({
+    ownerUserId: owner.id,
+    memberUserId: profile.id,
+    role: 'guardian',
+    permissions: { docTypes: ALL_DOC_TYPES },
+    status: 'active',
+    acceptedAt: timestamp,
+  });
+  if (linkError) throw linkError;
+
+  return profile;
+}
+
+async function resolveDocumentOwnerFromPatientName(
+  admin: SupabaseClient,
+  appUser: AppUser,
+  document: DocumentRow,
+  rawPatientName: string | null,
+): Promise<{
+  document: DocumentRow;
+  owner: AppUser;
+  patientName: string | null;
+  createdProfile: boolean;
+}> {
+  const patientName = cleanPatientName(rawPatientName);
+  if (!patientName) {
+    return {
+      document,
+      owner: await rangeUserForDocument(admin, appUser, document),
+      patientName: null,
+      createdProfile: false,
+    };
+  }
+
+  const profiles = await loadManagedProfiles(admin, appUser.id);
+  const existingOwner =
+    profiles.find((profile) => profile.id === document.ownerUserId) ??
+    (await rangeUserForDocument(admin, appUser, document));
+  const matched = findNameMatch(profiles, patientName);
+  const owner = matched ?? (await createManagedProfileFromReportName(admin, appUser, patientName));
+
+  if (owner.id !== document.ownerUserId) {
+    const { error } = await admin
+      .from('Document')
+      .update({ ownerUserId: owner.id })
+      .eq('id', document.id);
+    if (error) throw error;
+  }
+
+  return {
+    document: { ...document, ownerUserId: owner.id },
+    owner,
+    patientName,
+    createdProfile: !matched && owner.id !== existingOwner.id,
+  };
 }
 
 function clampConfidence(value: number): number {
@@ -249,8 +437,13 @@ function ocrJsonSchema(parameterIds: string[]) {
   return {
     type: 'object',
     additionalProperties: false,
-    required: ['document_date', 'lab_name', 'readings', 'warnings'],
+    required: ['patient_name', 'document_date', 'lab_name', 'readings', 'warnings'],
     properties: {
+      patient_name: {
+        type: ['string', 'null'],
+        description:
+          'Patient/person name printed on the report, with honorifics removed when possible. Return null if not visible.',
+      },
       document_date: {
         type: ['string', 'null'],
         description: 'Report collection/source date if visible, ISO YYYY-MM-DD when possible.',
@@ -327,6 +520,7 @@ function buildPrompt(catalog: CatalogRow[]): string {
   return [
     'Extract lab-report readings for HealthFolio.',
     'Return only readings that match one of the allowed catalog ids.',
+    'Extract the patient/person name if it is explicitly printed on the report.',
     'Prefer exact printed values and units. Do not infer missing numeric values.',
     'If a value is qualitative, a paragraph, a diagnosis, or a medication instruction, skip it.',
     'Do not decide whether a result is normal or abnormal. The backend will compute range flags.',
@@ -486,10 +680,17 @@ async function processDocumentOcr(
   if (catalog.length === 0) throw new Error('Parameter catalog is empty');
 
   const catalogById = new Map(catalog.map((entry) => [entry.id, entry]));
-  const rangeUser = await rangeUserForDocument(admin, appUser, doc);
   const bytes = new Uint8Array(await fileBlob.arrayBuffer());
   await setDocumentProgress(admin, documentId, 55, 'extracting_readings');
   const extraction = await extractWithOpenAI(bytes, mime, documentId, catalog);
+  const ownerResolution = await resolveDocumentOwnerFromPatientName(
+    admin,
+    appUser,
+    doc,
+    extraction.patient_name,
+  );
+  const finalDoc = ownerResolution.document;
+  const rangeUser = ownerResolution.owner;
   const readings = uniqueReadings(extraction.readings, catalogById);
   await setDocumentProgress(admin, documentId, 80, 'saving_readings');
 
@@ -503,14 +704,14 @@ async function processDocumentOcr(
   const rows = readings.map((reading) => {
     const entry = catalogById.get(reading.parameter_id)!;
     return {
-      userId: doc.ownerUserId,
+      userId: finalDoc.ownerUserId,
       documentId,
       parameterId: reading.parameter_id,
       value: reading.value,
       unit: reading.unit || entry.unit,
       recordedAt: normalizeDate(
         reading.recorded_at ?? extraction.document_date,
-        doc.sourceDate ?? doc.createdAt,
+        finalDoc.sourceDate ?? finalDoc.createdAt,
       ),
       status: 'pending',
       isUserVerified: false,

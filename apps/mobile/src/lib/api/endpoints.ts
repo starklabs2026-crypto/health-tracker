@@ -131,6 +131,19 @@ function mapDocument(row: DocumentRow): Document {
   };
 }
 
+function mapDocumentSummary(row: DocumentSummary): DocumentSummary {
+  return {
+    id: row.id,
+    docType: row.docType,
+    sourceDate: row.sourceDate,
+    labName: row.labName ?? null,
+    ocrStatus: row.ocrStatus,
+    ocrProgress: row.ocrProgress ?? 0,
+    ocrStage: row.ocrStage ?? null,
+    createdAt: row.createdAt,
+  };
+}
+
 function mapReading(row: ParameterReading): ParameterReading {
   return {
     id: row.id,
@@ -249,7 +262,7 @@ function parseStorageUrl(uploadUrl: string): { bucket: string; path: string } {
 
 async function functionErrorMessage(error: unknown): Promise<string> {
   const fallback =
-    error instanceof Error ? error.message : 'OCR processing failed. Please try again.';
+    error instanceof Error ? error.message : 'Document review failed. Please try again.';
   const context = (error as { context?: Response | null })?.context;
   if (!context) return fallback;
 
@@ -484,20 +497,24 @@ export async function listDocuments(params: {
   if (error) throw error;
 
   return {
-    items: ((data ?? []) as DocumentSummary[]).map((row) => ({
-      id: row.id,
-      docType: row.docType,
-      sourceDate: row.sourceDate,
-      labName: row.labName ?? null,
-      ocrStatus: row.ocrStatus,
-      ocrProgress: row.ocrProgress ?? 0,
-      ocrStage: row.ocrStage ?? null,
-      createdAt: row.createdAt,
-    })),
+    items: ((data ?? []) as DocumentSummary[]).map(mapDocumentSummary),
     page,
     limit,
     total: count ?? data?.length ?? 0,
   };
+}
+
+export async function listDocumentsByIds(ids: string[]): Promise<DocumentSummary[]> {
+  if (ids.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('Document')
+    .select('id, docType, sourceDate, labName, ocrStatus, ocrProgress, ocrStage, createdAt')
+    .in('id', ids)
+    .is('deletedAt', null);
+  if (error) throw error;
+
+  return ((data ?? []) as DocumentSummary[]).map(mapDocumentSummary);
 }
 
 export async function getDocument(id: string): Promise<DocumentDetail> {

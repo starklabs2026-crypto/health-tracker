@@ -13,6 +13,15 @@ const prisma = new PrismaClient();
 
 const STORAGE_ROOT = resolve(process.env['STORAGE_LOCAL_PATH'] ?? './storage');
 const MIN_CONFIDENCE = 0.5;
+const DEFAULT_MANAGED_PROFILE_DOB = new Date(Date.UTC(1900, 0, 1));
+const ALL_DOC_TYPES = [
+  'lab_report',
+  'prescription',
+  'imaging_report',
+  'discharge_summary',
+  'vaccination_record',
+  'other',
+];
 
 async function setOcrProgress(
   documentId: string,
@@ -131,7 +140,68 @@ function parseVisibleDate(raw: string): Date | null {
   return null;
 }
 
-function extractDocumentMetadata(text: string): { sourceDate?: Date; labName?: string } {
+function cleanPatientName(rawName: string | null): string | null {
+  if (!rawName) return null;
+  const cleaned = rawName
+    .replace(/^(?:patient|patient\s+name|name|pt\.?\s+name)\s*[:\-]\s*/i, '')
+    .replace(/\b(?:mr|mrs|ms|miss|master|shri|smt|dr)\.?\s+/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (cleaned.length < 2 || cleaned.length > 120) return null;
+  if (/[0-9@]/.test(cleaned)) return null;
+  return cleaned
+    .split(' ')
+    .map((part) =>
+      part.length <= 2 && part === part.toUpperCase()
+        ? part
+        : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+    )
+    .join(' ');
+}
+
+function nameKey(name: string | null | undefined): string {
+  return (name ?? '')
+    .replace(/\b(?:mr|mrs|ms|miss|master|shri|smt|dr)\.?\b/gi, ' ')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function namesProbablyMatch(a: string, b: string): boolean {
+  const aKey = nameKey(a);
+  const bKey = nameKey(b);
+  if (!aKey || !bKey) return false;
+  if (aKey === bKey) return true;
+
+  const aParts = aKey.split(' ');
+  const bParts = bKey.split(' ');
+  if (aParts[0] !== bParts[0]) return false;
+
+  const aLast = aParts[aParts.length - 1];
+  const bLast = bParts[bParts.length - 1];
+  if (aParts.length > 1 && bParts.length > 1) return aLast === bLast;
+
+  return aParts.length === 1 || bParts.length === 1;
+}
+
+function findProfileMatch<T extends { name: string }>(
+  profiles: T[],
+  patientName: string,
+): T | null {
+  const exact = profiles.find((profile) => nameKey(profile.name) === nameKey(patientName));
+  if (exact) return exact;
+
+  const loose = profiles.filter((profile) => namesProbablyMatch(profile.name, patientName));
+  return loose.length === 1 ? loose[0] : null;
+}
+
+function extractDocumentMetadata(text: string): {
+  sourceDate?: Date;
+  labName?: string;
+  patientName?: string;
+} {
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -167,14 +237,87 @@ function extractDocumentMetadata(text: string): { sourceDate?: Date; labName?: s
           /(lab|laboratory|diagnostic|pathology|hospital)/i.test(line) && line.length <= 120,
       );
 
+  const patientName = lines
+    .slice(0, 80)
+    .map((line) =>
+      cleanPatientName(
+        line.match(
+          /(?:patient|patient\s+name|name|pt\.?\s+name)\s*[:\-]\s*([A-Za-z][A-Za-z .'-]{1,119})$/i,
+        )?.[1] ?? null,
+      ),
+    )
+    .find((value): value is string => Boolean(value));
+
   return {
     ...(sourceDate ? { sourceDate } : {}),
     ...(headingLab ? { labName: headingLab } : {}),
+    ...(patientName ? { patientName } : {}),
   };
 }
 
+async function resolveOwnerFromPatientName(
+  uploaderUserId: string,
+  currentOwnerUserId: string,
+  patientName: string | undefined,
+): Promise<string> {
+  if (!patientName) return currentOwnerUserId;
+
+  const links = await prisma.familyLink.findMany({
+    where: { ownerUserId: uploaderUserId, status: 'active' },
+    select: { memberUserId: true },
+  });
+  const ids = [...new Set([uploaderUserId, ...links.map((link) => link.memberUserId)])];
+  const profiles = await prisma.user.findMany({
+    where: { id: { in: ids }, deletedAt: null },
+    select: {
+      id: true,
+      name: true,
+      unitsPreference: true,
+      residencyRegion: true,
+    },
+  });
+
+  const matched = findProfileMatch(profiles, patientName);
+  if (matched) return matched.id;
+
+  const uploader = profiles.find((profile) => profile.id === uploaderUserId);
+  const profile = await prisma.user.create({
+    data: {
+      name: patientName,
+      dob: DEFAULT_MANAGED_PROFILE_DOB,
+      sex: 'other',
+      unitsPreference: uploader?.unitsPreference ?? 'metric',
+      residencyRegion: uploader?.residencyRegion ?? 'US',
+    },
+    select: { id: true },
+  });
+
+  await prisma.$transaction([
+    prisma.healthProfile.create({
+      data: {
+        userId: profile.id,
+        knownConditions: [],
+        allergies: [],
+        currentMedications: [],
+      },
+    }),
+    prisma.familyLink.create({
+      data: {
+        ownerUserId: uploaderUserId,
+        memberUserId: profile.id,
+        role: 'guardian',
+        permissions: { docTypes: ALL_DOC_TYPES },
+        status: 'active',
+        acceptedAt: new Date(),
+      },
+    }),
+  ]);
+
+  return profile.id;
+}
+
 export async function processOcrJob(job: OcrJobData): Promise<void> {
-  const { documentId, userId, fileKey } = job;
+  const { documentId, fileKey } = job;
 
   // Mark as processing and increment attempt counter
   const doc = await prisma.document.update({
@@ -188,7 +331,7 @@ export async function processOcrJob(job: OcrJobData): Promise<void> {
       ocrCompletedAt: null,
       ocrError: null,
     },
-    select: { sourceDate: true, labName: true },
+    select: { sourceDate: true, labName: true, ownerUserId: true, uploadedByUserId: true },
   });
 
   let text: string;
@@ -221,6 +364,11 @@ export async function processOcrJob(job: OcrJobData): Promise<void> {
   }
 
   const metadata = extractDocumentMetadata(text);
+  const ownerUserId = await resolveOwnerFromPatientName(
+    doc.uploadedByUserId,
+    doc.ownerUserId,
+    metadata.patientName,
+  );
   const recordedAt = metadata.sourceDate ?? doc.sourceDate;
   const candidates = parseCandidates(text);
   const seen = new Set<string>(); // one reading per parameter per document
@@ -243,14 +391,14 @@ export async function processOcrJob(job: OcrJobData): Promise<void> {
     seen.add(match.entry.id);
 
     readingData.push({
-      userId,
+      userId: ownerUserId,
       documentId,
       parameterId: match.entry.id,
       value,
       unit: rawUnit || match.entry.unit,
       recordedAt,
       confidenceScore: match.score,
-      createdByUserId: userId,
+      createdByUserId: doc.uploadedByUserId,
     });
   }
 
@@ -262,6 +410,7 @@ export async function processOcrJob(job: OcrJobData): Promise<void> {
     prisma.document.update({
       where: { id: documentId },
       data: {
+        ownerUserId,
         ocrStatus: 'ready_for_review',
         ocrProgress: 100,
         ocrStage: 'ready_for_review',

@@ -58,6 +58,7 @@ function configureGoogleSignIn(): void {
   GoogleSignin.configure({
     iosClientId,
     webClientId,
+    scopes: ['openid', 'email', 'profile'],
   });
   googleConfigured = true;
 }
@@ -154,17 +155,23 @@ export async function signInWithApple(): Promise<void> {
 export async function signInWithGoogle(): Promise<void> {
   configureGoogleSignIn();
 
+  if (Platform.OS === 'android') {
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  }
+
   const response = await withTransientRetry(() => GoogleSignin.signIn());
   const data = assertGoogleSuccess(response);
   const idToken = data.idToken;
   if (!idToken) {
     throw new Error('Google did not return an identity token.');
   }
+  const tokens = await GoogleSignin.getTokens();
 
   const { error } = await withTransientRetry(() =>
     supabase.auth.signInWithIdToken({
       provider: 'google',
       token: idToken,
+      access_token: tokens.accessToken,
     }),
   );
   if (error) throw error;
