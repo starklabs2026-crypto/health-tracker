@@ -1,4 +1,4 @@
-// Medical Tracker — Prisma schema (PRD §11, playbook §0.1.8).
+// HealthFolio Prisma schema (PRD §11, playbook §0.1.8).
 // UUID primary keys. Cascade deletes from a user to their owned data, but NOT
 // to AuditLog (which is decoupled and retained). Enum-like fields are stored as
 // String and validated via Zod schemas in @medical-tracker/shared-types — one
@@ -9,12 +9,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
   id              String    @id @default(uuid())
+  authUserId      String?   @unique
   email           String?   @unique
   phone           String?   @unique
   name            String
@@ -118,12 +120,19 @@ model Document {
   fileUrl           String?
   fileType          String
   docType           String
-  sourceDate        DateTime
+  sourceDate        DateTime  @default(now())
   labName           String?
   orderingPhysician String?
   notes             String?
   ocrStatus         String    @default("pending_upload")
   ocrAttempts       Int       @default(0)
+  ocrModel          String?
+  ocrError          String?
+  ocrProgress       Int       @default(0)
+  ocrStage          String?
+  ocrQueuedAt       DateTime?
+  ocrStartedAt      DateTime?
+  ocrCompletedAt    DateTime?
   createdAt         DateTime  @default(now())
   deletedAt         DateTime?
 
@@ -174,21 +183,21 @@ model ParameterReading {
 }
 
 model DoctorShare {
-  id             String    @id @default(uuid())
-  ownerUserId    String
-  profileUserId  String
-  shareToken     String    @unique
-  dateRangeStart DateTime
-  dateRangeEnd   DateTime
-  parameterSet   Json
-  includeDocuments Boolean @default(true)
-  expiresAt      DateTime
-  singleUse      Boolean   @default(false)
-  revokedAt      DateTime?
-  customNote     String?
-  createdAt      DateTime  @default(now())
+  id               String    @id @default(uuid())
+  ownerUserId      String
+  profileUserId    String
+  shareToken       String    @unique
+  dateRangeStart   DateTime
+  dateRangeEnd     DateTime
+  parameterSet     Json
+  includeDocuments Boolean   @default(true)
+  expiresAt        DateTime
+  singleUse        Boolean   @default(false)
+  revokedAt        DateTime?
+  customNote       String?
+  createdAt        DateTime  @default(now())
 
-  owner    User                 @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  owner    User                @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
   accesses DoctorShareAccess[]
 
   @@index([ownerUserId, revokedAt])

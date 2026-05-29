@@ -38,6 +38,11 @@ export interface Document {
   notes: string | null;
   ocrStatus: OcrStatus;
   ocrAttempts: number;
+  ocrProgress: number;
+  ocrStage: string | null;
+  ocrQueuedAt: string | null;
+  ocrStartedAt: string | null;
+  ocrCompletedAt: string | null;
   createdAt: string;
   deletedAt: string | null;
 }
@@ -49,17 +54,39 @@ const isoDate = z.string().datetime({ offset: true }).or(z.string().date());
 export const createDocumentSchema = z.object({
   ownerProfileId: z.string().uuid().optional(),
   docType: docTypeSchema,
-  sourceDate: isoDate,
+  sourceDate: isoDate.optional(),
   labName: z.string().max(200).optional(),
   orderingPhysician: z.string().max(200).optional(),
   notes: z.string().max(2000).optional(),
-  fileSize: z.number().int().positive().max(25 * 1024 * 1024),
+  fileSize: z
+    .number()
+    .int()
+    .positive()
+    .max(25 * 1024 * 1024),
   fileType: z.string().min(1),
 });
 export type CreateDocumentRequest = z.infer<typeof createDocumentSchema>;
 
+export const createDocumentBatchSchema = z.object({
+  documents: z.array(createDocumentSchema).min(1).max(20),
+});
+export type CreateDocumentBatchRequest = z.infer<typeof createDocumentBatchSchema>;
+
 export const markUploadedSchema = z.object({ fileKey: z.string().min(1) });
 export type MarkUploadedRequest = z.infer<typeof markUploadedSchema>;
+
+export const markUploadedBatchSchema = z.object({
+  documents: z
+    .array(
+      z.object({
+        documentId: z.string().uuid(),
+        fileKey: z.string().min(1),
+      }),
+    )
+    .min(1)
+    .max(20),
+});
+export type MarkUploadedBatchRequest = z.infer<typeof markUploadedBatchSchema>;
 
 export const patchDocumentSchema = z
   .object({

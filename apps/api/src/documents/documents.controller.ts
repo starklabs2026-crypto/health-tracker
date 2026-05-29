@@ -12,11 +12,16 @@ import {
 } from '@nestjs/common';
 import {
   type CreateDocumentRequest,
+  type CreateDocumentBatchRequest,
+  createDocumentBatchSchema,
   createDocumentSchema,
+  type CreateDocumentBatchResponse,
   type CreateDocumentResponse,
   type DocumentDetail,
   type DocumentSummary,
   DocType,
+  type MarkUploadedBatchRequest,
+  markUploadedBatchSchema,
   type MarkUploadedRequest,
   markUploadedSchema,
   type Paginated,
@@ -44,6 +49,15 @@ export class DocumentsController {
     return this.docs.create(user.id, body);
   }
 
+  @Post('batch')
+  @AuditLog('create', 'document_batch')
+  createBatch(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(createDocumentBatchSchema)) body: CreateDocumentBatchRequest,
+  ): Promise<CreateDocumentBatchResponse> {
+    return this.docs.createBatch(user.id, body.documents);
+  }
+
   @Post(':id/mark-uploaded')
   markUploaded(
     @CurrentUser() user: AuthUser,
@@ -51,6 +65,14 @@ export class DocumentsController {
     @Body(new ZodValidationPipe(markUploadedSchema)) body: MarkUploadedRequest,
   ): Promise<{ ok: true }> {
     return this.docs.markUploaded(user.id, id, body.fileKey);
+  }
+
+  @Post('mark-uploaded')
+  markUploadedBatch(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(markUploadedBatchSchema)) body: MarkUploadedBatchRequest,
+  ): Promise<{ ok: true }> {
+    return this.docs.markUploadedBatch(user.id, body.documents);
   }
 
   @Get()

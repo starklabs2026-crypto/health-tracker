@@ -61,6 +61,11 @@ export function mapDocument(doc: Document): DocumentDto {
     notes: doc.notes,
     ocrStatus: doc.ocrStatus as OcrStatus,
     ocrAttempts: doc.ocrAttempts,
+    ocrProgress: doc.ocrProgress,
+    ocrStage: doc.ocrStage,
+    ocrQueuedAt: doc.ocrQueuedAt ? doc.ocrQueuedAt.toISOString() : null,
+    ocrStartedAt: doc.ocrStartedAt ? doc.ocrStartedAt.toISOString() : null,
+    ocrCompletedAt: doc.ocrCompletedAt ? doc.ocrCompletedAt.toISOString() : null,
     createdAt: doc.createdAt.toISOString(),
     deletedAt: doc.deletedAt ? doc.deletedAt.toISOString() : null,
   };

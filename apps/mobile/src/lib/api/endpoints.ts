@@ -1,10 +1,7 @@
 import { computeRangeFlag, findById, formatRange } from '@medical-tracker/parameter-catalog';
 import type {
-  AcceptInviteRequest,
   CreateDocumentRequest,
   CreateDocumentResponse,
-  CreateInviteRequest,
-  CreateInviteResponse,
   CreateReadingRequest,
   CreateShareRequest,
   CreateShareResponse,
@@ -32,6 +29,7 @@ import type {
   User,
 } from '@medical-tracker/shared-types';
 import {
+  FamilyLinkStatus,
   RangeFlag,
   ReadingStatus,
   ResidencyRegion,
@@ -64,6 +62,21 @@ type HealthProfileRow = HealthProfile & {
 type DocumentRow = Document & {
   ocrModel?: string | null;
   ocrError?: string | null;
+};
+
+type FamilyLinkRow = FamilyLink & {
+  inviteToken?: string | null;
+};
+
+type FamilyMemberJoinRow = FamilyLinkRow & {
+  member?:
+    | Pick<User, 'id' | 'name' | 'email' | 'phone'>
+    | Array<Pick<User, 'id' | 'name' | 'email' | 'phone'>>
+    | null;
+};
+
+type FamilyOwnerJoinRow = FamilyLinkRow & {
+  owner?: Pick<User, 'id' | 'name' | 'email'> | Array<Pick<User, 'id' | 'name' | 'email'>> | null;
 };
 
 function mapUser(row: UserRow): User {
@@ -108,6 +121,11 @@ function mapDocument(row: DocumentRow): Document {
     notes: row.notes ?? null,
     ocrStatus: row.ocrStatus,
     ocrAttempts: row.ocrAttempts ?? 0,
+    ocrProgress: row.ocrProgress ?? 0,
+    ocrStage: row.ocrStage ?? null,
+    ocrQueuedAt: row.ocrQueuedAt ?? null,
+    ocrStartedAt: row.ocrStartedAt ?? null,
+    ocrCompletedAt: row.ocrCompletedAt ?? null,
     createdAt: row.createdAt,
     deletedAt: row.deletedAt ?? null,
   };
@@ -129,6 +147,25 @@ function mapReading(row: ParameterReading): ParameterReading {
     sourceRegion: row.sourceRegion ?? null,
     createdByUserId: row.createdByUserId,
     lastEditedAt: row.lastEditedAt ?? null,
+  };
+}
+
+function firstRelated<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function mapFamilyLink(row: FamilyLinkRow): FamilyLink {
+  return {
+    id: row.id,
+    ownerUserId: row.ownerUserId,
+    memberUserId: row.memberUserId,
+    role: row.role,
+    permissions: row.permissions,
+    status: row.status,
+    invitedAt: row.invitedAt,
+    acceptedAt: row.acceptedAt ?? null,
+    revokedAt: row.revokedAt ?? null,
   };
 }
 
@@ -343,11 +380,13 @@ export async function createDocument(body: CreateDocumentRequest): Promise<Creat
       uploadedByUserId: appUser.id,
       fileType: body.fileType,
       docType: body.docType,
-      sourceDate: body.sourceDate,
+      sourceDate: body.sourceDate ?? new Date().toISOString(),
       labName: body.labName ?? null,
       orderingPhysician: body.orderingPhysician ?? null,
       notes: body.notes ?? null,
       ocrStatus: 'pending_upload',
+      ocrProgress: 0,
+      ocrStage: 'awaiting_upload',
     })
     .select('id')
     .single();
@@ -394,7 +433,16 @@ export async function uploadToPresignedUrl(
 export async function markUploaded(documentId: string, fileKey: string): Promise<void> {
   const { error } = await supabase
     .from('Document')
-    .update({ fileUrl: fileKey, ocrStatus: 'queued', ocrError: null })
+    .update({
+      fileUrl: fileKey,
+      ocrStatus: 'queued',
+      ocrProgress: 5,
+      ocrStage: 'queued',
+      ocrQueuedAt: new Date().toISOString(),
+      ocrStartedAt: null,
+      ocrCompletedAt: null,
+      ocrError: null,
+    })
     .eq('id', documentId);
   if (error) throw error;
 
@@ -420,7 +468,9 @@ export async function listDocuments(params: {
 
   let query = supabase
     .from('Document')
-    .select('id, docType, sourceDate, labName, ocrStatus, createdAt', { count: 'exact' })
+    .select('id, docType, sourceDate, labName, ocrStatus, ocrProgress, ocrStage, createdAt', {
+      count: 'exact',
+    })
     .eq('ownerUserId', params.profileId ?? appUser.id)
     .is('deletedAt', null)
     .order('sourceDate', { ascending: false })
@@ -440,6 +490,8 @@ export async function listDocuments(params: {
       sourceDate: row.sourceDate,
       labName: row.labName ?? null,
       ocrStatus: row.ocrStatus,
+      ocrProgress: row.ocrProgress ?? 0,
+      ocrStage: row.ocrStage ?? null,
       createdAt: row.createdAt,
     })),
     page,
@@ -577,7 +629,7 @@ export async function createReading(body: CreateReadingRequest): Promise<Paramet
 
 export async function getTrend(
   parameterId: string,
-  opts?: { dateFrom?: string; dateTo?: string },
+  opts?: { dateFrom?: string; dateTo?: string; profileId?: string },
 ): Promise<TrendResponse> {
   const appUser = await requireAppUser();
   const entry = findById(parameterId);
@@ -587,18 +639,53 @@ export async function getTrend(
     parameterId,
     dateFrom: opts?.dateFrom,
     dateTo: opts?.dateTo,
+    profileId: opts?.profileId,
     limit: 100,
   });
+  const documentIds = [
+    ...new Set(
+      readings.items.map((reading) => reading.documentId).filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const documentById = new Map<
+    string,
+    { id: string; docType: DocType; sourceDate: string; labName: string | null }
+  >();
+
+  if (documentIds.length > 0) {
+    const { data: docs, error } = await supabase
+      .from('Document')
+      .select('id, docType, sourceDate, labName')
+      .in('id', documentIds);
+    if (error) throw error;
+    for (const doc of docs ?? []) {
+      const row = doc as {
+        id: string;
+        docType: DocType;
+        sourceDate: string;
+        labName: string | null;
+      };
+      documentById.set(row.id, {
+        id: row.id,
+        docType: row.docType,
+        sourceDate: row.sourceDate,
+        labName: row.labName ?? null,
+      });
+    }
+  }
+
   const data = [...readings.items]
     .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt))
     .map((r) => ({
       readingId: r.id,
+      documentId: r.documentId,
       value: r.value,
       unit: r.unit,
       recordedAt: r.recordedAt,
       rangeFlag: r.rangeFlag,
       isUserVerified: r.isUserVerified,
       confidenceScore: r.confidenceScore,
+      sourceDocument: r.documentId ? (documentById.get(r.documentId) ?? null) : null,
     }));
 
   return {
@@ -650,38 +737,118 @@ export async function deleteReading(id: string): Promise<void> {
   if (error) throw error;
 }
 
-// --- Family (still pending Supabase Edge Function migration) ---
+// --- Family ---
 
-export async function inviteMember(body: CreateInviteRequest): Promise<CreateInviteResponse> {
-  const { data } = await api.post<CreateInviteResponse>('/family/invite', body);
-  return data;
-}
-
-export async function acceptInvite(body: AcceptInviteRequest): Promise<FamilyLink> {
-  const { data } = await api.post<FamilyLink>('/family/accept', body);
-  return data;
+export async function createManagedProfile(body: {
+  name: string;
+  dob: string;
+  sex: Sex;
+  unitsPreference?: UnitsPreference;
+}): Promise<{ profileId: string }> {
+  const { data, error } = await supabase.rpc('create_managed_profile', {
+    p_name: body.name,
+    p_dob: body.dob,
+    p_sex: body.sex,
+    p_units_preference: body.unitsPreference ?? UnitsPreference.Metric,
+    p_blood_group: null,
+    p_residency_region: ResidencyRegion.US,
+  });
+  if (error) throw error;
+  if (typeof data !== 'string' || !data) {
+    throw new Error('Managed profile creation did not return a profile id.');
+  }
+  return { profileId: data };
 }
 
 export async function listFamilyMembers(): Promise<FamilyMemberView[]> {
-  const { data } = await api.get<FamilyMemberView[]>('/family/members');
-  return data;
+  const appUser = await requireAppUser();
+  const { data, error } = await supabase
+    .from('FamilyLink')
+    .select(
+      `
+      id,
+      ownerUserId,
+      memberUserId,
+      role,
+      permissions,
+      status,
+      invitedAt,
+      acceptedAt,
+      revokedAt,
+      member:User!FamilyLink_memberUserId_fkey(id, name, email, phone)
+    `,
+    )
+    .eq('ownerUserId', appUser.id)
+    .neq('memberUserId', appUser.id)
+    .neq('status', FamilyLinkStatus.Revoked)
+    .order('invitedAt', { ascending: false });
+  if (error) throw error;
+
+  return ((data ?? []) as FamilyMemberJoinRow[]).map((row) => {
+    const member = firstRelated(row.member);
+    return {
+      link: mapFamilyLink(row),
+      memberName: member?.name ?? 'Unnamed profile',
+      memberEmail: member?.email ?? null,
+      memberPhone: member?.phone ?? null,
+    };
+  });
 }
 
 export async function listFamilyMemberships(): Promise<FamilyMembershipView[]> {
-  const { data } = await api.get<FamilyMembershipView[]>('/family/memberships');
-  return data;
+  const appUser = await requireAppUser();
+  const { data, error } = await supabase
+    .from('FamilyLink')
+    .select(
+      `
+      id,
+      ownerUserId,
+      memberUserId,
+      role,
+      permissions,
+      status,
+      invitedAt,
+      acceptedAt,
+      revokedAt,
+      owner:User!FamilyLink_ownerUserId_fkey(id, name, email)
+    `,
+    )
+    .eq('memberUserId', appUser.id)
+    .neq('ownerUserId', appUser.id)
+    .eq('status', FamilyLinkStatus.Active)
+    .order('invitedAt', { ascending: false });
+  if (error) throw error;
+
+  return ((data ?? []) as FamilyOwnerJoinRow[]).map((row) => {
+    const owner = firstRelated(row.owner);
+    return {
+      link: mapFamilyLink(row),
+      ownerName: owner?.name ?? 'Unnamed owner',
+      ownerEmail: owner?.email ?? null,
+    };
+  });
 }
 
 export async function patchFamilyLink(
   id: string,
   body: PatchFamilyLinkRequest,
 ): Promise<FamilyLink> {
-  const { data } = await api.patch<FamilyLink>(`/family/${id}`, body);
-  return data;
+  const { data, error } = await supabase
+    .from('FamilyLink')
+    .update(body)
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return mapFamilyLink(data as FamilyLinkRow);
 }
 
 export async function revokeFamilyLink(id: string): Promise<void> {
-  await api.delete(`/family/${id}`);
+  const { error } = await supabase
+    .from('FamilyLink')
+    .update({ status: FamilyLinkStatus.Revoked, revokedAt: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
 }
 
 // --- Shares (still pending Supabase Edge Function migration) ---
