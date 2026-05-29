@@ -70,8 +70,16 @@ type FamilyLinkRow = FamilyLink & {
 
 type FamilyMemberJoinRow = FamilyLinkRow & {
   member?:
-    | Pick<User, 'id' | 'name' | 'email' | 'phone'>
-    | Array<Pick<User, 'id' | 'name' | 'email' | 'phone'>>
+    | Pick<
+        User,
+        'id' | 'name' | 'email' | 'phone' | 'dob' | 'sex' | 'unitsPreference' | 'bloodGroup'
+      >
+    | Array<
+        Pick<
+          User,
+          'id' | 'name' | 'email' | 'phone' | 'dob' | 'sex' | 'unitsPreference' | 'bloodGroup'
+        >
+      >
     | null;
 };
 
@@ -777,6 +785,25 @@ export async function createManagedProfile(body: {
   return { profileId: data };
 }
 
+export async function updateManagedProfile(
+  profileId: string,
+  body: {
+    name?: string;
+    dob?: string;
+    sex?: Sex;
+    unitsPreference?: UnitsPreference;
+  },
+): Promise<void> {
+  const patch = {
+    ...(body.name !== undefined ? { name: body.name } : {}),
+    ...(body.dob !== undefined ? { dob: body.dob } : {}),
+    ...(body.sex !== undefined ? { sex: body.sex } : {}),
+    ...(body.unitsPreference !== undefined ? { unitsPreference: body.unitsPreference } : {}),
+  };
+  const { error } = await supabase.from('User').update(patch).eq('id', profileId);
+  if (error) throw error;
+}
+
 export async function listFamilyMembers(): Promise<FamilyMemberView[]> {
   const appUser = await requireAppUser();
   const { data, error } = await supabase
@@ -792,7 +819,7 @@ export async function listFamilyMembers(): Promise<FamilyMemberView[]> {
       invitedAt,
       acceptedAt,
       revokedAt,
-      member:User!FamilyLink_memberUserId_fkey(id, name, email, phone)
+      member:User!FamilyLink_memberUserId_fkey(id, name, email, phone, dob, sex, unitsPreference, bloodGroup)
     `,
     )
     .eq('ownerUserId', appUser.id)
@@ -808,6 +835,10 @@ export async function listFamilyMembers(): Promise<FamilyMemberView[]> {
       memberName: member?.name ?? 'Unnamed profile',
       memberEmail: member?.email ?? null,
       memberPhone: member?.phone ?? null,
+      memberDob: member?.dob ?? new Date(0).toISOString(),
+      memberSex: member?.sex ?? Sex.Other,
+      memberUnitsPreference: member?.unitsPreference ?? UnitsPreference.Metric,
+      memberBloodGroup: member?.bloodGroup ?? null,
     };
   });
 }

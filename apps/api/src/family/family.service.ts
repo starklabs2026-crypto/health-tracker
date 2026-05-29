@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   type AcceptInviteRequest,
   type CreateInviteRequest,
@@ -28,10 +24,7 @@ export class FamilyService {
     // Resolve the member by email or phone
     const member = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { email: body.memberIdentifier },
-          { phone: body.memberIdentifier },
-        ],
+        OR: [{ email: body.memberIdentifier }, { phone: body.memberIdentifier }],
         deletedAt: null,
       },
     });
@@ -95,6 +88,10 @@ export class FamilyService {
       memberName: l.member.name,
       memberEmail: l.member.email,
       memberPhone: l.member.phone,
+      memberDob: l.member.dob.toISOString(),
+      memberSex: l.member.sex as FamilyMemberView['memberSex'],
+      memberUnitsPreference: l.member.unitsPreference as FamilyMemberView['memberUnitsPreference'],
+      memberBloodGroup: l.member.bloodGroup as FamilyMemberView['memberBloodGroup'],
     }));
   }
 
@@ -112,7 +109,11 @@ export class FamilyService {
     }));
   }
 
-  async patch(ownerId: string, linkId: string, body: PatchFamilyLinkRequest): Promise<FamilyLinkDto> {
+  async patch(
+    ownerId: string,
+    linkId: string,
+    body: PatchFamilyLinkRequest,
+  ): Promise<FamilyLinkDto> {
     const link = await this.prisma.familyLink.findFirst({
       where: { id: linkId, ownerUserId: ownerId },
     });

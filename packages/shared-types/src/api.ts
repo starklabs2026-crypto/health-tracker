@@ -115,6 +115,10 @@ export interface FamilyMemberView {
   memberName: string;
   memberEmail: string | null;
   memberPhone: string | null;
+  memberDob: string;
+  memberSex: import('./user.js').Sex;
+  memberUnitsPreference: import('./user.js').UnitsPreference;
+  memberBloodGroup: import('./user.js').BloodGroup | null;
 }
 
 export interface FamilyMembershipView {
