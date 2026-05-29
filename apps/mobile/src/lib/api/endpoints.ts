@@ -48,6 +48,7 @@ type AuthUser = {
   id: string;
   email?: string | null;
   phone?: string | null;
+  user_metadata?: Record<string, unknown> | null;
 };
 
 type UserRow = User & {
@@ -196,6 +197,28 @@ async function requireAuthUser(): Promise<AuthUser> {
   return data.user as AuthUser;
 }
 
+function cleanString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function defaultProfileName(authUser: AuthUser): string {
+  const metadata = authUser.user_metadata ?? {};
+  const fullName = cleanString(metadata.full_name) ?? cleanString(metadata.name);
+  if (fullName) return fullName;
+
+  const givenName = cleanString(metadata.given_name);
+  const familyName = cleanString(metadata.family_name);
+  const combinedName = [givenName, familyName].filter(Boolean).join(' ').trim();
+  if (combinedName) return combinedName;
+
+  const emailPrefix = cleanString(authUser.email?.split('@')[0]?.replace(/[._-]+/g, ' '));
+  if (emailPrefix) return emailPrefix.replace(/\b\w/g, (char) => char.toUpperCase());
+
+  return 'My profile';
+}
+
 async function findAppUser(authUser = undefined as AuthUser | undefined): Promise<UserRow | null> {
   const current = authUser ?? (await requireAuthUser());
 
@@ -227,9 +250,23 @@ async function findAppUser(authUser = undefined as AuthUser | undefined): Promis
 }
 
 async function requireAppUser(): Promise<UserRow> {
-  const row = await findAppUser();
-  if (!row) throw new Error('HealthFolio profile not found');
-  return row;
+  const authUser = await requireAuthUser();
+  const row = await findAppUser(authUser);
+  if (row) return row;
+
+  const { error } = await supabase.rpc('upsert_app_user_profile', {
+    p_name: defaultProfileName(authUser),
+    p_dob: '2000-01-01T00:00:00.000Z',
+    p_sex: Sex.Other,
+    p_units_preference: UnitsPreference.Metric,
+    p_blood_group: null,
+    p_has_blood_group: false,
+  });
+  if (error) throw error;
+
+  const created = await findAppUser(authUser);
+  if (!created) throw new Error('HealthFolio profile could not be created');
+  return created;
 }
 
 function ageYears(dob: string): number | undefined {
