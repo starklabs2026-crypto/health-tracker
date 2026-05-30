@@ -149,7 +149,7 @@ export default function ParameterHistoryScreen() {
   const selectedDocument =
     selectedPoint?.sourceDocument ??
     (selectedPoint?.documentId ? documentById.get(selectedPoint.documentId) : undefined);
-  const rangeLabel = formatRange(entry);
+  const rangeLabel = trend?.rangeLabel ?? formatRange(entry);
   const canSaveReading = !!newValue && !Number.isNaN(parseFloat(newValue)) && isDateInput(newDate);
 
   return (

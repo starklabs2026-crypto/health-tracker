@@ -269,6 +269,15 @@ async function requireAppUser(): Promise<UserRow> {
   return created;
 }
 
+async function getProfileUser(profileId: string, fallbackUser: UserRow): Promise<UserRow> {
+  if (profileId === fallbackUser.id) return fallbackUser;
+
+  const { data, error } = await supabase.from('User').select('*').eq('id', profileId).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('HealthFolio profile not found');
+  return data as UserRow;
+}
+
 function ageYears(dob: string): number | undefined {
   const date = new Date(dob);
   if (Number.isNaN(date.getTime())) return undefined;
@@ -666,7 +675,8 @@ export async function listReadings(params: {
 export async function createReading(body: CreateReadingRequest): Promise<ParameterReading> {
   const appUser = await requireAppUser();
   const ownerUserId = body.ownerProfileId ?? appUser.id;
-  const rangeFlag = readingFlag(body.parameterId, body.value, appUser);
+  const ownerUser = await getProfileUser(ownerUserId, appUser);
+  const rangeFlag = readingFlag(body.parameterId, body.value, ownerUser);
 
   const { data, error } = await supabase
     .from('ParameterReading')
@@ -694,6 +704,7 @@ export async function getTrend(
   opts?: { dateFrom?: string; dateTo?: string; profileId?: string },
 ): Promise<TrendResponse> {
   const appUser = await requireAppUser();
+  const profileUser = opts?.profileId ? await getProfileUser(opts.profileId, appUser) : appUser;
   const entry = findById(parameterId);
   if (!entry) throw new Error('Unknown parameter');
 
@@ -754,7 +765,7 @@ export async function getTrend(
     parameterId: entry.id,
     canonicalName: entry.canonicalName,
     unit: entry.unit,
-    rangeLabel: formatRange(entry, rangeContext(appUser)),
+    rangeLabel: formatRange(entry, rangeContext(profileUser)),
     data,
   };
 }
@@ -773,13 +784,14 @@ export async function patchReading(
   if (!existing) throw new Error('Reading not found');
 
   const current = existing as ParameterReading;
+  const ownerUser = await getProfileUser(current.userId, appUser);
   const patch = {
     ...(body.status !== undefined ? { status: body.status } : {}),
     ...(body.isUserVerified !== undefined ? { isUserVerified: body.isUserVerified } : {}),
     ...(body.value !== undefined ? { value: body.value } : {}),
     ...(body.unit !== undefined ? { unit: body.unit } : {}),
     ...(body.value !== undefined
-      ? { rangeFlag: readingFlag(current.parameterId, body.value, appUser) }
+      ? { rangeFlag: readingFlag(current.parameterId, body.value, ownerUser) }
       : {}),
     lastEditedAt: new Date().toISOString(),
   };

@@ -10,7 +10,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
-import { AppScroll, Button, Card, LoadingScreen, Pill, Row, TopBar, typography } from '../../src/components/healthfolio';
+import {
+  AppScroll,
+  Button,
+  Card,
+  LoadingScreen,
+  Pill,
+  Row,
+  TopBar,
+  typography,
+} from '../../src/components/healthfolio';
 import { deleteDocument, getDocument, patchReading } from '../../src/lib/api/endpoints';
 import { colors, spacing } from '../../src/theme/tokens';
 
@@ -73,6 +82,7 @@ export default function DocumentDetailScreen() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['document', id] });
       await qc.invalidateQueries({ queryKey: ['readings'] });
+      await qc.invalidateQueries({ queryKey: ['trend'] });
     },
   });
 
@@ -106,18 +116,27 @@ export default function DocumentDetailScreen() {
       />
 
       <Card>
-        <Row title={doc.labName ?? 'Unknown source'} subtitle={`Source date: ${new Date(doc.sourceDate).toLocaleDateString()}`} />
-        {doc.orderingPhysician ? <Row title="Ordering doctor" subtitle={doc.orderingPhysician} /> : null}
+        <Row
+          title={doc.labName ?? 'Unknown source'}
+          subtitle={`Source date: ${new Date(doc.sourceDate).toLocaleDateString()}`}
+        />
+        {doc.orderingPhysician ? (
+          <Row title="Ordering doctor" subtitle={doc.orderingPhysician} />
+        ) : null}
         {doc.notes ? <Row title="Notes" subtitle={doc.notes} /> : null}
       </Card>
 
       <Card>
-        <Text style={typography.h3}>Extraction pipeline</Text>
+        <Text style={typography.h3}>Document review</Text>
         <PipelineStep number="1" title="Uploaded" subtitle="Document received." done />
         <PipelineStep
           number="2"
-          title={isPolling(status) ? 'Extracting readings' : 'Extraction complete'}
-          subtitle={isPolling(status) ? 'OCR is processing the report.' : 'OCR status has been updated.'}
+          title={isPolling(status) ? 'Reading report' : 'Read complete'}
+          subtitle={
+            isPolling(status)
+              ? 'Your document is being reviewed.'
+              : 'Document status has been updated.'
+          }
           done={status !== OcrStatus.PendingUpload}
         />
         <PipelineStep
@@ -134,7 +153,9 @@ export default function DocumentDetailScreen() {
           <View style={styles.reviewHeader}>
             <View>
               <Text style={typography.h3}>Review readings</Text>
-              <Text style={typography.bodySmall}>Please check these values against your report.</Text>
+              <Text style={typography.bodySmall}>
+                Please check these values against your report.
+              </Text>
             </View>
             <Pill label={`${readings.length} values`} tone="amber" />
           </View>
@@ -167,7 +188,9 @@ export default function DocumentDetailScreen() {
       {status === OcrStatus.Failed ? (
         <Card style={styles.failedCard}>
           <Text style={styles.failedTitle}>We could not extract readings from this document.</Text>
-          <Text style={typography.bodySmall}>Try re-uploading a clearer image or add readings manually.</Text>
+          <Text style={typography.bodySmall}>
+            Try re-uploading a clearer image or add readings manually.
+          </Text>
         </Card>
       ) : null}
 
@@ -227,9 +250,27 @@ function ReadingRow({ reading }: { reading: ParameterReading }) {
 }
 
 const styles = StyleSheet.create({
-  reviewHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.sm, marginBottom: spacing.sm },
-  pipelineStep: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
-  stepDot: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  pipelineStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  stepDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
   stepDotPending: { backgroundColor: colors.mutedBorder },
   stepDotText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
   stepDotTextPending: { color: colors.textSecondary },
