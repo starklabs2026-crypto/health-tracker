@@ -1,20 +1,98 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Support for the HealthFolio personal health record app."><title>Support | HealthFolio</title><style>
-  body{margin:0;background:#F7F9FC;color:#1A1A1A;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;}
-  main{max-width:920px;margin:0 auto;padding:32px 20px 64px;}
-  nav{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #DEE5EC;padding-bottom:20px;gap:16px;}
-  a{color:#0A5C68;font-weight:700;} .brand{text-decoration:none;font-size:20px;font-weight:800;color:#0A5C68;}
-  .navlink{font-size:14px;color:#1F4E79;text-decoration:none;margin-left:16px;}
-  .hero{padding:48px 0 20px;} .kicker{margin:0 0 8px;color:#0A5C68;font-size:13px;font-weight:800;text-transform:uppercase;}
-  h1{margin:0;color:#102A43;font-size:38px;line-height:1.12;letter-spacing:0;} h2{margin:0 0 12px;color:#1F4E79;font-size:18px;line-height:1.3;letter-spacing:0;}
-  .lead{max-width:720px;margin:16px 0 0;color:#415466;font-size:17px;line-height:1.65;} .updated{color:#6B7C8F;font-size:14px;margin-top:12px;}
-  .card{background:#fff;border:1px solid #DEE5EC;border-radius:8px;padding:20px;margin-top:16px;} p{color:#2F3F4F;font-size:15px;line-height:1.7;margin:10px 0 0;}
-  .contact{display:flex;align-items:center;justify-content:space-between;gap:20px;border-color:#BFD7D9;} .button{background:#0A5C68;color:white;text-decoration:none;border-radius:8px;padding:12px 16px;white-space:nowrap;}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:16px;} .grid .card{margin-top:0;}
-  @media(max-width:640px){h1{font-size:32px}.contact{display:block}.button{display:inline-block;margin-top:16px}}
-</style></head><body><main><nav><a class="brand" href="/health-tracker/">HealthFolio</a><div><a class="navlink" href="/health-tracker/privacy/">Privacy</a></div></nav>
-  <section class="hero"><p class="kicker">Support</p><h1>HealthFolio Support</h1><p class="lead">Get help with account access, document uploads, health readings, family profiles, and doctor-share links.</p></section>
-  <section class="card contact"><div><h2>Contact Support</h2><p>Email us at <a href="mailto:starklabs2026@gmail.com">starklabs2026@gmail.com</a>.</p></div><a class="button" href="mailto:starklabs2026@gmail.com">Email Support</a></section>
-  <section class="grid"><article class="card"><h2>Account Access</h2><p>If you cannot sign in, include the email address or phone number used for your HealthFolio account and describe what happens after requesting your sign-in code.</p></article><article class="card"><h2>Documents And OCR</h2><p>For upload or extraction issues, include the document type, file format, approximate upload time, and whether the issue happened with camera, photo library, or file upload.</p></article><article class="card"><h2>Health Readings</h2><p>For incorrect or missing readings, include the parameter name, date, unit, and a short description of the expected result.</p></article><article class="card"><h2>Family And Sharing</h2><p>For family profile or doctor-share link issues, include the invite or share flow you used, but do not send sensitive health details unless support asks for them.</p></article></section>
-  <section class="card"><h2>Privacy And Data Requests</h2><p>To request account deletion, data export, correction, or privacy help, contact <a href="mailto:starklabs2026@gmail.com">starklabs2026@gmail.com</a>. Use the subject line “HealthFolio Privacy Request” so we can route it correctly.</p></section>
-  <section class="card"><h2>Emergency Notice</h2><p>HealthFolio does not provide emergency services, diagnosis, treatment advice, or clinical decision support. If you are experiencing a medical emergency, contact local emergency services or a qualified healthcare professional immediately.</p></section>
-</main></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Support for the HealthFolio personal health record app." />
+    <title>Support | HealthFolio</title>
+    <link rel="stylesheet" href="/health-tracker/assets/site.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="shell nav" aria-label="Primary navigation">
+        <a class="brand" href="/health-tracker/">HealthFolio</a>
+        <div class="nav-links">
+          <a href="/health-tracker/privacy/">Privacy</a>
+          <a href="/health-tracker/privacy-choices/">Privacy choices</a>
+        </div>
+      </nav>
+    </header>
+    <main class="shell">
+      <p class="eyebrow">Support</p>
+      <h1>HealthFolio support</h1>
+      <p class="lead">
+        Get help with account access, document ingestion, OCR, records, sharing, or privacy
+        requests.
+      </p>
+
+      <section class="card contact">
+        <div>
+          <h2>Contact support</h2>
+          <p>Email <a href="mailto:starklabs2026@gmail.com">starklabs2026@gmail.com</a>.</p>
+        </div>
+        <a class="button" href="mailto:starklabs2026@gmail.com">Email support</a>
+      </section>
+
+      <section class="grid" aria-label="Common support topics">
+        <article class="card">
+          <h2>Sign-in and consent</h2>
+          <p>
+            Include the sign-in method you used and the exact message shown. Never send a password,
+            one-time code, or Apple/Google credential.
+          </p>
+        </article>
+        <article class="card">
+          <h2>Files, photos, and OCR</h2>
+          <p>
+            HealthFolio accepts supported medical PDFs and images. For a failed file, include the
+            file type, approximate upload time, and whether it came from Files, Photos, camera, or
+            forwarded email. Do not email the medical file unless support requests it.
+          </p>
+        </article>
+        <article class="card">
+          <h2>Email ingestion</h2>
+          <p>
+            Confirm that you forwarded the message to the address shown in your HealthFolio profile
+            and that the attachment is a supported medical document. Include the send time and email
+            subject without sensitive medical details.
+          </p>
+        </article>
+        <article class="card">
+          <h2>Sharing and exports</h2>
+          <p>
+            Describe whether the issue affects a doctor-share link, family profile, or exported
+            summary. Revoke any link that reached an unintended recipient.
+          </p>
+        </article>
+      </section>
+
+      <div class="content">
+        <section class="card">
+          <h2>Account deletion and privacy</h2>
+          <p>
+            Delete an account in the app at
+            <span class="path"
+              >Profile &gt; Privacy &amp; consent &gt; Delete account and data</span
+            >
+            For deletion trouble, correction, access, or export help, email support with the subject
+            “HealthFolio Privacy Request.”
+          </p>
+        </section>
+
+        <section class="card notice">
+          <h2>Medical emergency notice</h2>
+          <p>
+            HealthFolio does not provide emergency services, diagnosis, or treatment advice. If you
+            are experiencing a medical emergency, contact local emergency services or a qualified
+            healthcare professional immediately.
+          </p>
+        </section>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="shell">
+        HealthFolio support: <a href="mailto:starklabs2026@gmail.com">starklabs2026@gmail.com</a>.
+      </div>
+    </footer>
+  </body>
+</html>
