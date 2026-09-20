@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Param,
-  Post,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -30,20 +21,27 @@ export class SharesController {
     private readonly config: ConfigService,
   ) {}
 
+  private shareBaseUrl(): string {
+    return (
+      this.config.get<string>('DOCTOR_SHARE_URL') ??
+      this.config.get<string>('DOCTOR_SHARE_BASE_URL') ??
+      'http://localhost:3002'
+    );
+  }
+
   /** POST /shares — create a new share link */
   @Post()
   create(
     @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(createShareSchema)) body: CreateShareRequest,
   ): Promise<CreateShareResponse> {
-    const baseUrl = this.config.get<string>('DOCTOR_SHARE_URL') ?? 'http://localhost:3002';
-    return this.shares.create(user.id, body, baseUrl);
+    return this.shares.create(user.id, body, this.shareBaseUrl());
   }
 
   /** GET /shares — list caller's active share links */
   @Get()
   list(@CurrentUser() user: AuthUser): Promise<DoctorShare[]> {
-    return this.shares.list(user.id);
+    return this.shares.list(user.id, this.shareBaseUrl());
   }
 
   /** DELETE /shares/:id — revoke a share link */
@@ -61,10 +59,7 @@ export class PublicShareController {
   constructor(private readonly shares: SharesService) {}
 
   @Get(':token')
-  resolve(
-    @Param('token') token: string,
-    @Req() req: Request,
-  ): Promise<PublicShareView> {
+  resolve(@Param('token') token: string, @Req() req: Request): Promise<PublicShareView> {
     const ua = req.headers['user-agent'] ?? null;
     return this.shares.resolvePublic(token, ua);
   }

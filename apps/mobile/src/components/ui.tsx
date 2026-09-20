@@ -8,6 +8,7 @@ import {
   type TextInputProps,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, tapTarget } from '../theme/tokens';
 
@@ -25,8 +26,13 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'danger';
 }) {
   const bg =
-    variant === 'primary' ? colors.primary : variant === 'danger' ? colors.danger : colors.surface;
-  const fg = variant === 'secondary' ? colors.primary : '#FFFFFF';
+    variant === 'primary'
+      ? colors.primary
+      : variant === 'danger'
+        ? colors.danger
+        : colors.primaryBg;
+  const fg =
+    variant === 'primary' ? '#FFFFFF' : variant === 'secondary' ? colors.primary : '#FFFFFF';
   return (
     <Pressable
       accessibilityRole="button"
@@ -39,7 +45,11 @@ export function Button({
         variant === 'secondary' ? styles.buttonOutline : null,
       ]}
     >
-      {loading ? <ActivityIndicator color={fg} /> : <Text style={[styles.buttonText, { color: fg }]}>{label}</Text>}
+      {loading ? (
+        <ActivityIndicator color={fg} />
+      ) : (
+        <Text style={[styles.buttonText, { color: fg }]}>{label}</Text>
+      )}
     </Pressable>
   );
 }
@@ -99,7 +109,11 @@ export function Segmented<T extends string>({
 }
 
 export function Screen({ children }: { children: ReactNode }) {
-  return <View style={styles.screen}>{children}</View>;
+  return (
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+      {children}
+    </SafeAreaView>
+  );
 }
 
 export function Title({ children }: { children: ReactNode }) {
@@ -111,43 +125,50 @@ export function Subtitle({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, justifyContent: 'center' },
-  title: { fontSize: 26, fontWeight: '700', color: colors.primary, marginBottom: spacing.xs },
-  subtitle: { fontSize: 15, color: colors.textSecondary, marginBottom: spacing.xl },
-  label: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs },
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+    padding: spacing.lg,
+    justifyContent: 'center',
+  },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.xs },
+  subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xl },
+  label: { fontSize: 12, color: colors.textSecondary, marginBottom: spacing.xs },
   input: {
     minHeight: tapTarget,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 0,
     borderRadius: radius.input,
     paddingHorizontal: spacing.md,
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textPrimary,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceInset,
   },
   errorText: { color: colors.danger, fontSize: 13, marginTop: spacing.xs },
   button: {
     minHeight: tapTarget,
-    borderRadius: radius.card,
+    borderRadius: radius.input,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
     marginTop: spacing.sm,
   },
-  buttonOutline: { borderWidth: 1, borderColor: colors.primary },
-  buttonText: { fontSize: 16, fontWeight: '600' },
+  buttonOutline: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.primaryBg,
+  },
+  buttonText: { fontSize: 14, fontWeight: '600' },
   segmentRow: { flexDirection: 'row', gap: spacing.sm },
   segment: {
     flex: 1,
     minHeight: tapTarget,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 0,
     borderRadius: radius.input,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceInset,
   },
   segmentActive: { borderColor: colors.primary, backgroundColor: colors.primary },
-  segmentText: { fontSize: 15, color: colors.textPrimary },
+  segmentText: { fontSize: 13, color: colors.textPrimary },
   segmentTextActive: { color: '#FFFFFF', fontWeight: '600' },
 });

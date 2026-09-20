@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { computeRangeFlag, findById, formatRange } from '@medical-tracker/parameter-catalog';
 import {
   type CreateReadingRequest,
+  DocType,
   type PatchReadingRequest,
   type Paginated,
   type ParameterReading as ParameterReadingDto,
@@ -26,11 +27,8 @@ export class ReadingsService {
       select: { sex: true, dob: true },
     });
     if (!user) return {};
-    const sex =
-      user.sex === 'male' ? 'male' : user.sex === 'female' ? 'female' : undefined;
-    const ageYears = Math.floor(
-      (Date.now() - user.dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000),
-    );
+    const sex = user.sex === 'male' ? 'male' : user.sex === 'female' ? 'female' : undefined;
+    const ageYears = Math.floor((Date.now() - user.dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
     return { sex, ageYears };
   }
 
@@ -111,11 +109,7 @@ export class ReadingsService {
     return mapReading(r);
   }
 
-  async patch(
-    userId: string,
-    id: string,
-    dto: PatchReadingRequest,
-  ): Promise<ParameterReadingDto> {
+  async patch(userId: string, id: string, dto: PatchReadingRequest): Promise<ParameterReadingDto> {
     const existing = await this.prisma.parameterReading.findFirst({ where: { id, userId } });
     if (!existing) throw new NotFoundException();
 
@@ -170,16 +164,35 @@ export class ReadingsService {
       },
       orderBy: { recordedAt: 'asc' },
       take: 100,
+      include: {
+        document: {
+          select: {
+            id: true,
+            docType: true,
+            sourceDate: true,
+            labName: true,
+          },
+        },
+      },
     });
 
     const data: TrendPoint[] = rows.map((r) => ({
       readingId: r.id,
+      documentId: r.documentId,
       value: Number(r.value),
       unit: r.unit,
       recordedAt: r.recordedAt.toISOString(),
       rangeFlag: r.rangeFlag as RangeFlag,
       isUserVerified: r.isUserVerified,
       confidenceScore: r.confidenceScore,
+      sourceDocument: r.document
+        ? {
+            id: r.document.id,
+            docType: r.document.docType as DocType,
+            sourceDate: r.document.sourceDate.toISOString(),
+            labName: r.document.labName,
+          }
+        : null,
     }));
 
     return {

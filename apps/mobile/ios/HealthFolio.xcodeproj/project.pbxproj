@@ -1,0 +1,826 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0DE83F022FA1073914A868CC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5C61AF8C5F84DFAB69CCD84C /* PrivacyInfo.xcprivacy */; };
+		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		3E461D99554A48A4959DE609 /* LaunchBrand.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* LaunchBrand.storyboard */; };
+		A56000000000000000000001 /* AssistantNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000101 /* AssistantNativeView.swift */; };
+		A56000000000000000000002 /* AssistantPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000102 /* AssistantPrompt.swift */; };
+		A56000000000000000000003 /* CarePlanItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000103 /* CarePlanItem.swift */; };
+		A56000000000000000000004 /* CarePlanNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000104 /* CarePlanNativeView.swift */; };
+		A56000000000000000000005 /* CarePlanRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000105 /* CarePlanRow.swift */; };
+		A56000000000000000000006 /* DocumentDetailNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000106 /* DocumentDetailNativeView.swift */; };
+		A56000000000000000000007 /* DocumentScoreCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000107 /* DocumentScoreCard.swift */; };
+		A56000000000000000000008 /* EmptyRecordsState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000108 /* EmptyRecordsState.swift */; };
+		A56000000000000000000009 /* HealthFolioPreviewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000109 /* HealthFolioPreviewData.swift */; };
+		A56000000000000000000010 /* HealthFolioRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000110 /* HealthFolioRootView.swift */; };
+		A56000000000000000000011 /* HealthFolioTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000111 /* HealthFolioTab.swift */; };
+		A56000000000000000000012 /* HealthFolioTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000112 /* HealthFolioTheme.swift */; };
+		A56000000000000000000013 /* HealthMetric.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000113 /* HealthMetric.swift */; };
+		A56000000000000000000014 /* HealthRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000114 /* HealthRecord.swift */; };
+		A56000000000000000000015 /* HealthScoreCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000115 /* HealthScoreCard.swift */; };
+		A56000000000000000000016 /* HealthScoreRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000116 /* HealthScoreRing.swift */; };
+		A56000000000000000000017 /* MarkerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000117 /* MarkerRow.swift */; };
+		A56000000000000000000018 /* MetricCapsule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000118 /* MetricCapsule.swift */; };
+		A56000000000000000000019 /* NativeSectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000119 /* NativeSectionHeader.swift */; };
+		A56000000000000000000020 /* NextActionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000120 /* NextActionCard.swift */; };
+		A56000000000000000000021 /* RecordCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000121 /* RecordCard.swift */; };
+		A56000000000000000000022 /* RecordsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000122 /* RecordsNativeView.swift */; };
+		A56000000000000000000023 /* TodayNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000123 /* TodayNativeView.swift */; };
+		A56000000000000000000024 /* TrendsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000124 /* TrendsNativeView.swift */; };
+		A56000000000000000000025 /* HealthRecordKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000125 /* HealthRecordKind.swift */; };
+		A56000000000000000000026 /* NativeRecordStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000126 /* NativeRecordStatus.swift */; };
+		A56000000000000000000027 /* NativeUploadItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000127 /* NativeUploadItem.swift */; };
+		A56000000000000000000028 /* AssistantMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000128 /* AssistantMessage.swift */; };
+		A56000000000000000000029 /* HealthFolioProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000129 /* HealthFolioProfile.swift */; };
+		A56000000000000000000030 /* HealthFolioAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000130 /* HealthFolioAppModel.swift */; };
+		A56000000000000000000031 /* ProfileNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000131 /* ProfileNativeView.swift */; };
+		A56000000000000000000032 /* UploadRecordsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000132 /* UploadRecordsNativeView.swift */; };
+		A56000000000000000000033 /* AssistantBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000133 /* AssistantBubble.swift */; };
+		A56000000000000000000034 /* NativeSupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000134 /* NativeSupabaseConfig.swift */; };
+		A56000000000000000000035 /* NativeSupabaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000135 /* NativeSupabaseError.swift */; };
+		A56000000000000000000036 /* NativeSupabaseSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000136 /* NativeSupabaseSession.swift */; };
+		A56000000000000000000037 /* NativeSupabaseAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000137 /* NativeSupabaseAPI.swift */; };
+		A56000000000000000000038 /* ProfileSwitcherNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000138 /* ProfileSwitcherNativeView.swift */; };
+		A56000000000000000000039 /* AuthRequiredCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000139 /* AuthRequiredCard.swift */; };
+		A56000000000000000000040 /* TrendDetailNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000140 /* TrendDetailNativeView.swift */; };
+		A56000000000000000000041 /* NativeOAuthPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000141 /* NativeOAuthPresenter.swift */; };
+		A56000000000000000000042 /* DoctorShareNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000142 /* DoctorShareNativeView.swift */; };
+		A56000000000000000000043 /* DoctorShareRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000143 /* DoctorShareRecord.swift */; };
+		A56000000000000000000044 /* CarePlanKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000144 /* CarePlanKind.swift */; };
+		A56000000000000000000045 /* CarePlanDueState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000145 /* CarePlanDueState.swift */; };
+		A56000000000000000000046 /* CarePlanLocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000146 /* CarePlanLocalStore.swift */; };
+		A56000000000000000000047 /* CareReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000147 /* CareReminderScheduler.swift */; };
+		A56000000000000000000048 /* CareReminderScheduleResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000148 /* CareReminderScheduleResult.swift */; };
+		A56000000000000000000049 /* AssistantChatLocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000149 /* AssistantChatLocalStore.swift */; };
+		A56000000000000000000050 /* FamilyProfileRole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000150 /* FamilyProfileRole.swift */; };
+		A56000000000000000000051 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000151 /* SceneDelegate.swift */; };
+		A56000000000000000000052 /* AuthNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000152 /* AuthNativeView.swift */; };
+		A56000000000000000000053 /* NativeAppleSignInPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000153 /* NativeAppleSignInPresenter.swift */; };
+		A56000000000000000000054 /* NativeSocialAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000154 /* NativeSocialAuth.swift */; };
+		A56000000000000000000055 /* PasswordResetNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000155 /* PasswordResetNativeView.swift */; };
+		A56000000000000000000056 /* HealthFolioOnboardingPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000156 /* HealthFolioOnboardingPolicy.swift */; };
+		A56000000000000000000057 /* HealthFolioConsentPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000157 /* HealthFolioConsentPolicy.swift */; };
+		A56000000000000000000058 /* ConsentNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000158 /* ConsentNativeView.swift */; };
+		A56000000000000000000059 /* AccountDeletionNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000159 /* AccountDeletionNativeView.swift */; };
+		A56000000000000000000060 /* AssistantRemoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000160 /* AssistantRemoteModels.swift */; };
+		A56000000000000000000061 /* NativeSessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000161 /* NativeSessionCoordinator.swift */; };
+		A56000000000000000000062 /* TrendChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000162 /* TrendChartData.swift */; };
+		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		D8283EE2BAE012C91C0440E6 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1767F486A8049873FF828C /* ExpoModulesProvider.swift */; };
+		DEA3F429A532C579FF2AC3E2 /* libPods-HealthFolio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFBCA38755207E303E86C04C /* libPods-HealthFolio.a */; };
+		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		13B07F961A680F5B00A75B9A /* HealthFolio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HealthFolio.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = HealthFolio/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = HealthFolio/Info.plist; sourceTree = "<group>"; };
+		5C61AF8C5F84DFAB69CCD84C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = HealthFolio/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A56000000000000000000101 /* AssistantNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000102 /* AssistantPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantPrompt.swift; sourceTree = "<group>"; };
+		A56000000000000000000103 /* CarePlanItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanItem.swift; sourceTree = "<group>"; };
+		A56000000000000000000104 /* CarePlanNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000105 /* CarePlanRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanRow.swift; sourceTree = "<group>"; };
+		A56000000000000000000106 /* DocumentDetailNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentDetailNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000107 /* DocumentScoreCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScoreCard.swift; sourceTree = "<group>"; };
+		A56000000000000000000108 /* EmptyRecordsState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyRecordsState.swift; sourceTree = "<group>"; };
+		A56000000000000000000109 /* HealthFolioPreviewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthFolioPreviewData.swift; sourceTree = "<group>"; };
+		A56000000000000000000110 /* HealthFolioRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthFolioRootView.swift; sourceTree = "<group>"; };
+		A56000000000000000000111 /* HealthFolioTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthFolioTab.swift; sourceTree = "<group>"; };
+		A56000000000000000000112 /* HealthFolioTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthFolioTheme.swift; sourceTree = "<group>"; };
+		A56000000000000000000113 /* HealthMetric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthMetric.swift; sourceTree = "<group>"; };
+		A56000000000000000000114 /* HealthRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthRecord.swift; sourceTree = "<group>"; };
+		A56000000000000000000115 /* HealthScoreCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthScoreCard.swift; sourceTree = "<group>"; };
+		A56000000000000000000116 /* HealthScoreRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthScoreRing.swift; sourceTree = "<group>"; };
+		A56000000000000000000117 /* MarkerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkerRow.swift; sourceTree = "<group>"; };
+		A56000000000000000000118 /* MetricCapsule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricCapsule.swift; sourceTree = "<group>"; };
+		A56000000000000000000119 /* NativeSectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSectionHeader.swift; sourceTree = "<group>"; };
+		A56000000000000000000120 /* NextActionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextActionCard.swift; sourceTree = "<group>"; };
+		A56000000000000000000121 /* RecordCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordCard.swift; sourceTree = "<group>"; };
+		A56000000000000000000122 /* RecordsNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000123 /* TodayNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000124 /* TrendsNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendsNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000125 /* HealthRecordKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthRecordKind.swift; sourceTree = "<group>"; };
+		A56000000000000000000126 /* NativeRecordStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeRecordStatus.swift; sourceTree = "<group>"; };
+		A56000000000000000000127 /* NativeUploadItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeUploadItem.swift; sourceTree = "<group>"; };
+		A56000000000000000000128 /* AssistantMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantMessage.swift; sourceTree = "<group>"; };
+		A56000000000000000000129 /* HealthFolioProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthFolioProfile.swift; sourceTree = "<group>"; };
+		A56000000000000000000130 /* HealthFolioAppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthFolioAppModel.swift; sourceTree = "<group>"; };
+		A56000000000000000000131 /* ProfileNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000132 /* UploadRecordsNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadRecordsNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000133 /* AssistantBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantBubble.swift; sourceTree = "<group>"; };
+		A56000000000000000000134 /* NativeSupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSupabaseConfig.swift; sourceTree = "<group>"; };
+		A56000000000000000000135 /* NativeSupabaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSupabaseError.swift; sourceTree = "<group>"; };
+		A56000000000000000000136 /* NativeSupabaseSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSupabaseSession.swift; sourceTree = "<group>"; };
+		A56000000000000000000137 /* NativeSupabaseAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSupabaseAPI.swift; sourceTree = "<group>"; };
+		A56000000000000000000138 /* ProfileSwitcherNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSwitcherNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000139 /* AuthRequiredCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthRequiredCard.swift; sourceTree = "<group>"; };
+		A56000000000000000000140 /* TrendDetailNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendDetailNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000141 /* NativeOAuthPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeOAuthPresenter.swift; sourceTree = "<group>"; };
+		A56000000000000000000142 /* DoctorShareNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoctorShareNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000143 /* DoctorShareRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoctorShareRecord.swift; sourceTree = "<group>"; };
+		A56000000000000000000144 /* CarePlanKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanKind.swift; sourceTree = "<group>"; };
+		A56000000000000000000145 /* CarePlanDueState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanDueState.swift; sourceTree = "<group>"; };
+		A56000000000000000000146 /* CarePlanLocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanLocalStore.swift; sourceTree = "<group>"; };
+		A56000000000000000000147 /* CareReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareReminderScheduler.swift; sourceTree = "<group>"; };
+		A56000000000000000000148 /* CareReminderScheduleResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareReminderScheduleResult.swift; sourceTree = "<group>"; };
+		A56000000000000000000149 /* AssistantChatLocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatLocalStore.swift; sourceTree = "<group>"; };
+		A56000000000000000000150 /* FamilyProfileRole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyProfileRole.swift; sourceTree = "<group>"; };
+		A56000000000000000000151 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = HealthFolio/SceneDelegate.swift; sourceTree = "<group>"; };
+		A56000000000000000000152 /* AuthNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000153 /* NativeAppleSignInPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAppleSignInPresenter.swift; sourceTree = "<group>"; };
+		A56000000000000000000154 /* NativeSocialAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSocialAuth.swift; sourceTree = "<group>"; };
+		A56000000000000000000155 /* PasswordResetNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordResetNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000156 /* HealthFolioOnboardingPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthFolioOnboardingPolicy.swift; sourceTree = "<group>"; };
+		A56000000000000000000157 /* HealthFolioConsentPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthFolioConsentPolicy.swift; sourceTree = "<group>"; };
+		A56000000000000000000158 /* ConsentNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsentNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000159 /* AccountDeletionNativeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletionNativeView.swift; sourceTree = "<group>"; };
+		A56000000000000000000160 /* AssistantRemoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantRemoteModels.swift; sourceTree = "<group>"; };
+		A56000000000000000000161 /* NativeSessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSessionCoordinator.swift; sourceTree = "<group>"; };
+		A56000000000000000000162 /* TrendChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendChartData.swift; sourceTree = "<group>"; };
+		AA286B85B6C04FC6940260E9 /* LaunchBrand.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchBrand.storyboard; path = HealthFolio/LaunchBrand.storyboard; sourceTree = "<group>"; };
+		AFBCA38755207E303E86C04C /* libPods-HealthFolio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-HealthFolio.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		D2C94F7F4600E28BC29890D5 /* Pods-HealthFolio.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-HealthFolio.debug.xcconfig"; path = "Target Support Files/Pods-HealthFolio/Pods-HealthFolio.debug.xcconfig"; sourceTree = "<group>"; };
+		D7BC94AFEAF1B0678FC7A282 /* Pods-HealthFolio.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-HealthFolio.release.xcconfig"; path = "Target Support Files/Pods-HealthFolio/Pods-HealthFolio.release.xcconfig"; sourceTree = "<group>"; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = HealthFolio/AppDelegate.swift; sourceTree = "<group>"; };
+		F11748442D0722820044C1D9 /* HealthFolio-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "HealthFolio-Bridging-Header.h"; path = "HealthFolio/HealthFolio-Bridging-Header.h"; sourceTree = "<group>"; };
+		FA1767F486A8049873FF828C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-HealthFolio/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DEA3F429A532C579FF2AC3E2 /* libPods-HealthFolio.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		13B07FAE1A68108700A75B9A /* HealthFolio */ = {
+			isa = PBXGroup;
+			children = (
+				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
+				A56000000000000000000151 /* SceneDelegate.swift */,
+				A56000000000000000000200 /* SwiftUIPrototype */,
+				F11748442D0722820044C1D9 /* HealthFolio-Bridging-Header.h */,
+				BB2F792B24A3F905000567C9 /* Supporting */,
+				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				13B07FB61A68108700A75B9A /* Info.plist */,
+				AA286B85B6C04FC6940260E9 /* LaunchBrand.storyboard */,
+				5C61AF8C5F84DFAB69CCD84C /* PrivacyInfo.xcprivacy */,
+			);
+			name = HealthFolio;
+			sourceTree = "<group>";
+		};
+		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
+				AFBCA38755207E303E86C04C /* libPods-HealthFolio.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		42B437E87DB2DB6A27197C2C /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				DC88A7A923D74059A00203CD /* HealthFolio */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+		83CBB9F61A601CBA00E9B192 = {
+			isa = PBXGroup;
+			children = (
+				13B07FAE1A68108700A75B9A /* HealthFolio */,
+				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				83CBBA001A601CBA00E9B192 /* Products */,
+				2D16E6871FA4F8E400B85C8A /* Frameworks */,
+				FAA770C99F8CCCDA8289334E /* Pods */,
+				42B437E87DB2DB6A27197C2C /* ExpoModulesProviders */,
+			);
+			indentWidth = 2;
+			sourceTree = "<group>";
+			tabWidth = 2;
+			usesTabs = 0;
+		};
+		83CBBA001A601CBA00E9B192 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13B07F961A680F5B00A75B9A /* HealthFolio.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A56000000000000000000200 /* SwiftUIPrototype */ = {
+			isa = PBXGroup;
+			children = (
+				A56000000000000000000101 /* AssistantNativeView.swift */,
+				A56000000000000000000159 /* AccountDeletionNativeView.swift */,
+				A56000000000000000000102 /* AssistantPrompt.swift */,
+				A56000000000000000000149 /* AssistantChatLocalStore.swift */,
+				A56000000000000000000103 /* CarePlanItem.swift */,
+				A56000000000000000000104 /* CarePlanNativeView.swift */,
+				A56000000000000000000105 /* CarePlanRow.swift */,
+				A56000000000000000000144 /* CarePlanKind.swift */,
+				A56000000000000000000145 /* CarePlanDueState.swift */,
+				A56000000000000000000146 /* CarePlanLocalStore.swift */,
+				A56000000000000000000147 /* CareReminderScheduler.swift */,
+				A56000000000000000000148 /* CareReminderScheduleResult.swift */,
+				A56000000000000000000106 /* DocumentDetailNativeView.swift */,
+				A56000000000000000000107 /* DocumentScoreCard.swift */,
+				A56000000000000000000142 /* DoctorShareNativeView.swift */,
+				A56000000000000000000143 /* DoctorShareRecord.swift */,
+				A56000000000000000000108 /* EmptyRecordsState.swift */,
+				A56000000000000000000109 /* HealthFolioPreviewData.swift */,
+				A56000000000000000000110 /* HealthFolioRootView.swift */,
+				A56000000000000000000111 /* HealthFolioTab.swift */,
+				A56000000000000000000112 /* HealthFolioTheme.swift */,
+				A56000000000000000000113 /* HealthMetric.swift */,
+				A56000000000000000000114 /* HealthRecord.swift */,
+				A56000000000000000000115 /* HealthScoreCard.swift */,
+				A56000000000000000000116 /* HealthScoreRing.swift */,
+				A56000000000000000000117 /* MarkerRow.swift */,
+				A56000000000000000000118 /* MetricCapsule.swift */,
+				A56000000000000000000119 /* NativeSectionHeader.swift */,
+				A56000000000000000000120 /* NextActionCard.swift */,
+				A56000000000000000000121 /* RecordCard.swift */,
+				A56000000000000000000122 /* RecordsNativeView.swift */,
+				A56000000000000000000123 /* TodayNativeView.swift */,
+				A56000000000000000000124 /* TrendsNativeView.swift */,
+				A56000000000000000000125 /* HealthRecordKind.swift */,
+				A56000000000000000000126 /* NativeRecordStatus.swift */,
+				A56000000000000000000127 /* NativeUploadItem.swift */,
+				A56000000000000000000128 /* AssistantMessage.swift */,
+				A56000000000000000000150 /* FamilyProfileRole.swift */,
+				A56000000000000000000129 /* HealthFolioProfile.swift */,
+				A56000000000000000000157 /* HealthFolioConsentPolicy.swift */,
+				A56000000000000000000156 /* HealthFolioOnboardingPolicy.swift */,
+				A56000000000000000000130 /* HealthFolioAppModel.swift */,
+				A56000000000000000000131 /* ProfileNativeView.swift */,
+				A56000000000000000000132 /* UploadRecordsNativeView.swift */,
+				A56000000000000000000133 /* AssistantBubble.swift */,
+				A56000000000000000000134 /* NativeSupabaseConfig.swift */,
+				A56000000000000000000135 /* NativeSupabaseError.swift */,
+				A56000000000000000000136 /* NativeSupabaseSession.swift */,
+				A56000000000000000000137 /* NativeSupabaseAPI.swift */,
+				A56000000000000000000138 /* ProfileSwitcherNativeView.swift */,
+				A56000000000000000000139 /* AuthRequiredCard.swift */,
+				A56000000000000000000140 /* TrendDetailNativeView.swift */,
+				A56000000000000000000141 /* NativeOAuthPresenter.swift */,
+				A56000000000000000000152 /* AuthNativeView.swift */,
+				A56000000000000000000153 /* NativeAppleSignInPresenter.swift */,
+				A56000000000000000000154 /* NativeSocialAuth.swift */,
+				A56000000000000000000155 /* PasswordResetNativeView.swift */,
+				A56000000000000000000158 /* ConsentNativeView.swift */,
+				A56000000000000000000160 /* AssistantRemoteModels.swift */,
+				A56000000000000000000161 /* NativeSessionCoordinator.swift */,
+				A56000000000000000000162 /* TrendChartData.swift */,
+			);
+			path = HealthFolio/SwiftUIPrototype;
+			sourceTree = "<group>";
+		};
+		BB2F792B24A3F905000567C9 /* Supporting */ = {
+			isa = PBXGroup;
+			children = (
+				BB2F792C24A3F905000567C9 /* Expo.plist */,
+			);
+			name = Supporting;
+			path = HealthFolio/Supporting;
+			sourceTree = "<group>";
+		};
+		DC88A7A923D74059A00203CD /* HealthFolio */ = {
+			isa = PBXGroup;
+			children = (
+				FA1767F486A8049873FF828C /* ExpoModulesProvider.swift */,
+			);
+			name = HealthFolio;
+			sourceTree = "<group>";
+		};
+		FAA770C99F8CCCDA8289334E /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				D2C94F7F4600E28BC29890D5 /* Pods-HealthFolio.debug.xcconfig */,
+				D7BC94AFEAF1B0678FC7A282 /* Pods-HealthFolio.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		13B07F861A680F5B00A75B9A /* HealthFolio */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "HealthFolio" */;
+			buildPhases = (
+				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
+				40F251856AE8BFAA371ADDCB /* [Expo] Configure project */,
+				13B07F871A680F5B00A75B9A /* Sources */,
+				13B07F8C1A680F5B00A75B9A /* Frameworks */,
+				13B07F8E1A680F5B00A75B9A /* Resources */,
+				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
+				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
+				1D81E67838B2C8171B7D66AD /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HealthFolio;
+			productName = HealthFolio;
+			productReference = 13B07F961A680F5B00A75B9A /* HealthFolio.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		83CBB9F71A601CBA00E9B192 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1130;
+				TargetAttributes = {
+					13B07F861A680F5B00A75B9A = {
+						DevelopmentTeam = WN432B5HS6;
+						LastSwiftMigration = 1250;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "HealthFolio" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 83CBB9F61A601CBA00E9B192;
+			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				13B07F861A680F5B00A75B9A /* HealthFolio */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		13B07F8E1A680F5B00A75B9A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
+				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				3E461D99554A48A4959DE609 /* LaunchBrand.storyboard in Resources */,
+				0DE83F022FA1073914A868CC /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\nREACT_NATIVE_XCODE_SCRIPT=\"$(\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\")\"\n/bin/sh \"$REACT_NATIVE_XCODE_SCRIPT\"\n\n";
+		};
+		08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-HealthFolio-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		1D81E67838B2C8171B7D66AD /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-HealthFolio/Pods-HealthFolio-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermesvm.framework/hermesvm",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermesvm.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-HealthFolio/Pods-HealthFolio-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		40F251856AE8BFAA371ADDCB /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/HealthFolio/HealthFolio.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-HealthFolio/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-HealthFolio/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-HealthFolio/expo-configure-project.sh\"\n";
+		};
+		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-HealthFolio/Pods-HealthFolio-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/AppAuth/AppAuthCore_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GTMAppAuth/GTMAppAuth_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GTMSessionFetcher/GTMSessionFetcher_Core_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleSignIn/GoogleSignIn.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities/GoogleUtilities_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/PromisesObjC/FBLPromises_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AppAuthCore_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMAppAuth_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMSessionFetcher_Core_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSignIn.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleUtilities_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FBLPromises_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-HealthFolio/Pods-HealthFolio-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		13B07F871A680F5B00A75B9A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
+				A56000000000000000000001 /* AssistantNativeView.swift in Sources */,
+				A56000000000000000000059 /* AccountDeletionNativeView.swift in Sources */,
+				A56000000000000000000002 /* AssistantPrompt.swift in Sources */,
+				A56000000000000000000049 /* AssistantChatLocalStore.swift in Sources */,
+				A56000000000000000000003 /* CarePlanItem.swift in Sources */,
+				A56000000000000000000004 /* CarePlanNativeView.swift in Sources */,
+				A56000000000000000000005 /* CarePlanRow.swift in Sources */,
+				A56000000000000000000044 /* CarePlanKind.swift in Sources */,
+				A56000000000000000000045 /* CarePlanDueState.swift in Sources */,
+				A56000000000000000000046 /* CarePlanLocalStore.swift in Sources */,
+				A56000000000000000000047 /* CareReminderScheduler.swift in Sources */,
+				A56000000000000000000048 /* CareReminderScheduleResult.swift in Sources */,
+				A56000000000000000000006 /* DocumentDetailNativeView.swift in Sources */,
+				A56000000000000000000007 /* DocumentScoreCard.swift in Sources */,
+				A56000000000000000000042 /* DoctorShareNativeView.swift in Sources */,
+				A56000000000000000000043 /* DoctorShareRecord.swift in Sources */,
+				A56000000000000000000008 /* EmptyRecordsState.swift in Sources */,
+				A56000000000000000000009 /* HealthFolioPreviewData.swift in Sources */,
+				A56000000000000000000010 /* HealthFolioRootView.swift in Sources */,
+				A56000000000000000000011 /* HealthFolioTab.swift in Sources */,
+				A56000000000000000000012 /* HealthFolioTheme.swift in Sources */,
+				A56000000000000000000013 /* HealthMetric.swift in Sources */,
+				A56000000000000000000014 /* HealthRecord.swift in Sources */,
+				A56000000000000000000015 /* HealthScoreCard.swift in Sources */,
+				A56000000000000000000016 /* HealthScoreRing.swift in Sources */,
+				A56000000000000000000017 /* MarkerRow.swift in Sources */,
+				A56000000000000000000018 /* MetricCapsule.swift in Sources */,
+				A56000000000000000000019 /* NativeSectionHeader.swift in Sources */,
+				A56000000000000000000020 /* NextActionCard.swift in Sources */,
+				A56000000000000000000021 /* RecordCard.swift in Sources */,
+				A56000000000000000000022 /* RecordsNativeView.swift in Sources */,
+				A56000000000000000000023 /* TodayNativeView.swift in Sources */,
+				A56000000000000000000024 /* TrendsNativeView.swift in Sources */,
+				A56000000000000000000025 /* HealthRecordKind.swift in Sources */,
+				A56000000000000000000026 /* NativeRecordStatus.swift in Sources */,
+				A56000000000000000000027 /* NativeUploadItem.swift in Sources */,
+				A56000000000000000000028 /* AssistantMessage.swift in Sources */,
+				A56000000000000000000050 /* FamilyProfileRole.swift in Sources */,
+				A56000000000000000000029 /* HealthFolioProfile.swift in Sources */,
+				A56000000000000000000030 /* HealthFolioAppModel.swift in Sources */,
+				A56000000000000000000031 /* ProfileNativeView.swift in Sources */,
+				A56000000000000000000032 /* UploadRecordsNativeView.swift in Sources */,
+				A56000000000000000000033 /* AssistantBubble.swift in Sources */,
+				A56000000000000000000034 /* NativeSupabaseConfig.swift in Sources */,
+				A56000000000000000000035 /* NativeSupabaseError.swift in Sources */,
+				A56000000000000000000036 /* NativeSupabaseSession.swift in Sources */,
+				A56000000000000000000037 /* NativeSupabaseAPI.swift in Sources */,
+				A56000000000000000000038 /* ProfileSwitcherNativeView.swift in Sources */,
+				A56000000000000000000039 /* AuthRequiredCard.swift in Sources */,
+				A56000000000000000000040 /* TrendDetailNativeView.swift in Sources */,
+				A56000000000000000000041 /* NativeOAuthPresenter.swift in Sources */,
+				A56000000000000000000051 /* SceneDelegate.swift in Sources */,
+				A56000000000000000000052 /* AuthNativeView.swift in Sources */,
+				A56000000000000000000053 /* NativeAppleSignInPresenter.swift in Sources */,
+				A56000000000000000000054 /* NativeSocialAuth.swift in Sources */,
+				A56000000000000000000055 /* PasswordResetNativeView.swift in Sources */,
+				A56000000000000000000056 /* HealthFolioOnboardingPolicy.swift in Sources */,
+				A56000000000000000000057 /* HealthFolioConsentPolicy.swift in Sources */,
+				A56000000000000000000058 /* ConsentNativeView.swift in Sources */,
+				A56000000000000000000060 /* AssistantRemoteModels.swift in Sources */,
+				A56000000000000000000061 /* NativeSessionCoordinator.swift in Sources */,
+				A56000000000000000000062 /* TrendChartData.swift in Sources */,
+				D8283EE2BAE012C91C0440E6 /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		13B07F941A680F5B00A75B9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D2C94F7F4600E28BC29890D5 /* Pods-HealthFolio.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = HealthFolio/HealthFolio.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 76;
+				DEVELOPMENT_TEAM = WN432B5HS6;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = HealthFolio/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.starklabs.healthfolio;
+				PRODUCT_NAME = HealthFolio;
+				SWIFT_OBJC_BRIDGING_HEADER = "HealthFolio/HealthFolio-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		13B07F951A680F5B00A75B9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D7BC94AFEAF1B0678FC7A282 /* Pods-HealthFolio.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = HealthFolio/HealthFolio.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Aditi Somani (WN432B5HS6)";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 76;
+				DEVELOPMENT_TEAM = WN432B5HS6;
+				INFOPLIST_FILE = HealthFolio/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.starklabs.healthfolio;
+				PRODUCT_NAME = HealthFolio;
+				SWIFT_OBJC_BRIDGING_HEADER = "HealthFolio/HealthFolio-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		83CBBA201A601CBA00E9B192 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
+				USE_HERMES = true;
+			};
+			name = Debug;
+		};
+		83CBBA211A601CBA00E9B192 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Aditi Somani (WN432B5HS6)";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
+				USE_HERMES = true;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "HealthFolio" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13B07F941A680F5B00A75B9A /* Debug */,
+				13B07F951A680F5B00A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "HealthFolio" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83CBBA201A601CBA00E9B192 /* Debug */,
+				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
+}

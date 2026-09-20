@@ -1,0 +1,19 @@
+node_modules/
+.expo/
+.turbo/
+/dist/
+coverage/
+web-build/
+
+# Local native build products. EAS installs pods and builds these remotely.
+build/
+ios/Pods/
+ios/build/
+ios/DerivedData/
+*.xcarchive/
+*.ipa
+*.dSYM/
+
+# Local editor and OS metadata.
+.DS_Store
+*.log
