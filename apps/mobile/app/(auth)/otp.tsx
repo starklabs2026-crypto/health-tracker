@@ -40,7 +40,7 @@ export default function Otp() {
       });
       await setTokens({ accessToken: res.accessToken, refreshToken: res.refreshToken });
       setUnlocked(true);
-      router.replace(res.isNewUser ? '/(auth)/onboarding/basics' : '/(tabs)/home');
+      router.replace(res.isNewUser ? '/(auth)/onboarding/health?mode=signup' : '/(tabs)/home');
     } catch {
       setError('Invalid or expired code. Please try again.');
     } finally {

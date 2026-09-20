@@ -1,290 +1,333 @@
+import { Feather } from '@expo/vector-icons';
 import { DocType } from '@medical-tracker/shared-types';
-import { useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-
-import { Button, TextField } from '../../src/components/ui';
+  AppScroll,
+  Button,
+  Card,
+  EmptyState,
+  IconButton,
+  Pill,
+  ProgressBar,
+  SectionHeader,
+  TopBar,
+  UploadSourceTile,
+} from '../../src/components/healthfolio';
 import {
-  createDocument,
-  markUploaded,
-  uploadToPresignedUrl,
-} from '../../src/lib/api/endpoints';
-import { colors, radius, spacing, tapTarget } from '../../src/theme/tokens';
+  type UploadQueueFile,
+  type UploadQueueItem,
+  type UploadQueueStatus,
+  inferDocTypeForFile,
+  useUploadQueueStore,
+} from '../../src/lib/uploads/uploadQueueStore';
+import { colors, spacing } from '../../src/theme/tokens';
+import { useProfileStore } from '../../src/lib/profile/profileStore';
 
-type Step = 'pick' | 'form' | 'uploading';
-
-interface PickedFile {
-  uri: string;
-  mimeType: string;
-  size: number;
+function fileNameFromUri(uri: string): string {
+  const lastSegment = uri.split('/').pop() ?? 'report';
+  return decodeURIComponent(lastSegment.split('?')[0] || 'report');
 }
 
-const DOC_TYPE_OPTIONS: { label: string; value: DocType }[] = [
-  { label: 'Lab Report', value: DocType.LabReport },
-  { label: 'Prescription', value: DocType.Prescription },
-  { label: 'Imaging Report', value: DocType.ImagingReport },
-  { label: 'Discharge Summary', value: DocType.DischargeSummary },
-  { label: 'Vaccination Record', value: DocType.VaccinationRecord },
-  { label: 'Other', value: DocType.Other },
-];
+function normalizePickedFile(file: {
+  uri: string;
+  mimeType?: string | null;
+  size?: number | null;
+  name?: string | null;
+}): UploadQueueFile {
+  return {
+    uri: file.uri,
+    mimeType: file.mimeType ?? 'application/octet-stream',
+    size: file.size ?? 0,
+    name: file.name?.trim() || fileNameFromUri(file.uri),
+  };
+}
+
+function queueTone(status: UploadQueueStatus): 'neutral' | 'blue' | 'green' | 'red' | 'active' {
+  if (status === 'uploading' || status === 'processing') return 'blue';
+  if (status === 'analyzed') return 'green';
+  if (status === 'failed') return 'red';
+  return 'neutral';
+}
+
+function queueLabel(status: UploadQueueStatus): string {
+  if (status === 'uploading') return 'Uploading';
+  if (status === 'processing') return 'Processing';
+  if (status === 'analyzed') return 'Analyzed';
+  if (status === 'failed') return 'Failed';
+  return 'Queued';
+}
+
+function statusCopy(item: UploadQueueItem): string {
+  if (item.status === 'failed') return item.error ?? 'This file needs another try.';
+  if (item.status === 'analyzed') return 'Ready in Records.';
+  if (item.status === 'processing') return 'Reading report.';
+  if (item.status === 'uploading') return 'Uploading.';
+  return 'Queued.';
+}
+
+function leadingIcon(item: UploadQueueItem): keyof typeof Feather.glyphMap {
+  if (item.mimeType.includes('pdf')) return 'file-text';
+  if (item.mimeType.startsWith('image/')) return 'image';
+  return 'paperclip';
+}
 
 export default function NewDocumentScreen() {
-  const qc = useQueryClient();
-  const [step, setStep] = useState<Step>('pick');
-  const [file, setFile] = useState<PickedFile | null>(null);
-  const [docType, setDocType] = useState<DocType>(DocType.LabReport);
-  const [sourceDate, setSourceDate] = useState(new Date().toISOString().split('T')[0] ?? '');
-  const [labName, setLabName] = useState('');
-  const [orderingPhysician, setOrderingPhysician] = useState('');
-  const [notes, setNotes] = useState('');
-  const [showTypeModal, setShowTypeModal] = useState(false);
-  const [error, setError] = useState('');
+  const { activeProfileId, activeProfileName } = useProfileStore();
+  const items = useUploadQueueStore((state) => state.items);
+  const addFiles = useUploadQueueStore((state) => state.addFiles);
+  const retryItem = useUploadQueueStore((state) => state.retryItem);
+  const removeItem = useUploadQueueStore((state) => state.removeItem);
+  const clearFinished = useUploadQueueStore((state) => state.clearFinished);
+
+  const queue = useMemo(() => {
+    return [...items].sort((a, b) => b.createdAt - a.createdAt);
+  }, [items]);
+
+  const analyzedCount = queue.filter((item) => item.status === 'analyzed').length;
+
+  function enqueueFiles(files: UploadQueueFile[]): void {
+    if (files.length === 0) return;
+
+    const hasPrescription = files.some(
+      (file) => inferDocTypeForFile(file.name, file.mimeType) === DocType.Prescription,
+    );
+
+    const enqueue = () =>
+      addFiles(files, {
+        profileId: activeProfileId,
+        profileName: activeProfileName,
+      });
+
+    if (!hasPrescription) {
+      enqueue();
+      return;
+    }
+
+    Alert.alert(
+      'Verify prescription OCR',
+      'Handwritten prescriptions can be misread. HealthFolio will organize the file, but you must review and approve extracted text before relying on it.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Continue', onPress: enqueue },
+      ],
+    );
+  }
 
   async function pickFromCamera(): Promise<void> {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission required', 'Camera access is needed to capture documents.');
-      return;
-    }
+    if (status !== 'granted') return;
+
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.85,
     });
+
     if (!result.canceled && result.assets[0]) {
-      const asset = result.assets[0];
-      setFile({
-        uri: asset.uri,
-        mimeType: asset.mimeType ?? 'image/jpeg',
-        size: asset.fileSize ?? 0,
-      });
-      setStep('form');
+      enqueueFiles([normalizePickedFile(result.assets[0])]);
     }
   }
 
   async function pickFromGallery(): Promise<void> {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission required', 'Photo library access is needed to pick documents.');
-      return;
-    }
+    if (status !== 'granted') return;
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.85,
+      allowsMultipleSelection: true,
+      selectionLimit: 0,
     });
-    if (!result.canceled && result.assets[0]) {
-      const asset = result.assets[0];
-      setFile({
-        uri: asset.uri,
-        mimeType: asset.mimeType ?? 'image/jpeg',
-        size: asset.fileSize ?? 0,
-      });
-      setStep('form');
+
+    if (!result.canceled && result.assets.length > 0) {
+      enqueueFiles(result.assets.map(normalizePickedFile));
     }
   }
 
-  async function pickPdf(): Promise<void> {
+  async function pickFiles(): Promise<void> {
     const result = await DocumentPicker.getDocumentAsync({
-      type: 'application/pdf',
+      type: ['application/pdf', 'image/*'],
       copyToCacheDirectory: true,
+      multiple: true,
     });
-    if (!result.canceled && result.assets[0]) {
-      const asset = result.assets[0];
-      setFile({
-        uri: asset.uri,
-        mimeType: asset.mimeType ?? 'application/pdf',
-        size: asset.size ?? 0,
-      });
-      setStep('form');
+
+    if (!result.canceled && result.assets.length > 0) {
+      enqueueFiles(
+        result.assets.map((asset) =>
+          normalizePickedFile({
+            uri: asset.uri,
+            mimeType: asset.mimeType,
+            size: asset.size,
+            name: asset.name,
+          }),
+        ),
+      );
     }
   }
-
-  async function submit(): Promise<void> {
-    if (!file) return;
-    setError('');
-
-    if (!sourceDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      setError('Date must be YYYY-MM-DD');
-      return;
-    }
-
-    setStep('uploading');
-    try {
-      const { documentId, uploadUrl, fileKey } = await createDocument({
-        docType,
-        sourceDate,
-        fileType: file.mimeType,
-        fileSize: file.size || 1,
-        labName: labName.trim() || undefined,
-        orderingPhysician: orderingPhysician.trim() || undefined,
-        notes: notes.trim() || undefined,
-      });
-
-      await uploadToPresignedUrl(uploadUrl, file);
-      await markUploaded(documentId, fileKey);
-
-      await qc.invalidateQueries({ queryKey: ['documents'] });
-      router.replace(`/documents/${documentId}`);
-    } catch (err) {
-      setError('Upload failed. Please check your connection and try again.');
-      setStep('form');
-    }
-  }
-
-  if (step === 'pick') {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Add Document</Text>
-        <Text style={styles.subtitle}>Choose a source for your document.</Text>
-        <PickOption label="Camera" description="Capture a photo right now" onPress={() => void pickFromCamera()} />
-        <PickOption label="Gallery" description="Pick an image from your photos" onPress={() => void pickFromGallery()} />
-        <PickOption label="PDF File" description="Select a PDF from your files" onPress={() => void pickPdf()} />
-        <Button label="Cancel" variant="secondary" onPress={() => router.back()} />
-      </View>
-    );
-  }
-
-  if (step === 'uploading') {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.uploadingText}>Uploading and queuing OCR…</Text>
-      </View>
-    );
-  }
-
-  const docTypeLabel = DOC_TYPE_OPTIONS.find((o) => o.value === docType)?.label ?? docType;
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Document Details</Text>
-
-      <Text style={styles.label}>Document Type</Text>
-      <Pressable style={styles.selectBox} onPress={() => setShowTypeModal(true)}>
-        <Text style={styles.selectBoxText}>{docTypeLabel}</Text>
-        <Text style={styles.selectCaret}>›</Text>
-      </Pressable>
-
-      <TextField
-        label="Date on document (YYYY-MM-DD)"
-        value={sourceDate}
-        onChangeText={setSourceDate}
-        placeholder="2024-01-15"
-        keyboardType="numeric"
-      />
-      <TextField
-        label="Lab / Hospital name (optional)"
-        value={labName}
-        onChangeText={setLabName}
-        placeholder="e.g. Apollo Diagnostics"
-      />
-      <TextField
-        label="Ordering physician (optional)"
-        value={orderingPhysician}
-        onChangeText={setOrderingPhysician}
-        placeholder="e.g. Dr. Smith"
-      />
-      <TextField
-        label="Notes (optional)"
-        value={notes}
-        onChangeText={setNotes}
-        placeholder="Any additional context"
-        multiline
+    <AppScroll>
+      <TopBar
+        title="Add"
+        action={
+          <IconButton
+            icon="x"
+            label="Close"
+            variant="secondary"
+            onPress={() => router.replace('/(tabs)/documents')}
+            style={styles.closeButton}
+          />
+        }
       />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      <Button label="Upload & OCR" onPress={() => void submit()} />
-      <Button label="Back" variant="secondary" onPress={() => setStep('pick')} />
-
-      <Modal visible={showTypeModal} animationType="slide" onRequestClose={() => setShowTypeModal(false)}>
-        <View style={styles.modal}>
-          <Text style={styles.modalTitle}>Document Type</Text>
-          {DOC_TYPE_OPTIONS.map((opt) => (
-            <Pressable
-              key={opt.value}
-              style={[styles.typeOption, docType === opt.value ? styles.typeOptionActive : null]}
-              onPress={() => { setDocType(opt.value); setShowTypeModal(false); }}
-            >
-              <Text style={[styles.typeOptionText, docType === opt.value ? styles.typeOptionTextActive : null]}>
-                {opt.label}
-              </Text>
-            </Pressable>
-          ))}
-          <Button label="Cancel" variant="secondary" onPress={() => setShowTypeModal(false)} />
+      <Card style={styles.sourceCard}>
+        <View style={styles.sourceHeader}>
+          <SectionHeader icon="upload-cloud" title="Source" style={styles.cardHeader} />
+          <Pill label="OCR" tone="blue" />
         </View>
-      </Modal>
-    </ScrollView>
-  );
-}
+        <View style={styles.sourceRow}>
+          <UploadSourceTile
+            code="CAM"
+            label="Camera"
+            icon={<Feather name="camera" size={17} color="#FFFFFF" />}
+            onPress={() => void pickFromCamera()}
+          />
+          <UploadSourceTile
+            code="IMG"
+            label="Photos"
+            icon={<Feather name="image" size={17} color="#FFFFFF" />}
+            onPress={() => void pickFromGallery()}
+          />
+          <UploadSourceTile
+            code="FILE"
+            label="Files"
+            icon={<Feather name="file-text" size={17} color="#FFFFFF" />}
+            onPress={() => void pickFiles()}
+          />
+        </View>
+      </Card>
 
-function PickOption({ label, description, onPress }: { label: string; description: string; onPress: () => void }) {
-  return (
-    <Pressable style={styles.pickOption} onPress={onPress} accessibilityRole="button">
-      <Text style={styles.pickOptionLabel}>{label}</Text>
-      <Text style={styles.pickOptionDesc}>{description}</Text>
-    </Pressable>
+      <Card>
+        <View style={styles.queueHeader}>
+          <View>
+            <SectionHeader icon="activity" title="Queue" style={styles.cardHeader} />
+          </View>
+          {analyzedCount > 0 ? (
+            <Button
+              label="Clear"
+              variant="secondary"
+              onPress={clearFinished}
+              style={styles.headerButton}
+            />
+          ) : null}
+        </View>
+
+        {queue.length === 0 ? (
+          <EmptyState icon="upload-cloud" title="No files" body="Add a report." />
+        ) : (
+          <View style={styles.queueList}>
+            {queue.map((item) => (
+              <View key={item.localId} style={styles.queueItem}>
+                <View style={styles.queueTop}>
+                  <View style={styles.queueLead}>
+                    <View style={styles.fileIcon}>
+                      <Feather name={leadingIcon(item)} size={18} color={colors.primary} />
+                    </View>
+                    <View style={styles.queueText}>
+                      <Text numberOfLines={1} style={styles.fileName}>
+                        {item.name}
+                      </Text>
+                      <Text numberOfLines={2} style={styles.fileCopy}>
+                        {statusCopy(item)}
+                      </Text>
+                    </View>
+                  </View>
+                  <Pill label={queueLabel(item.status)} tone={queueTone(item.status)} />
+                </View>
+
+                <ProgressBar value={item.progress} />
+
+                <View style={styles.queueMeta}>
+                  <Text style={styles.queuePercent}>{Math.round(item.progress * 100)}%</Text>
+                  {item.profileName ? (
+                    <Text style={styles.queueProfile}>{item.profileName}</Text>
+                  ) : null}
+                </View>
+
+                {item.status === 'failed' || item.status === 'analyzed' ? (
+                  <View style={styles.queueActions}>
+                    {item.status === 'failed' ? (
+                      <Pressable onPress={() => retryItem(item.localId)}>
+                        <Text style={styles.queueActionText}>Retry</Text>
+                      </Pressable>
+                    ) : item.documentId ? (
+                      <Pressable onPress={() => router.push(`/documents/${item.documentId}`)}>
+                        <Text style={styles.queueActionText}>Open</Text>
+                      </Pressable>
+                    ) : null}
+                    <Pressable onPress={() => removeItem(item.localId)}>
+                      <Text style={styles.queueRemoveText}>Remove</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        )}
+      </Card>
+    </AppScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, backgroundColor: colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 22, fontWeight: '700', color: colors.primary, marginBottom: spacing.xs },
-  subtitle: { fontSize: 15, color: colors.textSecondary, marginBottom: spacing.xl },
-  label: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs },
-  error: { color: colors.danger, fontSize: 14, marginBottom: spacing.sm },
-  uploadingText: { marginTop: spacing.lg, fontSize: 16, color: colors.textSecondary },
-  pickOption: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
+  closeButton: { width: 42, height: 42, borderRadius: 21 },
+  sourceCard: {
     padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-    minHeight: tapTarget,
-    justifyContent: 'center',
+    backgroundColor: colors.primaryBg,
   },
-  pickOptionLabel: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  pickOptionDesc: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.xs },
-  selectBox: {
-    minHeight: tapTarget,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.input,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
+  sourceHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    gap: spacing.md,
   },
-  selectBoxText: { fontSize: 16, color: colors.textPrimary },
-  selectCaret: { fontSize: 20, color: colors.textSecondary },
-  modal: { flex: 1, padding: spacing.xl, backgroundColor: colors.background, justifyContent: 'center' },
-  modalTitle: { fontSize: 20, fontWeight: '700', color: colors.primary, marginBottom: spacing.lg },
-  typeOption: {
-    minHeight: tapTarget,
-    borderRadius: radius.input,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
+  cardHeader: { marginTop: 0, marginBottom: 0 },
+  sourceRow: { gap: spacing.sm, marginTop: spacing.md },
+  queueHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  headerButton: { minHeight: 34, marginTop: 0, paddingHorizontal: spacing.sm },
+  queueList: { marginTop: spacing.md, gap: spacing.md },
+  queueItem: { gap: spacing.sm },
+  queueTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  queueLead: { flexDirection: 'row', flex: 1, gap: spacing.sm },
+  fileIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.softSurface,
   },
-  typeOptionActive: { borderColor: colors.primary, backgroundColor: colors.primary },
-  typeOptionText: { fontSize: 16, color: colors.textPrimary },
-  typeOptionTextActive: { color: '#FFFFFF', fontWeight: '600' },
+  queueText: { flex: 1, gap: 2 },
+  fileName: { color: colors.textPrimary, fontSize: 15, lineHeight: 20, fontWeight: '700' },
+  fileCopy: { color: colors.textSecondary, fontSize: 12, lineHeight: 17 },
+  queueMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  queuePercent: { color: colors.textSecondary, fontSize: 11, lineHeight: 15, fontWeight: '700' },
+  queueProfile: { color: colors.textSecondary, fontSize: 11, lineHeight: 15 },
+  queueActions: { flexDirection: 'row', gap: spacing.md },
+  queueActionText: { color: colors.primary, fontSize: 12, lineHeight: 16, fontWeight: '700' },
+  queueRemoveText: { color: colors.textSecondary, fontSize: 12, lineHeight: 16, fontWeight: '700' },
 });

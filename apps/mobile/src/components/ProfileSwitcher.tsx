@@ -18,7 +18,11 @@ export function ProfileSwitcher() {
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+      >
         <Pressable
           style={[styles.chip, activeProfileId === null && styles.chipActive]}
           onPress={() => setActiveProfile(null, null)}
@@ -50,7 +54,7 @@ export function ProfileSwitcher() {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceInset,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     paddingVertical: spacing.xs,
@@ -62,9 +66,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceRaised,
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-  chipTextActive: { color: '#fff' },
+  chipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '700' },
+  chipTextActive: { color: '#FFFFFF', fontWeight: '700' },
 });

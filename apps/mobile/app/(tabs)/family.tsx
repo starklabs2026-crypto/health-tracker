@@ -1,75 +1,121 @@
-import type {
-  FamilyLink,
-  FamilyMemberView,
-} from '@medical-tracker/shared-types';
-import { FamilyLinkStatus, FamilyRole } from '@medical-tracker/shared-types';
+import { Feather } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import type { FamilyLink, FamilyMemberView } from '@medical-tracker/shared-types';
+import { BloodGroup, FamilyLinkStatus, Sex, UnitsPreference } from '@medical-tracker/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { router } from 'expo-router';
+import { useState, type ComponentProps, type ReactNode } from 'react';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Button, TextField } from '../../src/components/ui';
 import {
-  acceptInvite,
-  inviteMember,
+  AppScroll,
+  Avatar,
+  Button,
+  Card,
+  EmptyState,
+  IconButton,
+  Pill,
+  SelectablePill,
+  TopBar,
+  typography,
+} from '../../src/components/healthfolio';
+import { Segmented, TextField } from '../../src/components/ui';
+import {
+  createManagedProfile,
   listFamilyMembers,
   revokeFamilyLink,
+  updateManagedProfile,
 } from '../../src/lib/api/endpoints';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { useProfileStore } from '../../src/lib/profile/profileStore';
+import { colors, spacing } from '../../src/theme/tokens';
 
-const ROLE_LABELS: Record<FamilyRole, string> = {
-  [FamilyRole.Viewer]: 'Viewer',
-  [FamilyRole.Contributor]: 'Contributor',
-  [FamilyRole.Guardian]: 'Guardian',
-};
+const BLOOD_GROUP_OPTIONS = Object.values(BloodGroup);
 
-const STATUS_COLORS: Record<FamilyLinkStatus, string> = {
-  [FamilyLinkStatus.Pending]: '#F4B400',
-  [FamilyLinkStatus.Active]: colors.rangeNormal,
-  [FamilyLinkStatus.Declined]: colors.danger,
-  [FamilyLinkStatus.Revoked]: colors.textSecondary,
-};
+function statusTone(status: FamilyLinkStatus): 'green' | 'amber' | 'red' | 'neutral' {
+  if (status === FamilyLinkStatus.Active) return 'green';
+  if (status === FamilyLinkStatus.Pending) return 'amber';
+  if (status === FamilyLinkStatus.Declined) return 'red';
+  return 'neutral';
+}
+
+function formatDate(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate(),
+  ).padStart(2, '0')}`;
+}
+
+function editableDob(value: string): Date | null {
+  if (value.startsWith('1900-01-01')) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function memberSubtitle(member: FamilyMemberView, selected: boolean): string {
+  const dob = editableDob(member.memberDob);
+  const details = [
+    dob ? formatDate(dob) : 'DOB not set',
+    member.memberSex,
+    member.memberBloodGroup,
+  ].filter(Boolean);
+  return selected ? `Selected - ${details.join(' - ')}` : details.join(' - ');
+}
 
 export default function FamilyScreen() {
   const qc = useQueryClient();
-  const [showInvite, setShowInvite] = useState(false);
-  const [showAccept, setShowAccept] = useState(false);
-  const [identifier, setIdentifier] = useState('');
-  const [inviteToken, setInviteToken] = useState('');
+  const { activeProfileId, setActiveProfile } = useProfileStore();
+  const [showCreate, setShowCreate] = useState(false);
+  const [editingMember, setEditingMember] = useState<FamilyMemberView | null>(null);
+  const [name, setName] = useState('');
+  const [dob, setDob] = useState<Date | null>(null);
+  const [draftDob, setDraftDob] = useState(new Date(2000, 0, 1));
+  const [showDobPicker, setShowDobPicker] = useState(false);
+  const [sex, setSex] = useState<Sex | null>(null);
+  const [units, setUnits] = useState<UnitsPreference>(UnitsPreference.Metric);
+  const [bloodGroup, setBloodGroup] = useState<BloodGroup | null>(null);
+  const isEditing = editingMember !== null;
+  const showProfileForm = showCreate || isEditing;
 
   const { data: members, isLoading } = useQuery<FamilyMemberView[]>({
     queryKey: ['family', 'members'],
     queryFn: listFamilyMembers,
   });
 
-  const inviteMutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: () =>
-      inviteMember({ memberIdentifier: identifier, role: FamilyRole.Viewer }),
-    onSuccess: async (res) => {
+      createManagedProfile({
+        name: name.trim(),
+        dob: formatDate(dob as Date),
+        sex: sex as Sex,
+        unitsPreference: units,
+        bloodGroup,
+      }),
+    onSuccess: async ({ profileId }) => {
       await qc.invalidateQueries({ queryKey: ['family'] });
-      setShowInvite(false);
-      setIdentifier('');
-      Alert.alert(
-        'Invite sent',
-        `Share this token with ${identifier}:\n\n${res.inviteToken}`,
-      );
+      setActiveProfile(profileId, name.trim());
+      resetForm();
+      setShowCreate(false);
     },
   });
 
-  const acceptMutation = useMutation({
-    mutationFn: () => acceptInvite({ inviteToken }),
+  const updateMutation = useMutation({
+    mutationFn: () =>
+      updateManagedProfile((editingMember as FamilyMemberView).link.memberUserId, {
+        name: name.trim(),
+        dob: formatDate(dob as Date),
+        sex: sex as Sex,
+        unitsPreference: units,
+        bloodGroup,
+      }),
     onSuccess: async () => {
+      const profileId = editingMember?.link.memberUserId;
       await qc.invalidateQueries({ queryKey: ['family'] });
-      setShowAccept(false);
-      setInviteToken('');
-      Alert.alert('Joined!', 'You now have access to their health data.');
+      await qc.invalidateQueries({ queryKey: ['documents'] });
+      await qc.invalidateQueries({ queryKey: ['readings'] });
+      await qc.invalidateQueries({ queryKey: ['trend'] });
+      if (profileId && activeProfileId === profileId) {
+        setActiveProfile(profileId, name.trim());
+      }
+      closeProfileForm();
     },
   });
 
@@ -78,150 +124,418 @@ export default function FamilyScreen() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['family'] }),
   });
 
-  function confirmRevoke(link: FamilyLink, name: string): void {
-    Alert.alert('Remove member', `Remove ${name}?`, [
+  function resetForm(): void {
+    setName('');
+    setDob(null);
+    setDraftDob(new Date(2000, 0, 1));
+    setShowDobPicker(false);
+    setSex(null);
+    setUnits(UnitsPreference.Metric);
+    setBloodGroup(null);
+  }
+
+  function beginCreateProfile(): void {
+    resetForm();
+    setEditingMember(null);
+    setShowCreate(true);
+  }
+
+  function beginEditProfile(member: FamilyMemberView): void {
+    setEditingMember(member);
+    setShowCreate(false);
+    setName(member.memberName);
+    const parsedDob = editableDob(member.memberDob);
+    setDob(parsedDob);
+    setDraftDob(parsedDob ?? new Date(2000, 0, 1));
+    setSex(member.memberSex);
+    setUnits(member.memberUnitsPreference);
+    setBloodGroup(member.memberBloodGroup ?? null);
+    setShowDobPicker(false);
+  }
+
+  function closeProfileForm(): void {
+    setShowCreate(false);
+    setEditingMember(null);
+    resetForm();
+  }
+
+  function confirmRevoke(link: FamilyLink, member: FamilyMemberView): void {
+    Alert.alert('Remove profile', `Remove ${member.memberName}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',
         style: 'destructive',
-        onPress: () => revokeMutation.mutate(link.id),
+        onPress: () => {
+          if (activeProfileId === link.memberUserId) {
+            setActiveProfile(null, null);
+          }
+          revokeMutation.mutate(link.id);
+        },
       },
     ]);
   }
 
+  function onSaveProfile(): void {
+    if (!name.trim() || !dob || !sex) {
+      Alert.alert('Missing details', 'Enter a name, date of birth, and gender.');
+      return;
+    }
+    if (isEditing) {
+      updateMutation.mutate();
+    } else {
+      createMutation.mutate();
+    }
+  }
+
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.container}
-    >
-      {/* Actions */}
-      <View style={styles.actionRow}>
-        <Button label="+ Invite member" onPress={() => setShowInvite(true)} />
-        <Button
-          label="Join with token"
-          variant="secondary"
-          onPress={() => setShowAccept(true)}
+    <AppScroll>
+      <TopBar
+        title="Family"
+        action={
+          <IconButton
+            icon="plus"
+            label="Add profile"
+            onPress={beginCreateProfile}
+            style={styles.addButton}
+          />
+        }
+      />
+
+      <View style={styles.metaRail}>
+        <FamilyMeta label={`${(members?.length ?? 0) + 1} profiles`} tone="violet" />
+        <FamilyMeta label={activeProfileId ? 'family selected' : 'me selected'} tone="primary" />
+      </View>
+
+      <Card style={styles.profileCard}>
+        <ProfileRow
+          title="Me"
+          subtitle={activeProfileId === null ? 'Selected' : 'Personal'}
+          selected={activeProfileId === null}
+          right={
+            activeProfileId === null ? <Pill label="Active" tone="active" /> : <Avatar label="Me" />
+          }
+          onPress={() => setActiveProfile(null, null)}
         />
-      </View>
+      </Card>
 
-      {/* Member list */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>People with access to my data</Text>
+      <Card>
+        <Text style={typography.h3}>Profiles</Text>
         {isLoading ? (
-          <Text style={styles.dimText}>Loading…</Text>
+          <Text style={[typography.body, { marginTop: spacing.sm }]}>Loading...</Text>
         ) : !members || members.length === 0 ? (
-          <Text style={styles.dimText}>No members yet.</Text>
+          <View style={styles.emptyFamily}>
+            <EmptyState
+              icon="users"
+              title="No profiles"
+              body="Add one or upload reports."
+              action={<Button label="Upload" onPress={() => router.push('/documents/new')} />}
+            />
+          </View>
         ) : (
-          members.map((m) => (
-            <View key={m.link.id} style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.memberName}>{m.memberName}</Text>
-                <Text style={styles.memberSub}>
-                  {m.memberEmail ?? m.memberPhone ?? ''}
-                </Text>
-                <Text style={[styles.statusBadge, { color: STATUS_COLORS[m.link.status] }]}>
-                  {m.link.status.toUpperCase()} · {ROLE_LABELS[m.link.role]}
-                </Text>
-              </View>
-              {m.link.status !== FamilyLinkStatus.Revoked && (
-                <Pressable
-                  onPress={() => confirmRevoke(m.link, m.memberName)}
-                  style={styles.revokeBtn}
-                  accessibilityLabel="Remove member"
-                >
-                  <Text style={styles.revokeBtnText}>✕</Text>
-                </Pressable>
-              )}
-            </View>
-          ))
+          members.map((member) => {
+            const selected = activeProfileId === member.link.memberUserId;
+            return (
+              <ProfileRow
+                key={member.link.id}
+                title={member.memberName}
+                subtitle={memberSubtitle(member, selected)}
+                selected={selected}
+                right={
+                  <View style={styles.memberActions}>
+                    <Pill
+                      label={selected ? 'Active' : member.link.status}
+                      tone={selected ? 'active' : statusTone(member.link.status)}
+                    />
+                    <IconAction
+                      icon="edit-2"
+                      label={`Edit ${member.memberName}`}
+                      onPress={() => beginEditProfile(member)}
+                    />
+                    <IconAction
+                      icon="trash-2"
+                      label={`Remove ${member.memberName}`}
+                      danger
+                      onPress={() => confirmRevoke(member.link, member)}
+                    />
+                  </View>
+                }
+                onPress={() => setActiveProfile(member.link.memberUserId, member.memberName)}
+              />
+            );
+          })
         )}
+      </Card>
+
+      <Modal visible={showProfileForm} animationType="slide" onRequestClose={closeProfileForm}>
+        <AppScroll contentStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+          <Text style={typography.h2}>{isEditing ? 'Edit profile' : 'Add profile'}</Text>
+          <Text style={[typography.body, { marginTop: spacing.xs, marginBottom: spacing.md }]}>
+            {isEditing ? 'Update this record.' : 'Create a managed profile.'}
+          </Text>
+
+          <TextField
+            label="Full name"
+            value={name}
+            onChangeText={setName}
+            placeholder="Full name"
+          />
+          <Button
+            label={dob ? `DOB ${formatDate(dob)}` : 'Select date of birth'}
+            variant="secondary"
+            onPress={() => {
+              setDraftDob(dob ?? new Date(2000, 0, 1));
+              setShowDobPicker(true);
+            }}
+          />
+          <Segmented
+            label="Gender"
+            value={sex}
+            onChange={setSex}
+            options={[
+              { label: 'Female', value: Sex.Female },
+              { label: 'Male', value: Sex.Male },
+              { label: 'Other', value: Sex.Other },
+            ]}
+          />
+          <Segmented
+            label="Units"
+            value={units}
+            onChange={setUnits}
+            options={[
+              { label: 'Metric', value: UnitsPreference.Metric },
+              { label: 'Imperial', value: UnitsPreference.Imperial },
+            ]}
+          />
+          <Text style={styles.formLabel}>Blood group</Text>
+          <View style={styles.bloodGroupGrid}>
+            <SelectablePill
+              label="Not set"
+              selected={bloodGroup === null}
+              onPress={() => setBloodGroup(null)}
+            />
+            {BLOOD_GROUP_OPTIONS.map((group) => (
+              <SelectablePill
+                key={group}
+                label={group}
+                selected={bloodGroup === group}
+                onPress={() => setBloodGroup(group)}
+              />
+            ))}
+          </View>
+
+          <Button
+            label={isEditing ? 'Save profile' : 'Create profile'}
+            loading={createMutation.isPending || updateMutation.isPending}
+            onPress={onSaveProfile}
+          />
+          <Button label="Cancel" variant="secondary" onPress={closeProfileForm} />
+
+          <Modal
+            visible={showDobPicker}
+            animationType="slide"
+            transparent
+            onRequestClose={() => setShowDobPicker(false)}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={styles.dateSheet}>
+                <Text style={styles.sheetTitle}>Date of birth</Text>
+                <DateTimePicker
+                  value={draftDob}
+                  mode="date"
+                  display="spinner"
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1900, 0, 1)}
+                  onChange={(_, selectedDate) => {
+                    if (selectedDate) setDraftDob(selectedDate);
+                  }}
+                />
+                <View style={styles.sheetActions}>
+                  <Button
+                    label="Cancel"
+                    variant="secondary"
+                    onPress={() => setShowDobPicker(false)}
+                    style={styles.sheetButton}
+                  />
+                  <Button
+                    label="Done"
+                    onPress={() => {
+                      setDob(draftDob);
+                      setShowDobPicker(false);
+                    }}
+                    style={styles.sheetButton}
+                  />
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </AppScroll>
+      </Modal>
+    </AppScroll>
+  );
+}
+
+function IconAction({
+  icon,
+  label,
+  danger,
+  onPress,
+}: {
+  icon: ComponentProps<typeof Feather>['name'];
+  label: string;
+  danger?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={styles.iconAction}
+    >
+      <Feather name={icon} size={15} color={danger ? colors.danger : colors.primary} />
+    </Pressable>
+  );
+}
+
+function ProfileRow({
+  title,
+  subtitle,
+  right,
+  selected,
+  onPress,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: ReactNode;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={[styles.profileRow, selected && styles.profileRowSelected]}
+    >
+      <View style={[styles.profileRail, selected && styles.profileRailSelected]}>
+        {selected ? <Feather name="check" size={13} color="#FFFFFF" /> : null}
       </View>
+      <View style={styles.profileRowText}>
+        <Text style={[styles.profileTitle, selected && styles.profileTitleSelected]}>{title}</Text>
+        {subtitle ? (
+          <Text style={[styles.profileSubtitle, selected && styles.profileSubtitleSelected]}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {right}
+    </Pressable>
+  );
+}
 
-      {/* Invite modal */}
-      <Modal visible={showInvite} animationType="slide" onRequestClose={() => setShowInvite(false)}>
-        <ScrollView
-          style={{ backgroundColor: colors.background }}
-          contentContainerStyle={styles.container}
-        >
-          <Text style={styles.modalTitle}>Invite a member</Text>
-          <TextField
-            label="Their email or phone"
-            value={identifier}
-            onChangeText={setIdentifier}
-            keyboardType="email-address"
-            placeholder="user@example.com"
-          />
-          <Button
-            label="Send invite"
-            loading={inviteMutation.isPending}
-            disabled={!identifier.trim()}
-            onPress={() => inviteMutation.mutate()}
-          />
-          <Button label="Cancel" variant="secondary" onPress={() => setShowInvite(false)} />
-        </ScrollView>
-      </Modal>
-
-      {/* Accept modal */}
-      <Modal visible={showAccept} animationType="slide" onRequestClose={() => setShowAccept(false)}>
-        <ScrollView
-          style={{ backgroundColor: colors.background }}
-          contentContainerStyle={styles.container}
-        >
-          <Text style={styles.modalTitle}>Join with invite token</Text>
-          <TextField
-            label="Invite token"
-            value={inviteToken}
-            onChangeText={setInviteToken}
-            placeholder="Paste token here"
-          />
-          <Button
-            label="Accept invite"
-            loading={acceptMutation.isPending}
-            disabled={!inviteToken.trim()}
-            onPress={() => acceptMutation.mutate()}
-          />
-          <Button label="Cancel" variant="secondary" onPress={() => setShowAccept(false)} />
-        </ScrollView>
-      </Modal>
-    </ScrollView>
+function FamilyMeta({ label, tone }: { label: string; tone: 'primary' | 'violet' }) {
+  return (
+    <View style={styles.metaItem}>
+      <View
+        style={[styles.metaDot, tone === 'primary' ? styles.metaDotPrimary : styles.metaDotViolet]}
+      />
+      <Text style={styles.metaText}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-  actionRow: { gap: spacing.sm, marginBottom: spacing.md },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
+  addButton: { width: 48, height: 48, borderRadius: 24 },
+  metaRail: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
     marginBottom: spacing.sm,
+    paddingHorizontal: 2,
   },
-  dimText: { fontSize: 14, color: colors.textSecondary },
-  row: {
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  metaDot: { width: 7, height: 7, borderRadius: 4 },
+  metaDotPrimary: { backgroundColor: colors.primary },
+  metaDotViolet: { backgroundColor: colors.secondary },
+  metaText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: '700',
+  },
+  profileCard: { padding: spacing.sm },
+  profileRow: {
+    minHeight: 76,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    gap: spacing.sm,
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
-  memberName: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-  memberSub: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
-  statusBadge: { fontSize: 11, fontWeight: '600', marginTop: 2 },
-  revokeBtn: { padding: spacing.xs },
-  revokeBtnText: { fontSize: 14, color: colors.textSecondary },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.primary,
-    marginBottom: spacing.lg,
-    marginTop: spacing.xl,
+  profileRowSelected: {
+    backgroundColor: colors.primaryBg,
+    borderColor: '#B9DCFF',
   },
+  profileRail: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryBg,
+  },
+  profileRailSelected: { backgroundColor: colors.primary },
+  profileRowText: { flex: 1 },
+  profileTitle: { color: colors.textPrimary, fontSize: 15, lineHeight: 20, fontWeight: '600' },
+  profileTitleSelected: { color: colors.primary },
+  profileSubtitle: { color: colors.textSecondary, fontSize: 13, lineHeight: 18, marginTop: 2 },
+  profileSubtitleSelected: { color: colors.primary, fontWeight: '600' },
+  memberActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: spacing.xs,
+  },
+  iconAction: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0,
+    backgroundColor: colors.primaryBg,
+  },
+  emptyFamily: { marginTop: spacing.sm },
+  formLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  bloodGroupGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(17,24,29,0.38)',
+  },
+  dateSheet: {
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    backgroundColor: colors.surfaceRaised,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  sheetTitle: { color: colors.textPrimary, fontSize: 16, lineHeight: 21, fontWeight: '700' },
+  sheetActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  sheetButton: { flex: 1, marginTop: 0 },
 });

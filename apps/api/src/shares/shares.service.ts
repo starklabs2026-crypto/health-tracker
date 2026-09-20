@@ -10,6 +10,7 @@ import {
   type CreateShareRequest,
   type CreateShareResponse,
   type DoctorShare,
+  FamilyLinkStatus,
   type PublicShareView,
   RangeFlag,
   ShareExpiry,
@@ -24,26 +25,30 @@ const EXPIRY_MS: Record<ShareExpiry, number> = {
   [ShareExpiry.OneMonth]: 30 * 24 * 60 * 60 * 1000,
 };
 
-function mapShare(s: {
-  id: string;
-  ownerUserId: string;
-  profileUserId: string;
-  shareToken: string;
-  dateRangeStart: Date;
-  dateRangeEnd: Date;
-  parameterSet: unknown;
-  includeDocuments: boolean;
-  expiresAt: Date;
-  singleUse: boolean;
-  revokedAt: Date | null;
-  customNote: string | null;
-  createdAt: Date;
-}): DoctorShare {
+function mapShare(
+  s: {
+    id: string;
+    ownerUserId: string;
+    profileUserId: string;
+    shareToken: string;
+    dateRangeStart: Date;
+    dateRangeEnd: Date;
+    parameterSet: unknown;
+    includeDocuments: boolean;
+    expiresAt: Date;
+    singleUse: boolean;
+    revokedAt: Date | null;
+    customNote: string | null;
+    createdAt: Date;
+  },
+  shareBaseUrl?: string,
+): DoctorShare {
   return {
     id: s.id,
     ownerUserId: s.ownerUserId,
     profileUserId: s.profileUserId,
     shareToken: s.shareToken,
+    shareUrl: shareBaseUrl ? `${shareBaseUrl}/share/${s.shareToken}` : undefined,
     dateRangeStart: s.dateRangeStart.toISOString(),
     dateRangeEnd: s.dateRangeEnd.toISOString(),
     parameterSet: s.parameterSet as string[],
@@ -66,6 +71,8 @@ export class SharesService {
     shareBaseUrl: string,
   ): Promise<CreateShareResponse> {
     const profileUserId = body.profileUserId ?? ownerId;
+    await this.assertProfileIsShareable(ownerId, profileUserId);
+
     const expiry = body.expiry ?? ShareExpiry.OneWeek;
     const expiresAt = new Date(Date.now() + EXPIRY_MS[expiry]);
     const shareToken = randomBytes(32).toString('hex');
@@ -86,17 +93,34 @@ export class SharesService {
     });
 
     return {
-      share: mapShare(share),
+      share: mapShare(share, shareBaseUrl),
       shareUrl: `${shareBaseUrl}/share/${shareToken}`,
     };
   }
 
-  async list(ownerId: string): Promise<DoctorShare[]> {
+  private async assertProfileIsShareable(ownerId: string, profileUserId: string): Promise<void> {
+    if (profileUserId === ownerId) return;
+
+    const managedProfile = await this.prisma.familyLink.findFirst({
+      where: {
+        ownerUserId: ownerId,
+        memberUserId: profileUserId,
+        status: FamilyLinkStatus.Active,
+      },
+      select: { id: true },
+    });
+
+    if (!managedProfile) {
+      throw new ForbiddenException('Profile is not managed by this account');
+    }
+  }
+
+  async list(ownerId: string, shareBaseUrl: string): Promise<DoctorShare[]> {
     const shares = await this.prisma.doctorShare.findMany({
       where: { ownerUserId: ownerId, revokedAt: null },
       orderBy: { createdAt: 'desc' },
     });
-    return shares.map(mapShare);
+    return shares.map((share) => mapShare(share, shareBaseUrl));
   }
 
   async revoke(ownerId: string, shareId: string): Promise<void> {
@@ -137,9 +161,7 @@ export class SharesService {
       where: { id: share.profileUserId },
     });
 
-    const ageYears = Math.floor(
-      (Date.now() - user.dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000),
-    );
+    const ageYears = Math.floor((Date.now() - user.dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
 
     const paramSet = share.parameterSet as string[];
 

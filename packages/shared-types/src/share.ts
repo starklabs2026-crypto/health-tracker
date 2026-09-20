@@ -17,6 +17,7 @@ export interface DoctorShare {
   ownerUserId: string;
   profileUserId: string;
   shareToken: string;
+  shareUrl?: string;
   dateRangeStart: string;
   dateRangeEnd: string;
   parameterSet: string[]; // catalog parameter ids; empty => all
