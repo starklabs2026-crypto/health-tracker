@@ -29,7 +29,6 @@ struct ProfileNativeView: View {
     @State private var pendingAction: (() -> Void)?
     @State private var isShowingDiscardConfirmation = false
     @FocusState private var focusedField: ProfileEditorField?
-    @State private var keyboardOverlap: CGFloat = 0
 
     private let supportURL = URL(string: "https://starklabs2026-crypto.github.io/health-tracker/support/")!
 
@@ -47,15 +46,7 @@ struct ProfileNativeView: View {
             deleteAccountSection
         }
         .formStyle(.grouped)
-        .scrollDismissesKeyboard(.interactively)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            Color.clear.frame(height: keyboardOverlap)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
-            guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-            let overlap = max(0, UIScreen.main.bounds.height - frame.origin.y - 8)
-            keyboardOverlap = overlap > 80 ? overlap : 0
-        }
+        .keyboardAvoiding()
         .navigationTitle("Profile & settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -141,22 +132,12 @@ struct ProfileNativeView: View {
 
     private var accountSection: some View {
         Section {
-            HStack(alignment: .top, spacing: 14) {
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.largeTitle)
-                    .foregroundStyle(HealthFolioTheme.blue)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 8) {
-                    LabeledContent("Name", value: displayedAccountName)
-                    LabeledContent("Email", value: model.isSignedIn && !signedInEmailLabel.isEmpty ? signedInEmailLabel : "Not set")
-                        .privacySensitive()
-                    Label(model.isSignedIn ? "Signed in" : "On this device", systemImage: model.isSignedIn ? "checkmark.shield" : "iphone")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-                .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.vertical, 6)
+            LabeledContent("Name", value: displayedAccountName)
+            LabeledContent("Email", value: model.isSignedIn && !signedInEmailLabel.isEmpty ? signedInEmailLabel : "Not set")
+                .privacySensitive()
+            Label(model.isSignedIn ? "Signed in" : "On this device", systemImage: model.isSignedIn ? "checkmark.shield" : "iphone")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         } header: {
             Text("Account")
         } footer: {
@@ -290,14 +271,14 @@ struct ProfileNativeView: View {
 
     private var profileSection: some View {
         Section {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Name").font(.subheadline).foregroundStyle(.secondary)
-                TextField("Name", text: $name, axis: .vertical)
+            LabeledContent("Name") {
+                TextField("Not set", text: $name, axis: .vertical)
                     .textContentType(.name)
                     .textInputAutocapitalization(.words)
                     .focused($focusedField, equals: .name)
                     .submitLabel(.done)
                     .onSubmit { focusedField = nil }
+                    .multilineTextAlignment(.trailing)
             }
             LabeledContent("Email", value: model.isSignedIn && !signedInEmailLabel.isEmpty ? signedInEmailLabel : "Not set")
                 .privacySensitive()
@@ -353,9 +334,8 @@ struct ProfileNativeView: View {
 
     private var emailIngestionSection: some View {
         Section {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Handle").font(.subheadline).foregroundStyle(.secondary)
-                TextField("Forwarding alias", text: $alias)
+            LabeledContent("Handle") {
+                TextField("Not set", text: $alias)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.asciiCapable)

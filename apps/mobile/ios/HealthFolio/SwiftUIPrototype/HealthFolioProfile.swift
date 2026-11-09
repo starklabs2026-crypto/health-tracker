@@ -15,7 +15,9 @@ struct HealthFolioProfile: Identifiable, Hashable {
     var roleRaw: String
 
     var forwardingAddress: String {
-        "test.healthfolio+\(forwardingAlias)@gmail.com"
+        let alias = forwardingAlias.trimmingCharacters(in: .whitespacesAndNewlines)
+        if alias.isEmpty { return "Not set" }
+        return "\(alias)@records.healthfolio.app"
     }
 
     var role: FamilyProfileRole {

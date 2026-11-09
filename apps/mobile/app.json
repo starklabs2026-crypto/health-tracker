@@ -83,7 +83,7 @@
         "googleIosClientId": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
         "googleWebClientId": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
         "inboundEmailDomain": "records.healthfolio.app",
-        "inboundEmailAddressTemplate": "test.healthfolio+{alias}@gmail.com"
+        "inboundEmailAddressTemplate": "{alias}@records.healthfolio.app"
       },
       "eas": {
         "projectId": "YOUR_EAS_PROJECT_ID"

@@ -91,7 +91,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       googleIosClientId: identity.googleIosClientId,
       googleWebClientId: identity.googleWebClientId,
       inboundEmailDomain: 'records.healthfolio.app',
-      inboundEmailAddressTemplate: 'test.healthfolio+{alias}@gmail.com',
+      inboundEmailAddressTemplate: '{alias}@records.healthfolio.app',
     },
     eas: {
       projectId: identity.easProjectId,

@@ -70,6 +70,7 @@ struct CarePlanNativeView: View {
             .padding()
         }
         .background(HealthFolioTheme.background)
+        .keyboardAvoiding()
         .navigationTitle("Care plan")
         .navigationDestination(for: HealthRecord.self) { record in
             DocumentDetailNativeView(record: record)

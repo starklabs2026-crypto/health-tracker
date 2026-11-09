@@ -37,7 +37,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const EMAIL_INGEST_WEBHOOK_SECRET = Deno.env.get('EMAIL_INGEST_WEBHOOK_SECRET');
 const INTERNAL_FUNCTION_SECRET = Deno.env.get('INTERNAL_FUNCTION_SECRET');
 // Match the address emitted by HealthFolioProfile; alternative transports are server-owned.
-const EMAIL_INGEST_MAILBOX = Deno.env.get('EMAIL_INGEST_MAILBOX')?.trim().toLowerCase() || 'test.healthfolio@gmail.com';
+const EMAIL_INGEST_MAILBOX = Deno.env.get('EMAIL_INGEST_MAILBOX')?.trim().toLowerCase() ?? '';
 const EMAIL_INGEST_DOMAIN = Deno.env.get('EMAIL_INGEST_DOMAIN')?.trim().toLowerCase();
 const MAX_ATTACHMENTS = 10;
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;

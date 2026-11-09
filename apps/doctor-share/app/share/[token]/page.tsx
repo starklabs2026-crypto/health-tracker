@@ -1,6 +1,8 @@
 import type { PublicShareView } from '@medical-tracker/shared-types';
 
-const API_URL = process.env.DOCTOR_SHARE_API_URL ?? 'http://localhost:3000';
+const API_URL =
+  process.env.DOCTOR_SHARE_API_URL ??
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
 
 const FLAG_COLORS: Record<string, string> = {
   normal: '#2E7D32',
@@ -19,6 +21,7 @@ const FLAG_LABELS: Record<string, string> = {
 };
 
 async function fetchShare(token: string): Promise<PublicShareView | null> {
+  if (!API_URL) return null;
   try {
     const res = await fetch(
       `${API_URL}/public/share/${encodeURIComponent(token)}`,

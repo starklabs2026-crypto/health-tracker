@@ -98,6 +98,7 @@ struct PasswordResetNativeView: View {
             .frame(maxWidth: 540, alignment: .topLeading)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(HealthFolioTheme.background.ignoresSafeArea())
+            .keyboardAvoiding()
             .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
         }

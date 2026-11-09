@@ -61,6 +61,7 @@ struct AuthNativeView: View {
                 .frame(maxWidth: .infinity)
             }
             .background(HealthFolioTheme.background.ignoresSafeArea())
+            .keyboardAvoiding()
             .navigationBarTitleDisplayMode(.inline)
         }
         .onChange(of: mode) { _ in

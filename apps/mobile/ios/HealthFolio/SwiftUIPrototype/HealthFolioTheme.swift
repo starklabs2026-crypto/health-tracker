@@ -17,3 +17,27 @@ enum HealthFolioTheme {
     static let controlRadius: CGFloat = 18
     static let spacing: CGFloat = 16
 }
+
+private struct KeyboardAvoidingInset: ViewModifier {
+    @State private var overlap: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                Color.clear.frame(height: overlap)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
+                guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+                let covered = max(0, UIScreen.main.bounds.height - frame.minY)
+                overlap = covered > 80 ? covered : 0
+            }
+    }
+}
+
+extension View {
+    /// Keeps the focused field above the keyboard inside forms, sheets, and scroll views.
+    func keyboardAvoiding() -> some View {
+        modifier(KeyboardAvoidingInset())
+    }
+}

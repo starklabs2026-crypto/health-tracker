@@ -291,6 +291,7 @@ private struct CreateDoctorShareView: View {
             }
         }
         .navigationTitle("Create share link")
+        .keyboardAvoiding()
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Cancel", action: dismiss.callAsFunction)
