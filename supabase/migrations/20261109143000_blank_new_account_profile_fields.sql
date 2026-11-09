@@ -30,7 +30,7 @@ CREATE OR REPLACE FUNCTION public.upsert_app_user_profile(
 )
 RETURNS text
 LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = pg_catalog, public
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_auth_user_id text := auth.uid()::text;
