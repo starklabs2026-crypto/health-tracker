@@ -23,6 +23,7 @@ import {
   TopBar,
 } from '../../src/components/healthfolio';
 import { getMe, listDocuments, listReadings } from '../../src/lib/api/endpoints';
+import { displayedDateOfBirth } from '../../src/lib/profile/profileFields';
 import { useProfileStore } from '../../src/lib/profile/profileStore';
 import { colors, radius, spacing } from '../../src/theme/tokens';
 
@@ -250,7 +251,7 @@ export default function HomeScreen() {
   );
   const abnormal = pickAbnormal(allReadings);
   const currentPanels = panelCount(allReadings);
-  const ageYears = activeProfileId ? null : profileAgeYears(me?.user.dob);
+  const ageYears = activeProfileId ? null : profileAgeYears(displayedDateOfBirth(me?.user.dob));
   const healthScore = healthScoreBreakdown({
     documents: allDocs.length,
     readings: allReadings,

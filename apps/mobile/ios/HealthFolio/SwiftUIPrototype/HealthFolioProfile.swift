@@ -78,3 +78,34 @@ struct HealthFolioProfile: Identifiable, Hashable {
         }
     }
 }
+
+enum ProfileFieldPolicy {
+    /// Account creation used to persist these instants when the person had not entered a birthday.
+    static func isPlaceholderDateOfBirth(_ date: Date) -> Bool {
+        let instant = date.timeIntervalSince1970
+        if abs(instant) < 1 { return true }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+        let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        return parts.year == 2000 && parts.month == 1 && parts.day == 1
+            && parts.hour == 0 && parts.minute == 0 && (parts.second ?? 0) == 0
+    }
+
+    static func displayedDateOfBirth(_ date: Date?) -> Date? {
+        guard let date, !isPlaceholderDateOfBirth(date) else { return nil }
+        return date
+    }
+
+    /// "Other" paired with a creation placeholder is the untouched default, not a choice the person made.
+    static func displayedSex(_ sex: String, dateOfBirth: Date?) -> String {
+        let trimmed = sex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || trimmed.caseInsensitiveCompare("Not set") == .orderedSame {
+            return "Not set"
+        }
+        if trimmed.caseInsensitiveCompare("other") == .orderedSame,
+           let dateOfBirth, isPlaceholderDateOfBirth(dateOfBirth) {
+            return "Not set"
+        }
+        return trimmed
+    }
+}

@@ -507,7 +507,7 @@ actor NativeSupabaseAPI {
             body: ["expiresIn": 300]
         )
         let response = try decoder.decode(SignedURLResponse.self, from: data)
-        guard let url = URL(string: response.signedURL, relativeTo: NativeSupabaseConfig.url)?.absoluteURL else {
+        guard let url = NativeSupabaseConfig.absoluteSignedStorageURL(signedPath: response.signedURL) else {
             throw NativeSupabaseError.fileUnavailable
         }
         return url
@@ -1005,8 +1005,8 @@ actor NativeSupabaseAPI {
             session: session,
             body: [
                 "p_name": defaultName(for: authUser),
-                "p_dob": "2000-01-01T00:00:00.000Z",
-                "p_sex": "other",
+                "p_dob": NSNull(),
+                "p_sex": NSNull(),
                 "p_units_preference": "metric",
                 "p_blood_group": NSNull(),
                 "p_has_blood_group": false
@@ -1038,15 +1038,11 @@ actor NativeSupabaseAPI {
             return user
         }
 
-        if let email = authUser.email, !email.isEmpty {
-            return try await singleUser(queryItems: [
-                URLQueryItem(name: "select", value: "*"),
-                URLQueryItem(name: "email", value: "eq.\(email)"),
-                URLQueryItem(name: "limit", value: "1")
-            ], session: session)
-        }
-
-        return nil
+        return try await singleUser(queryItems: [
+            URLQueryItem(name: "select", value: "*"),
+            URLQueryItem(name: "id", value: "eq.\(authUser.id)"),
+            URLQueryItem(name: "limit", value: "1")
+        ], session: session)
     }
 
     private func singleUser(queryItems: [URLQueryItem], session: NativeSupabaseSession) async throws -> AppUser? {
@@ -1316,6 +1312,7 @@ actor NativeSupabaseAPI {
         guard let url = components.url else { throw NativeSupabaseError.backend("Invalid Supabase URL.") }
 
         var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         request.timeoutInterval = timeoutInterval ?? (rawBody == nil ? 30 : 120)
         request.httpMethod = method
         request.setValue(NativeSupabaseConfig.publishableKey, forHTTPHeaderField: "apikey")
@@ -1441,7 +1438,7 @@ actor NativeSupabaseAPI {
             trust: trust,
             source: fallbackSource,
             category: kind(for: document.docType ?? "other"),
-            status: recordStatus(for: document.ocrStatus),
+            status: recordStatus(for: document),
             sourceDate: sourceDate,
             valueCount: readings.count,
             flaggedCount: reviewCount,
@@ -1509,6 +1506,7 @@ actor NativeSupabaseAPI {
     ) -> HealthMetric {
         let range = reference?.resolvedRange(context: rangeContext)
         return HealthMetric(
+            id: UUID(uuidString: reading.id ?? "") ?? UUID(),
             parameterId: reading.parameterId,
             recordId: recordId,
             sourceTitle: sourceTitle,
@@ -1533,12 +1531,13 @@ actor NativeSupabaseAPI {
         familyLinkId: String? = nil,
         roleRaw: String? = nil
     ) -> HealthFolioProfile {
-        HealthFolioProfile(
+        let parsedDob = parseDate(user.dob)
+        return HealthFolioProfile(
             id: user.id,
             name: user.name?.isEmpty == false ? user.name! : (isPrimary ? "Me" : "Profile"),
             email: user.email ?? "",
-            dateOfBirth: parseDate(user.dob),
-            sex: displaySex(user.sex),
+            dateOfBirth: ProfileFieldPolicy.displayedDateOfBirth(parsedDob),
+            sex: ProfileFieldPolicy.displayedSex(displaySex(user.sex), dateOfBirth: parsedDob),
             bloodGroup: user.bloodGroup ?? "Not set",
             units: user.unitsPreference == "us" ? "US" : "Metric",
             forwardingAlias: user.inboundEmailAlias ?? aliasFromEmail(user.email),
@@ -1641,7 +1640,7 @@ actor NativeSupabaseAPI {
     private func passwordRecoveryVerifierQuery() -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: Bundle.main.bundleIdentifier ?? "com.starklabs.healthfolio",
+            kSecAttrService as String: Bundle.main.bundleIdentifier ?? "com.ORG.healthfolio",
             kSecAttrAccount as String: passwordRecoveryVerifierKey
         ]
     }
@@ -1696,8 +1695,18 @@ actor NativeSupabaseAPI {
     }
 
     private func note(for document: DocumentRow, valueCount: Int, reviewCount: Int) -> String {
+        let hasFile = !(document.fileUrl?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+        if document.ocrStatus == "pending_upload" && !hasFile {
+            return "The upload never finished, so there is no original file to open. Add the PDF or image again."
+        }
+        if document.ocrStatus == "failed" && !hasFile {
+            return document.ocrError ?? "This upload failed before a file was stored. Add the original PDF or image again."
+        }
         if document.ocrStatus == "failed" {
-            return document.ocrError ?? "OCR needs another pass. Try the original PDF or a clearer image."
+            return document.ocrError ?? "OCR needs another pass. The original file is still stored."
+        }
+        if document.ocrStatus == "queued" || document.ocrStatus == "processing" {
+            return "HealthFolio is still reading this file."
         }
         if valueCount == 0 {
             return "Uploaded to HealthFolio. OCR values will appear after processing."
@@ -1778,8 +1787,12 @@ actor NativeSupabaseAPI {
         }
     }
 
-    private func recordStatus(for ocrStatus: String?) -> NativeRecordStatus {
-        switch ocrStatus {
+    private func recordStatus(for document: DocumentRow) -> NativeRecordStatus {
+        let hasFile = !(document.fileUrl?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+        if document.ocrStatus == "pending_upload" && !hasFile {
+            return .failed
+        }
+        switch document.ocrStatus {
         case "failed": .failed
         case "ready_for_review": .ready
         case "queued", "processing", "pending_upload": .inProgress

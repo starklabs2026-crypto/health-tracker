@@ -115,6 +115,16 @@ struct AssistantNativeView: View {
                 AssistantStat(label: "Flags", value: "\(model.flaggedMetrics.count)")
             }
 
+            if model.hasPendingUploads || model.inProgressCount > 0 {
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text(model.hasPendingUploads ? "Reading your latest upload" : "Updating markers from records")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityElement(children: .combine)
+            }
+
             Text("Based on uploaded records and extracted readings. No diagnosis or medication dosing.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)

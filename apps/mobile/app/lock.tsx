@@ -5,7 +5,9 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Button, CenteredScreen, LogoMark, typography } from '../src/components/healthfolio';
 import { useAuthStore } from '../src/lib/auth/authStore';
+import { clearLocalAccountState } from '../src/lib/auth/localAccountState';
 import { signOut } from '../src/lib/auth/session';
+import { useUploadQueueStore } from '../src/lib/uploads/uploadQueueStore';
 import { hasAppProfile } from '../src/lib/supabase/auth';
 import { colors, spacing } from '../src/theme/tokens';
 
@@ -45,6 +47,8 @@ export default function LockScreen() {
 
   async function logout(): Promise<void> {
     await signOut();
+    useUploadQueueStore.setState({ items: [] });
+    clearLocalAccountState();
     router.replace('/welcome');
   }
 

@@ -136,8 +136,22 @@ final class HealthFolioAppModel: ObservableObject {
         return records.isEmpty ? 0 : max(40, min(96, base - min(18, flagged * 3)))
     }
 
+    var hasPendingUploads: Bool {
+        uploads.contains { $0.status == .queued || $0.status == .uploading || $0.status == .processing }
+    }
+
+    /// Records and readings for the profile currently on screen. Another account's rows never chart.
+    var scopedRecords: [HealthRecord] {
+        let owners = Set([profile.id, activeProfileId].compactMap { $0 }.filter { !$0.isEmpty })
+        guard !owners.isEmpty else { return records }
+        return records.filter { record in
+            guard let owner = record.ownerProfileId, !owner.isEmpty else { return true }
+            return owners.contains(owner)
+        }
+    }
+
     var allMetrics: [HealthMetric] {
-        records.flatMap(\.metrics)
+        dedupedMetrics(scopedRecords.flatMap(\.metrics))
     }
 
     var latestMetrics: [HealthMetric] {
@@ -209,7 +223,7 @@ final class HealthFolioAppModel: ObservableObject {
     }
 
     var chronologicalAge: Int? {
-        guard let dateOfBirth = profile.dateOfBirth else { return nil }
+        guard let dateOfBirth = ProfileFieldPolicy.displayedDateOfBirth(profile.dateOfBirth) else { return nil }
         return Calendar.current.dateComponents([.year], from: dateOfBirth, to: Date.now).year
     }
 
@@ -377,6 +391,7 @@ final class HealthFolioAppModel: ObservableObject {
 
     func signIn(email: String, password: String) async {
         let generation = beginDashboardOperation()
+        await discardLocalAccountData()
         firstLaunchAuthIntent = .returning
         isLoadingData = true
         defer { if dashboardGeneration == generation { isLoadingData = false } }
@@ -393,6 +408,7 @@ final class HealthFolioAppModel: ObservableObject {
 
     func signUp(email: String, password: String, consentSource: NativeConsentSource) async {
         let generation = beginDashboardOperation()
+        await discardLocalAccountData()
         firstLaunchAuthIntent = .newAccount
         isLoadingData = true
         defer { if dashboardGeneration == generation { isLoadingData = false } }
@@ -417,6 +433,7 @@ final class HealthFolioAppModel: ObservableObject {
         consentSource: NativeConsentSource? = nil
     ) async {
         let generation = beginDashboardOperation()
+        await discardLocalAccountData()
         firstLaunchAuthIntent = authIntent
         isLoadingData = true
         defer { if dashboardGeneration == generation { isLoadingData = false } }
@@ -436,6 +453,7 @@ final class HealthFolioAppModel: ObservableObject {
         consentSource: NativeConsentSource? = nil
     ) async {
         let generation = beginDashboardOperation()
+        await discardLocalAccountData()
         firstLaunchAuthIntent = authIntent
         isLoadingData = true
         defer { if dashboardGeneration == generation { isLoadingData = false } }
@@ -518,7 +536,7 @@ final class HealthFolioAppModel: ObservableObject {
     }
 
     func signOut() async {
-        AssistantChatLocalStore.clearAll()
+        await discardLocalAccountData()
         resetSignedOutState(message: "Signed out.")
         hasBootstrapped = true
         await supabase.signOut()
@@ -684,8 +702,28 @@ final class HealthFolioAppModel: ObservableObject {
         firstLaunchAuthIntent = .returning
         records = []
         uploads = []
+        careItems = []
         profile = HealthFolioProfile.signedOut
         sessionMessage = message
+    }
+
+    private func discardLocalAccountData() async {
+        await cancelPendingCareNotifications()
+        CarePlanLocalStore.clear()
+        careItems = []
+        uploads.forEach { cleanupStagedFile($0.fileURL) }
+        uploads = []
+        records = []
+        signedInProfile = nil
+        activeProfileId = nil
+        availableProfiles = []
+        profile = HealthFolioProfile.signedOut
+        assistantRemoteConfig = nil
+        assistantConfigLoadedAt = nil
+        AssistantChatLocalStore.clearAll()
+        assistantMessages = Self.seedAssistantMessages()
+        assistantHistoryProfileKey = nil
+        URLCache.shared.removeAllCachedResponses()
     }
 
     func exportHealthSummaryURL() async throws -> URL {
@@ -871,9 +909,19 @@ final class HealthFolioAppModel: ObservableObject {
     }
 
     func metrics(for parameterId: String) -> [HealthMetric] {
-        allMetrics
+        dedupedMetrics(scopedRecords.flatMap(\.metrics))
             .filter { $0.parameterId == parameterId }
             .sorted { $0.recordedAt > $1.recordedAt }
+    }
+
+    private func dedupedMetrics(_ metrics: [HealthMetric]) -> [HealthMetric] {
+        var seen = Set<String>()
+        return metrics.filter { metric in
+            let instant = String(format: "%.0f", metric.recordedAt.timeIntervalSince1970)
+            let value = metric.numericValue.map { String($0) } ?? metric.value
+            let key = [metric.parameterId, instant, value, metric.unit ?? ""].joined(separator: "|")
+            return seen.insert(key).inserted
+        }
     }
 
     func importFileURLs(_ urls: [URL], source: String) {
@@ -1313,11 +1361,23 @@ final class HealthFolioAppModel: ObservableObject {
     }
 
     private func apply(_ snapshot: NativeDashboardSnapshot) {
+        // A dashboard captured for another account must not repaint this session.
+        if let signedInProfile, isSignedIn, signedInProfile.id != snapshot.signedInProfile.id {
+            return
+        }
         isSignedIn = true
         signedInProfile = snapshot.signedInProfile
         profile = snapshot.activeProfile
         availableProfiles = snapshot.profiles
-        records = snapshot.records
+        let serverIds = Set(snapshot.records.map(\.id))
+        let pendingLocal = records.filter { record in
+            record.status == .inProgress && !serverIds.contains(record.id) && uploads.contains { upload in
+                upload.id == record.id || upload.localRecordId == record.id || upload.documentId == record.id
+            }
+        }
+        records = pendingLocal + snapshot.records.filter { server in
+            !pendingLocal.contains { $0.id == server.id }
+        }
         activeProfileId = snapshot.activeProfile.isPrimary ? nil : snapshot.activeProfile.id
         activateAssistantHistory(for: snapshot.activeProfile.id)
         scheduleFirstLaunchGuideIfNeeded()

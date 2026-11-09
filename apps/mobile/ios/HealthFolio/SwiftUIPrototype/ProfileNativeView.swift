@@ -29,6 +29,7 @@ struct ProfileNativeView: View {
     @State private var pendingAction: (() -> Void)?
     @State private var isShowingDiscardConfirmation = false
     @FocusState private var focusedField: ProfileEditorField?
+    @State private var keyboardOverlap: CGFloat = 0
 
     private let supportURL = URL(string: "https://starklabs2026-crypto.github.io/health-tracker/support/")!
 
@@ -47,6 +48,14 @@ struct ProfileNativeView: View {
         }
         .formStyle(.grouped)
         .scrollDismissesKeyboard(.interactively)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear.frame(height: keyboardOverlap)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
+            guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            let overlap = max(0, UIScreen.main.bounds.height - frame.origin.y - 8)
+            keyboardOverlap = overlap > 80 ? overlap : 0
+        }
         .navigationTitle("Profile & settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -137,16 +146,10 @@ struct ProfileNativeView: View {
                     .font(.largeTitle)
                     .foregroundStyle(HealthFolioTheme.blue)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(model.signedInProfile?.name ?? model.profile.name)
-                        .font(.headline)
-                    if model.isSignedIn {
-                        Text(signedInEmailLabel)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
-                            .privacySensitive()
-                    }
+                VStack(alignment: .leading, spacing: 8) {
+                    LabeledContent("Name", value: displayedAccountName)
+                    LabeledContent("Email", value: model.isSignedIn && !signedInEmailLabel.isEmpty ? signedInEmailLabel : "Not set")
+                        .privacySensitive()
                     Label(model.isSignedIn ? "Signed in" : "On this device", systemImage: model.isSignedIn ? "checkmark.shield" : "iphone")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -279,6 +282,12 @@ struct ProfileNativeView: View {
         }
     }
 
+    private var displayedAccountName: String {
+        let value = (model.signedInProfile?.name ?? model.profile.name).trimmingCharacters(in: .whitespacesAndNewlines)
+        if value.isEmpty || value == "Profile" { return "Not set" }
+        return value
+    }
+
     private var profileSection: some View {
         Section {
             VStack(alignment: .leading, spacing: 6) {
@@ -290,6 +299,8 @@ struct ProfileNativeView: View {
                     .submitLabel(.done)
                     .onSubmit { focusedField = nil }
             }
+            LabeledContent("Email", value: model.isSignedIn && !signedInEmailLabel.isEmpty ? signedInEmailLabel : "Not set")
+                .privacySensitive()
             Toggle("Date of birth", isOn: $hasDateOfBirth)
             if hasDateOfBirth {
                 if dynamicTypeSize.isAccessibilitySize {
@@ -343,7 +354,7 @@ struct ProfileNativeView: View {
     private var emailIngestionSection: some View {
         Section {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Forwarding alias").font(.subheadline).foregroundStyle(.secondary)
+                Text("Handle").font(.subheadline).foregroundStyle(.secondary)
                 TextField("Forwarding alias", text: $alias)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()

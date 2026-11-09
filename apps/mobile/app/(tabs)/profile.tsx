@@ -31,7 +31,9 @@ import {
   updateMe,
 } from '../../src/lib/api/endpoints';
 import { useAuthStore } from '../../src/lib/auth/authStore';
+import { clearLocalAccountState } from '../../src/lib/auth/localAccountState';
 import { signOut } from '../../src/lib/auth/session';
+import { useUploadQueueStore } from '../../src/lib/uploads/uploadQueueStore';
 import { publicRuntimeConfig } from '../../src/lib/config';
 import { colors, spacing } from '../../src/theme/tokens';
 
@@ -47,7 +49,7 @@ function formatDate(date: Date): string {
 }
 
 function editableDob(value: string | null | undefined): Date | null {
-  if (!value || value.startsWith('1970-01-01')) return null;
+  if (!value || value.startsWith('1970-01-01') || value.startsWith('2000-01-01T00:00:00')) return null;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
@@ -129,12 +131,13 @@ export default function Profile() {
   const deleteMutation = useMutation({
     mutationFn: deleteAccount,
     onSuccess: async () => {
-      qc.clear();
       try {
         await signOut();
       } catch {
         // The server may have already removed the auth account; local state still gets cleared below.
       }
+      useUploadQueueStore.setState({ items: [] });
+      clearLocalAccountState();
       setUnlocked(false);
       setDeleteModalVisible(false);
       setDeleteAcknowledged(false);
@@ -217,6 +220,8 @@ export default function Profile() {
 
   async function onSignOut(): Promise<void> {
     await signOut();
+    useUploadQueueStore.setState({ items: [] });
+    clearLocalAccountState();
     setUnlocked(false);
     router.replace('/welcome');
   }

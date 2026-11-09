@@ -143,7 +143,7 @@ function parseVisibleDate(raw: string): Date | null {
 function cleanPatientName(rawName: string | null): string | null {
   if (!rawName) return null;
   const cleaned = rawName
-    .replace(/^(?:patient|patient\s+name|name|pt\.?\s+name)\s*[:\-]\s*/i, '')
+    .replace(/^(?:patient|patient\s+name|name|pt\.?\s+name)\s*[:-]\s*/i, '')
     .replace(/\b(?:mr|mrs|ms|miss|master|shri|smt|dr)\.?\s+/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -194,7 +194,7 @@ function findProfileMatch<T extends { name: string }>(
   if (exact) return exact;
 
   const loose = profiles.filter((profile) => namesProbablyMatch(profile.name, patientName));
-  return loose.length === 1 ? loose[0] : null;
+  return loose.length === 1 ? (loose[0] ?? null) : null;
 }
 
 function extractDocumentMetadata(text: string): {
@@ -222,7 +222,7 @@ function extractDocumentMetadata(text: string): {
     .map((line) =>
       line
         .match(
-          /(?:lab|laboratory|hospital|diagnostic(?:s)?|provider)\s*(?:name)?\s*[:\-]\s*(.+)$/i,
+          /(?:lab|laboratory|hospital|diagnostic(?:s)?|provider)\s*(?:name)?\s*[:-]\s*(.+)$/i,
         )?.[1]
         ?.trim(),
     )
@@ -242,7 +242,7 @@ function extractDocumentMetadata(text: string): {
     .map((line) =>
       cleanPatientName(
         line.match(
-          /(?:patient|patient\s+name|name|pt\.?\s+name)\s*[:\-]\s*([A-Za-z][A-Za-z .'-]{1,119})$/i,
+          /(?:patient|patient\s+name|name|pt\.?\s+name)\s*[:-]\s*([A-Za-z][A-Za-z .'-]{1,119})$/i,
         )?.[1] ?? null,
       ),
     )

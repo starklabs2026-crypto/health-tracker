@@ -198,8 +198,8 @@ struct DocumentDetailNativeView: View {
         fileMetadata = nil
         previewMessage = nil
 
-        guard let fileKey = record.fileKey else {
-            previewMessage = "No stored source file is attached to this record yet."
+        guard let fileKey = record.fileKey, !fileKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            previewMessage = originalFileUnavailableMessage
             return
         }
 
@@ -225,8 +225,32 @@ struct DocumentDetailNativeView: View {
                 previewFileURL = try await downloadPreviewFile(from: url, preferredExtension: preferredFileExtension)
             }
         } catch {
-            previewMessage = (error as? LocalizedError)?.errorDescription ?? "The original file could not be prepared."
+            previewMessage = originalFileErrorMessage(error)
         }
+    }
+
+    private var originalFileUnavailableMessage: String {
+        switch record.ocrStatusRaw {
+        case "pending_upload":
+            return "This upload never finished, so there is no original file yet. Add the PDF or image again from Records."
+        case "failed":
+            return "This upload failed before a file was stored. Add the original PDF or image again."
+        case "queued", "processing":
+            return "The original file is still being saved. It will open here when the upload finishes."
+        default:
+            return "No original file is attached to this record."
+        }
+    }
+
+    private func originalFileErrorMessage(_ error: Error) -> String {
+        let message = (error as? LocalizedError)?.errorDescription ?? ""
+        if message.contains("404") || record.ocrStatusRaw == "queued" || record.ocrStatusRaw == "processing" {
+            return "The original file is not ready to open yet. Wait for the upload to finish, then open this record again."
+        }
+        if record.fileKey == nil {
+            return originalFileUnavailableMessage
+        }
+        return message.isEmpty ? "The original file could not be prepared." : message
     }
 
     @MainActor
@@ -237,8 +261,8 @@ struct DocumentDetailNativeView: View {
             return
         }
 
-        guard let fileKey = record.fileKey else {
-            openMessage = "The source file is listed, but no stored file path is attached yet."
+        guard let fileKey = record.fileKey, !fileKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            openMessage = originalFileUnavailableMessage
             return
         }
 
@@ -259,7 +283,7 @@ struct DocumentDetailNativeView: View {
             quickLookFile = PreviewFile(url: localFile)
             openMessage = nil
         } catch {
-            openMessage = (error as? LocalizedError)?.errorDescription ?? "The original file could not be opened right now."
+            openMessage = originalFileErrorMessage(error)
         }
     }
 

@@ -24,7 +24,7 @@ struct HealthMetric: Identifiable, Hashable {
         }
     }
 
-    let id = UUID()
+    let id: UUID
     let parameterId: String
     let recordId: UUID?
     let sourceTitle: String?
@@ -41,6 +41,7 @@ struct HealthMetric: Identifiable, Hashable {
     let recordedAt: Date
 
     init(
+        id: UUID = UUID(),
         parameterId: String? = nil,
         recordId: UUID? = nil,
         sourceTitle: String? = nil,
@@ -56,6 +57,7 @@ struct HealthMetric: Identifiable, Hashable {
         panel: String? = nil,
         recordedAt: Date = Date.now
     ) {
+        self.id = id
         self.parameterId = parameterId ?? name.lowercased().replacingOccurrences(of: " ", with: "-")
         self.recordId = recordId
         self.sourceTitle = sourceTitle

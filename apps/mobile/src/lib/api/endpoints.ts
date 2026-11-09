@@ -233,22 +233,6 @@ async function findAppUser(authUser = undefined as AuthUser | undefined): Promis
   if (res.error) throw res.error;
   if (res.data) return res.data as UserRow;
 
-  if (current.email) {
-    res = await supabase.from('User').select('*').eq('email', current.email).maybeSingle();
-    if (res.error) throw res.error;
-    if (res.data) {
-      const row = res.data as UserRow;
-      if (!row.authUserId) {
-        const update = await supabase
-          .from('User')
-          .update({ authUserId: current.id })
-          .eq('id', row.id);
-        if (update.error) throw update.error;
-      }
-      return { ...row, authUserId: current.id };
-    }
-  }
-
   return null;
 }
 
@@ -259,8 +243,8 @@ async function requireAppUser(): Promise<UserRow> {
 
   const { error } = await supabase.rpc('upsert_app_user_profile', {
     p_name: defaultProfileName(authUser),
-    p_dob: '2000-01-01T00:00:00.000Z',
-    p_sex: Sex.Other,
+    p_dob: null,
+    p_sex: null,
     p_units_preference: UnitsPreference.Metric,
     p_blood_group: null,
     p_has_blood_group: false,

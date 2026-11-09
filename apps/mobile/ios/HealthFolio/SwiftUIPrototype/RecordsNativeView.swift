@@ -61,7 +61,10 @@ struct RecordsNativeView: View {
                 }
                 .scrollIndicators(.hidden)
 
-                if records.isEmpty {
+                if records.isEmpty && (model.isLoadingData || model.hasPendingUploads) {
+                    ProgressView("Updating records")
+                        .frame(maxWidth: .infinity, minHeight: 160)
+                } else if records.isEmpty {
                     EmptyRecordsState(searchText: searchText)
                 } else {
                     LazyVStack(spacing: 12) {
