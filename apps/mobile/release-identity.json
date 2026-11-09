@@ -1,0 +1,15 @@
+{
+  "iosBundleIdentifier": "com.ORG.healthfolio",
+  "androidPackage": "com.ORG.healthfolio",
+  "appleTeamId": "YOUR_APPLE_TEAM_ID",
+  "ascAppId": "YOUR_ASC_APP_ID",
+  "easOwner": "YOUR_EXPO_OWNER",
+  "easSlug": "healthfolio",
+  "easProjectId": "YOUR_EAS_PROJECT_ID",
+  "urlScheme": "healthfolio",
+  "associatedDomains": [],
+  "usesAppleSignIn": true,
+  "googleIosUrlScheme": "com.googleusercontent.apps.YOUR_REVERSED_IOS_CLIENT_ID",
+  "googleIosClientId": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
+  "googleWebClientId": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
+}

@@ -42,7 +42,7 @@
   "submit": {
     "production": {
       "ios": {
-        "ascAppId": "6773293787"
+        "ascAppId": "YOUR_ASC_APP_ID"
       }
     }
   }

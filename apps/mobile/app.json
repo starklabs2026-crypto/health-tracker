@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HealthFolio",
-    "owner": "starklabs",
+    "owner": "YOUR_EXPO_OWNER",
     "slug": "healthfolio",
     "scheme": "healthfolio",
     "version": "1.0.0",
@@ -18,7 +18,7 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.starklabs.healthfolio",
+      "bundleIdentifier": "com.ORG.healthfolio",
       "buildNumber": "76",
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -30,7 +30,7 @@
       }
     },
     "android": {
-      "package": "com.starklabs.healthfolio",
+      "package": "com.ORG.healthfolio",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F4F7FA"
@@ -68,7 +68,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.249865909043-c2pn0u8jbt4b8sqtso91ggd1fkcbif3q"
+          "iosUrlScheme": "com.googleusercontent.apps.YOUR_REVERSED_IOS_CLIENT_ID"
         }
       ]
     ],
@@ -80,13 +80,13 @@
       "publicConfig": {
         "supabaseUrl": "https://qojdeuacwkmlxmodeabt.supabase.co",
         "supabaseAnonKey": "sb_publishable_d-pZ2zQvS-0QA5KR5EdloA_KOw1MUoI",
-        "googleIosClientId": "249865909043-c2pn0u8jbt4b8sqtso91ggd1fkcbif3q.apps.googleusercontent.com",
-        "googleWebClientId": "249865909043-9jq52l7h9rd01nhfkvv582rfopjprrdm.apps.googleusercontent.com",
+        "googleIosClientId": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
+        "googleWebClientId": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
         "inboundEmailDomain": "records.healthfolio.app",
         "inboundEmailAddressTemplate": "test.healthfolio+{alias}@gmail.com"
       },
       "eas": {
-        "projectId": "b06f1d7e-8692-4995-9a4f-8641dbffadbf"
+        "projectId": "YOUR_EAS_PROJECT_ID"
       }
     }
   }

@@ -126,7 +126,7 @@ struct NativeSupabaseSession: Codable, Hashable, Sendable {
     private static func keychainQuery() -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: Bundle.main.bundleIdentifier ?? "com.starklabs.healthfolio",
+            kSecAttrService as String: Bundle.main.bundleIdentifier ?? "com.ORG.healthfolio",
             kSecAttrAccount as String: NativeSupabaseConfig.authStorageKey
         ]
     }
@@ -147,7 +147,7 @@ struct NativeSupabaseSession: Codable, Hashable, Sendable {
         let fileManager = FileManager.default
         let support = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
         let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.starklabs.healthfolio"
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.ORG.healthfolio"
         return (support + documents).flatMap { base in
             [
                 base.appendingPathComponent(bundleID).appendingPathComponent("RCTAsyncLocalStorage_V1"),
