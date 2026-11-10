@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.asianol.healthfolio",
-      "buildNumber": "78",
+      "buildNumber": "79",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "HealthFolio uses the camera to scan lab reports, prescriptions, and other health documents you choose to upload.",

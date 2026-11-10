@@ -26,7 +26,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: false,
     bundleIdentifier: identity.iosBundleIdentifier,
-    buildNumber: '78',
+    buildNumber: '79',
     usesAppleSignIn: identity.usesAppleSignIn,
     associatedDomains: identity.associatedDomains,
     infoPlist: {
