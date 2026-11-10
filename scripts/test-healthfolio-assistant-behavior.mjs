@@ -380,6 +380,24 @@ test('provider failures and missing keys return sanitized errors', async () => {
   assert.equal(JSON.stringify([response, failure.logs]).includes('private provider details'), false);
 });
 
+test('provider 400 logs the error code and param without the question', async () => {
+  const h = await harness({ provider: () => new Response(JSON.stringify({
+    error: {
+      message: "Invalid value: 'input_text'. Supported values are: 'output_text' and 'refusal'. Question was What is my glucose result?",
+      type: 'invalid_request_error',
+      param: 'input[1].content[0]',
+      code: 'invalid_value',
+    },
+  }), { status: 400 }) });
+  const response = await h.request({ question: 'What is my glucose result?' });
+  assert.equal(response.status, 502);
+  const logged = JSON.stringify(h.logs);
+  assert.equal(logged.includes('invalid_value'), true);
+  assert.equal(logged.includes('input[1].content[0]'), true);
+  assert.equal(logged.includes('What is my glucose result?'), false);
+  assert.equal(h.providerRequests[0].body.input.some((item) => item.role === 'assistant' && JSON.stringify(item).includes('input_text')), false);
+});
+
 test('legacy model JSON still yields the existing client fields', async () => {
   const h = await harness({ result: { answer: answer.answer, sourceRecordIds: ['glucose-doc', 'glucose-doc'], isRefusal: false } });
   const response = await h.request();

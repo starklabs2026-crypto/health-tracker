@@ -6,6 +6,7 @@ import {
   assistantConfig,
   assistantErrorResponse,
   assistantResponseSchema,
+  providerErrorLog,
   ASSISTANT_SAFETY_PROMPT,
   assistantSubjectWords,
   bearerToken,
@@ -126,7 +127,7 @@ async function assertCurrentConsent(admin: SupabaseClient, userId: string): Prom
   const { data, error } = await admin.from('UserConsent')
     .select('acceptedAt, consentVersion, privacyPolicyVersion')
     .eq('userId', userId)
-    .in('consentVersion', ['2026-07-10', '2026-11-10'])
+    .in('consentVersion', ['2026-07-10', '2026-11-10', '2026-11-10.2'])
     .eq('eulaType', 'apple_standard')
     .eq('healthDataProcessingAccepted', true)
     .order('consentVersion', { ascending: false })
@@ -420,7 +421,11 @@ async function callOpenAI(
     });
 
     if (!response.ok) {
-      console.error('Assistant provider request failed', { status: response.status });
+      // Live assistant-response v2 logged only the status. The Responses API
+      // rejects an assistant turn whose content type is input_text with HTTP 400.
+      // This function does not forward client history, so that turn is not sent.
+      const bodyText = await response.text().catch(() => '');
+      console.error('Assistant provider request failed', providerErrorLog(response.status, bodyText, [question, context]));
       throw new HttpError(502, 'Assistant is temporarily unavailable.');
     }
 

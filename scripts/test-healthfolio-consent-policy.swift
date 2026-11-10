@@ -6,13 +6,13 @@ struct HealthFolioConsentPolicyTests {
         var failures: [String] = []
 
         expect(
-            HealthFolioConsentPolicy.consentVersion == "2026-11-10",
+            HealthFolioConsentPolicy.consentVersion == "2026-11-10.2",
             "consent version changed unexpectedly",
             failures: &failures
         )
 
         expect(
-            HealthFolioConsentPolicy.privacyPolicyVersion == "2026-11-10",
+            HealthFolioConsentPolicy.privacyPolicyVersion == "2026-11-10.2",
             "privacy version changed unexpectedly",
             failures: &failures
         )
@@ -44,7 +44,7 @@ struct HealthFolioConsentPolicyTests {
         )
 
         do {
-            let payload = Data(#"{"consentVersion":"2026-11-10","acceptedAt":"2026-11-10T10:00:00.123456+00:00"}"#.utf8)
+            let payload = Data(#"{"consentVersion":"2026-11-10.2","acceptedAt":"2026-11-10T10:00:00.123456+00:00"}"#.utf8)
             let status = try JSONDecoder().decode(NativeConsentStatus.self, from: payload)
             expect(
                 status.isCurrent,
