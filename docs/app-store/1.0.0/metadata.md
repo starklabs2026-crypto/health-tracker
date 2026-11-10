@@ -3,7 +3,7 @@
 ## Product Page
 
 - Name: `HealthFolio: Medical Records`
-- Subtitle: `Your health records, organized` (30/30 characters)
+- Subtitle: `Personal health records`
 - Primary category: `Medical`
 - Secondary category: `Health & Fitness`
 - Promotional text: `Store medical records, extract readings, follow trends, manage reminders, and create secure summaries you control.` (114/170 characters)

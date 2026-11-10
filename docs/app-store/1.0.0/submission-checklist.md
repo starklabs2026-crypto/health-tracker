@@ -1,39 +1,29 @@
-# Submission Checklist
+# Build 79 Submission Readiness
 
-## Code And Backend
+## Completed and verified
 
-- [ ] All release tests pass from the no-space snapshot.
-- [ ] Supabase migrations are applied in order.
-- [ ] `delete-account`, OCR, email ingestion, export, and sharing functions are deployed and smoke-tested.
-- [ ] Synthetic manual-upload, email-ingestion, export/share, and deletion test data is removed.
-- [ ] Build numbers are `1.0.0 (73)` in Expo, Info.plist, and Xcode.
-- [ ] Unused microphone permission is removed.
+- [x] EAS cloud build 1.0.0 (79) finished for com.asianol.healthfolio on team 2GVCQDUJFJ.
+- [x] Automatic upload targets App Store Connect app 6832929860.
+- [x] Native profile and consent tests, release identity checks, and 83 Assistant behavior checks passed.
+- [x] Latest live assistant-response source and shared Assistant module match the release branch.
+- [x] Current consent version 2026-11-10.2 added to the production insert policy; migration history repaired for that migration only.
+- [x] Public privacy policy identifies Focal Labs and OpenAI and provides the in-app consent anchor.
+- [x] Version 1.0.0 product description, keywords, URLs, copyright, and review notes saved.
+- [x] App Review contact and dedicated demo credentials saved privately. Production demo login/profile/document-access/logout smoke passed.
+- [x] Seven App Functionality privacy types published, linked to user; no tracking or phone-number collection.
+- [x] Medical primary category, Health & Fitness secondary category, and 16+ age questionnaire saved.
+- [x] Four 1320 × 2868 native iPhone screenshots uploaded; medium slot reuses existing assets.
+- [x] Manual release after approval selected.
 
-## Public URLs
+## Remaining before final submission
 
-- [ ] Privacy Policy returns HTTP 200.
-- [ ] Support returns HTTP 200 and displays `starklabs2026@gmail.com`.
-- [ ] Privacy Choices returns HTTP 200 and shows the in-app deletion path.
-- [ ] All in-app links open the same production URLs.
+- [ ] EAS upload completes, Apple processing completes, and build 79 is selected for version 1.0.0.
+- [ ] Owner confirms price and launch countries; these are not configured yet.
+- [ ] Owner confirms necessary third-party content rights and non-regulated-medical-device declaration.
+- [ ] If EU countries are selected, account holder completes DSA trader requirements.
+- [ ] Build 79 iPhone smoke test: current consent, email/Apple/Google login, fresh and expired reset links, reset countdown, profile/DOB/custom sex, upload/OCR, Assistant, reminders, sharing/export and account deletion with synthetic data.
+- [ ] Verify email forwarding live. Deployed inbound-email-ingest predates the reviewed source; confirm recipient configuration before deployment.
+- [ ] Stage Add for Review and verify Apple validation passes.
+- [ ] Final Submit for Review is performed only when the owner is ready.
 
-## App Store Connect
-
-- [ ] Product-page metadata entered from `metadata.md`.
-- [ ] Apple Standard EULA selected; no custom EULA uploaded.
-- [ ] Privacy label entered from `privacy-label.md`.
-- [ ] Age rating entered from `age-rating.md`.
-- [ ] Regulated medical device answers entered from `regulated-medical-device.md`.
-- [ ] Review notes and a synthetic reviewer account added.
-- [ ] Copyright/legal entity confirmed.
-- [ ] DSA trader status confirmed at account level.
-- [ ] Price, countries/regions, and release method confirmed.
-- [ ] Required iPhone screenshots uploaded in listed order.
-- [ ] iPad screenshots left empty because build 73 is iPhone-only.
-
-## Submission
-
-- [ ] EAS production build completed successfully.
-- [ ] Exact EAS build ID submitted, not `latest`.
-- [ ] Apple processing completed and build 73 selected for version 1.0.0.
-- [ ] Export compliance answer confirmed (`No non-exempt encryption`).
-- [ ] Final App Review submission performed by an authorized App Store Connect user.
+No final App Review submission has been made. Do not mark untested live paths complete based on source tests or screenshot rendering.

@@ -23,15 +23,10 @@ The forwarding address is shown in Profile. Supported attachments forwarded to t
 - Standard EULA: `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
 - Focal Labs is the operator shown in the app. Uploaded or forwarded files, and Assistant questions with relevant information from the selected profile, are sent to OpenAI to extract information and generate replies. The consent screen describes this as an outside AI provider and links to the privacy policy section that names OpenAI.
 - HealthFolio is not a regulated medical device.
-- There are no ads, cross-app tracking, purchases, or subscriptions in build 73.
+- There are no ads, cross-app tracking, purchases, or subscriptions in build 79.
 
 ## Reviewer Credentials
 
-Owner must fill these immediately before submission:
-
-- Review account email: `[OWNER REQUIRED]`
-- Review account password: `[OWNER REQUIRED]`
-- Review contact first and last name: `[OWNER REQUIRED]`
-- Review contact phone: `[OWNER REQUIRED]`
+The owner-supplied dedicated demo credentials and review contact are saved privately in App Store Connect. Production password sign-in, profile creation, authenticated document access, and logout were verified. The account has no real patient data and has not accepted consent on behalf of the reviewer.
 
 Use a dedicated synthetic review account. Do not place a real user password or health record in this repository.

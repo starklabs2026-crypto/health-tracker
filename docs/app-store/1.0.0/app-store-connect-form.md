@@ -21,7 +21,7 @@ This is the authoritative fill sheet for `HealthFolio 1.0.0 (79)`.
 
 | Field               | Value                                                                                                                |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Subtitle            | `Your health records, organized`                                                                                     |
+| Subtitle            | `Personal health records`                                                                                     |
 | Promotional text    | `Store medical records, extract readings, follow trends, manage reminders, and create secure summaries you control.` |
 | Keywords            | `medical records,lab reports,health tracker,OCR,medications,health trends,doctor summary`                            |
 | Support URL         | `https://starklabs2026-crypto.github.io/health-tracker/support/`                                                     |
@@ -48,9 +48,7 @@ This is the authoritative fill sheet for `HealthFolio 1.0.0 (79)`.
 - Notes: paste `review-notes.md` excluding the owner placeholders section.
 - Review contact and dedicated demo credentials are saved privately in App Store Connect.
 - Dedicated demo login was verified against production and saved privately in App Store Connect.
-- Contact first name: `[OWNER REQUIRED]`.
-- Contact last name: `[OWNER REQUIRED]`.
-- Contact phone: `[OWNER REQUIRED]`.
+- Contact details supplied by the owner are saved privately in App Store Connect.
 - Sign-in required: `Yes` for most synced functionality.
 
 Never commit reviewer credentials or a temporary password.
@@ -75,6 +73,6 @@ These are account/business decisions and cannot be inferred from code:
 ## Final Upload State
 
 - EAS build URL: https://expo.dev/accounts/starklabs/projects/healthfolio/builds/7d1917f1-e6e3-4029-95ab-b6083baddc8c.
-- IPA URL: `[GENERATED AFTER BUILD 73]`.
+- EAS cloud build: `FINISHED`; source commit `d362475`.
 - EAS submission URL: https://expo.dev/accounts/starklabs/projects/healthfolio/submissions/47db0032-326f-4e2f-a9e5-004ee8a456ee.
-- Apple processing status: `[VERIFY AFTER SUBMISSION]`.
+- EAS submission was `IN_QUEUE` at the last check; Apple processing and build selection remain pending.
