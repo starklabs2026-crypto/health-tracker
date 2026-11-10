@@ -75,4 +75,4 @@ These are account/business decisions and cannot be inferred from code:
 - EAS build URL: https://expo.dev/accounts/starklabs/projects/healthfolio/builds/7d1917f1-e6e3-4029-95ab-b6083baddc8c.
 - EAS cloud build: `FINISHED`; source commit `d362475`.
 - EAS submission URL: https://expo.dev/accounts/starklabs/projects/healthfolio/submissions/47db0032-326f-4e2f-a9e5-004ee8a456ee.
-- EAS submission was `IN_QUEUE` at the last check; Apple processing and build selection remain pending.
+- EAS submission finished. Apple processed build 79; it is saved on the version 1.0.0 draft and available in Team (Expo) internal TestFlight.

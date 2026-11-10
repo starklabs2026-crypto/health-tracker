@@ -3,7 +3,7 @@
 ## Completed and verified
 
 - [x] EAS cloud build 1.0.0 (79) finished for com.asianol.healthfolio on team 2GVCQDUJFJ.
-- [x] Automatic upload targets App Store Connect app 6832929860.
+- [x] EAS upload and Apple processing completed for App Store Connect app 6832929860. Build 79 is saved on draft version 1.0.0 and is Testing in the Team (Expo) internal group.
 - [x] Native profile and consent tests, release identity checks, and 83 Assistant behavior checks passed.
 - [x] Latest live assistant-response source and shared Assistant module match the release branch.
 - [x] Current consent version 2026-11-10.2 added to the production insert policy; migration history repaired for that migration only.
@@ -17,7 +17,6 @@
 
 ## Remaining before final submission
 
-- [ ] EAS upload completes, Apple processing completes, and build 79 is selected for version 1.0.0.
 - [ ] Owner confirms price and launch countries; these are not configured yet.
 - [ ] Owner confirms necessary third-party content rights and non-regulated-medical-device declaration.
 - [ ] If EU countries are selected, account holder completes DSA trader requirements.
