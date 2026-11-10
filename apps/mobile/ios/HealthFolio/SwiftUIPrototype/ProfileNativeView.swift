@@ -5,6 +5,7 @@ struct ProfileNativeView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject private var model: HealthFolioAppModel
+    @EnvironmentObject private var appLock: HealthFolioAppLock
     @State private var name = ""
     @State private var dateOfBirth = Date.now
     @State private var hasDateOfBirth = false
@@ -39,6 +40,7 @@ struct ProfileNativeView: View {
             profilesSection
             emailIngestionSection
             signInSection
+            appLockSection
             actionsSection
             privacyConsentSection
             supportSection
@@ -123,6 +125,18 @@ struct ProfileNativeView: View {
                 navigationTitle: "Change password"
             )
             .environmentObject(model)
+        }
+    }
+
+    private var appLockSection: some View {
+        Section {
+            Toggle("App lock", isOn: Binding(
+                get: { appLock.isEnabled },
+                set: { enabled in Task { await appLock.setEnabled(enabled) } }
+            ))
+            .disabled(appLock.isAuthenticating)
+        } footer: {
+            Text(appLock.message ?? "Require Face ID or your device passcode after reopening HealthFolio.")
         }
     }
 
@@ -762,5 +776,6 @@ private struct ProfileManagementRow: View {
     NavigationStack {
         ProfileNativeView()
             .environmentObject(HealthFolioAppModel())
+            .environmentObject(HealthFolioAppLock())
     }
 }

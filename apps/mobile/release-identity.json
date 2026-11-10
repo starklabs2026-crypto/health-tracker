@@ -9,7 +9,7 @@
   "urlScheme": "healthfolio",
   "associatedDomains": [],
   "usesAppleSignIn": true,
-  "googleIosUrlScheme": "com.googleusercontent.apps.YOUR_REVERSED_IOS_CLIENT_ID",
-  "googleIosClientId": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
-  "googleWebClientId": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
+  "googleIosUrlScheme": "com.googleusercontent.apps.326783637021-rudet3065p0a78ffq9i3q6tvvjd97mo4",
+  "googleIosClientId": "326783637021-rudet3065p0a78ffq9i3q6tvvjd97mo4.apps.googleusercontent.com",
+  "googleWebClientId": "326783637021-jjghkjheca8bmmijkib2a7opv23ku6lj.apps.googleusercontent.com"
 }

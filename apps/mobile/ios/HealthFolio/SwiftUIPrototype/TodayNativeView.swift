@@ -265,5 +265,6 @@ private struct EmailIngestionRecordRow: View {
     NavigationStack {
         TodayNativeView(selectedTab: .constant(.today))
             .environmentObject(HealthFolioAppModel())
+            .environmentObject(HealthFolioAppLock())
     }
 }

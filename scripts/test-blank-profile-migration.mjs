@@ -32,7 +32,7 @@ const other = '00000000-0000-4000-8000-0000000000a3';
 let started = false;
 try {
   checked(run('initdb', ['-D', data, '-U', 'postgres', '--auth=trust', '--no-locale', '--encoding=UTF8']), 'initdb');
-  checked(run('pg_ctl', ['-D', data, '-l', join(directory, 'postgres.log'), '-o', `-k ${directory} -c listen_addresses='' -c fsync=off`, '-w', 'start']), 'start postgres');
+  checked(run('pg_ctl', ['-D', data, '-l', join(directory, 'postgres.log'), '-o', `-k ${directory} -c listen_addresses='' -c fsync=off -c timezone=UTC`, '-w', 'start']), 'start postgres');
   started = true;
   console.log(checked(query('SELECT version();'), 'PostgreSQL version'));
   checked(query(`

@@ -40,6 +40,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>HealthFolioGoogleIosClientId</key>
+	<string>326783637021-rudet3065p0a78ffq9i3q6tvvjd97mo4.apps.googleusercontent.com</string>
+	<key>HealthFolioGoogleWebClientId</key>
+	<string>326783637021-jjghkjheca8bmmijkib2a7opv23ku6lj.apps.googleusercontent.com</string>
 	<key>HealthFolioURLScheme</key>
 	<string>healthfolio</string>
 	<key>CFBundleVersion</key>
@@ -57,8 +61,6 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>HealthFolio uses the camera to scan health documents you choose to upload.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Allow HealthFolio to use Face ID to unlock your health records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
