@@ -10,7 +10,6 @@ struct UploadRecordsNativeView: View {
     @State private var photoSelections: [PhotosPickerItem] = []
     @State private var importerSource = "Files"
     @State private var isShowingPrescriptionWarning = false
-    @State private var isShowingCameraNote = false
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -54,14 +53,6 @@ struct UploadRecordsNativeView: View {
                     }
                     .buttonStyle(.plain)
 
-                    SourceChoiceCard(
-                        title: "Camera",
-                        subtitle: "Scan soon",
-                        systemImage: "camera",
-                        isPrimary: false
-                    ) {
-                        isShowingCameraNote = true
-                    }
                     SourceChoiceCard(
                         title: "Prescription",
                         subtitle: "Rx source",
@@ -146,14 +137,6 @@ struct UploadRecordsNativeView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Prescription images can be misread. Review extracted text before relying on it.")
-        }
-        .alert("Camera scan", isPresented: $isShowingCameraNote) {
-            Button("Choose from Files") {
-                showImporter(source: "Camera")
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("For this build, choose an existing scan or image. Live camera capture can be layered onto the same OCR route next.")
         }
     }
 

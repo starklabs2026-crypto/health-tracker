@@ -1,24 +1,13 @@
--- New accounts must not store a fake birthday or sex.
--- Foreign-key indexes and SECURITY DEFINER EXECUTE grants are applied
--- separately by the owner. Do not add those statements here.
+-- New accounts must not store a fake birthday, sex, or phone number.
+-- Existing rows are left untouched: no backfill and no blanking.
+-- Safe on the live database, which has the Nov 9 grant/index migrations and
+-- 20261110110000_asianol_health_data_consent, and does not have
+-- 20260914120000_trusted_family_authorization or
+-- 20260914130000_profile_document_access_hardening.
+-- This function does not call objects created only by those two files.
 
 ALTER TABLE public."User" ALTER COLUMN dob DROP NOT NULL;
 ALTER TABLE public."User" ALTER COLUMN sex DROP NOT NULL;
-
-UPDATE public."User"
-SET sex = NULL
-WHERE lower(sex) = 'other'
-  AND dob IN (
-    timestamptz '2000-01-01 00:00:00+00',
-    timestamptz '1970-01-01 00:00:00+00'
-  );
-
-UPDATE public."User"
-SET dob = NULL
-WHERE dob IN (
-  timestamptz '2000-01-01 00:00:00+00',
-  timestamptz '1970-01-01 00:00:00+00'
-);
 
 CREATE OR REPLACE FUNCTION public.upsert_app_user_profile(
   p_name text DEFAULT NULL,
@@ -29,12 +18,14 @@ CREATE OR REPLACE FUNCTION public.upsert_app_user_profile(
   p_has_blood_group boolean DEFAULT false
 )
 RETURNS text
-LANGUAGE plpgsql SECURITY DEFINER
+LANGUAGE plpgsql
+SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_auth_user_id text := auth.uid()::text;
   v_email text := NULLIF(auth.jwt() ->> 'email', '');
+  -- Read only. Never written onto public."User". Callers do not pass a phone argument.
   v_phone text := NULLIF(auth.jwt() ->> 'phone', '');
   v_user_id text;
   v_user public."User"%ROWTYPE;
@@ -77,9 +68,9 @@ BEGIN
   END IF;
 
   IF v_user_id IS NULL THEN
-    INSERT INTO public."User" (id, "authUserId", email, phone, name, dob, sex,
+    INSERT INTO public."User" (id, "authUserId", email, name, dob, sex,
       "unitsPreference", "bloodGroup", "residencyRegion")
-    VALUES (v_auth_user_id, v_auth_user_id, v_email, v_phone,
+    VALUES (v_auth_user_id, v_auth_user_id, v_email,
       COALESCE(NULLIF(TRIM(p_name), ''), ''), p_dob, v_sex,
       COALESCE(p_units_preference, 'metric'),
       CASE WHEN p_has_blood_group THEN p_blood_group ELSE NULL END, 'US')
@@ -88,7 +79,6 @@ BEGIN
     UPDATE public."User" SET
       "authUserId" = v_auth_user_id,
       email = COALESCE("User".email, v_email),
-      phone = COALESCE("User".phone, v_phone),
       name = COALESCE(NULLIF(TRIM(p_name), ''), "User".name),
       dob = COALESCE(p_dob, "User".dob),
       sex = COALESCE(v_sex, "User".sex),
@@ -99,3 +89,7 @@ BEGIN
   RETURN v_user_id;
 END
 $$;
+
+ALTER FUNCTION public.upsert_app_user_profile(text, timestamptz, text, text, text, boolean) SET search_path = public, pg_temp;
+REVOKE EXECUTE ON FUNCTION public.upsert_app_user_profile(text, timestamptz, text, text, text, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.upsert_app_user_profile(text, timestamptz, text, text, text, boolean) TO authenticated, service_role;

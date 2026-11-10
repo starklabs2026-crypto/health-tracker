@@ -47,6 +47,7 @@
     "test:ingestion-security": "node scripts/test-healthfolio-ingestion-security.mjs",
     "test:deletion-behavior": "node scripts/test-healthfolio-account-deletion-behavior.mjs",
     "test:profile-document-access": "node scripts/test-profile-document-access-postgres.mjs",
+    "test:blank-profile": "node scripts/test-blank-profile-migration.mjs",
     "test:inbound-email-security": "node scripts/test-healthfolio-inbound-email-security.mjs",
     "test:assistant-policy": "swift -frontend -interpret -sdk \"$(xcrun --sdk macosx --show-sdk-path)\" -target \"$(uname -m)-apple-macosx$(sw_vers -productVersion)\" apps/mobile/ios/HealthFolio/SwiftUIPrototype/AssistantPrompt.swift scripts/test-healthfolio-assistant-policy.swift",
     "test:assistant-history": "swift -frontend -interpret -sdk \"$(xcrun --sdk macosx --show-sdk-path)\" -target \"$(uname -m)-apple-macosx$(sw_vers -productVersion)\" apps/mobile/ios/HealthFolio/SwiftUIPrototype/AssistantMessage.swift apps/mobile/ios/HealthFolio/SwiftUIPrototype/AssistantChatLocalStore.swift scripts/test-healthfolio-assistant-history.swift",
