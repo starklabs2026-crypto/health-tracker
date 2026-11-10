@@ -63,7 +63,7 @@ try {
   for (const name of migrations) {
     checked(query(readFileSync(join(root, 'supabase/migrations', name), 'utf8')), name);
   }
-  checked(query(readFileSync(join(root, 'supabase/migrations/20261109143000_blank_new_account_profile_fields.sql'), 'utf8')), 'migration is idempotent');
+  checked(query(readFileSync(join(root, 'supabase/migrations/20261110115757_blank_new_account_profile_fields.sql'), 'utf8')), 'migration is idempotent');
 
   checked(query(`
     INSERT INTO auth.users VALUES ('${existing}'), ('${fresh}'), ('${other}');
