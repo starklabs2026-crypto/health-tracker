@@ -63,12 +63,12 @@ struct ConsentNativeView: View {
                 .font(.headline)
                 .foregroundStyle(HealthFolioTheme.ink)
 
-            Text("Asianol Lubricants Private Limited operates HealthFolio and processes your account details and health records to provide the service.")
+            Text("Focal Labs operates HealthFolio and processes your account details and health records to provide the service.")
                 .font(.body)
                 .foregroundStyle(HealthFolioTheme.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("HealthFolio sends uploaded or forwarded medical files to OpenAI to extract text and readings. When you use Assistant, HealthFolio sends your question and relevant information from the selected health profile to OpenAI to generate a reply.")
+            Text("HealthFolio uses AI to extract text and readings from uploaded or forwarded files, and to answer your Assistant questions using information from the selected health profile.")
                 .font(.body)
                 .foregroundStyle(HealthFolioTheme.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
@@ -99,7 +99,7 @@ struct ConsentNativeView: View {
     private var acknowledgementSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Toggle(isOn: $hasAcknowledgedConsent) {
-                Text("I agree to Asianol’s processing of my account and health data, including sending the information described above to OpenAI for document extraction and Assistant replies.")
+                Text("I agree to Focal Labs processing my account and health data, including using AI to extract information from my records and answer Assistant questions.")
                     .font(.body)
                     .foregroundStyle(HealthFolioTheme.ink)
                     .fixedSize(horizontal: false, vertical: true)

@@ -69,6 +69,38 @@ export function publicAssistantConfig(config = assistantConfig()) {
   };
 }
 
+export function providerErrorLog(status: number, bodyText: string, redactions: string[] = []): {
+  status: number;
+  type?: string;
+  code?: string;
+  param?: string;
+  message?: string;
+} {
+  let message: string | undefined;
+  let type: string | undefined;
+  let code: string | undefined;
+  let param: string | undefined;
+  try {
+    const parsed = JSON.parse(bodyText) as { error?: { message?: unknown; type?: unknown; code?: unknown; param?: unknown } };
+    const error = parsed?.error;
+    if (error && typeof error === 'object') {
+      if (typeof error.type === 'string') type = error.type.slice(0, 80);
+      if (typeof error.code === 'string') code = error.code.slice(0, 80);
+      if (typeof error.param === 'string') param = error.param.slice(0, 160);
+      if (typeof error.message === 'string') message = error.message;
+    }
+  } catch {
+    message = undefined;
+  }
+  if (message) {
+    for (const secret of redactions) {
+      if (secret.length >= 4) message = message.split(secret).join('[redacted]');
+    }
+    message = message.slice(0, 400);
+  }
+  return { status, type, code, param, message };
+}
+
 export function assistantErrorResponse(error: unknown): Response {
   if (error instanceof HttpError) {
     return jsonResponse({ error: error.message }, error.status);

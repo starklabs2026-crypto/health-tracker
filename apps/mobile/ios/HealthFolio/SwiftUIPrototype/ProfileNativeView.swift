@@ -167,7 +167,7 @@ struct ProfileNativeView: View {
                 }
                 .disabled(isBusy)
             } else {
-                TextField("HealthFolio email", text: $signInEmail)
+                TextField("Email", text: $signInEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()

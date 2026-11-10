@@ -63,8 +63,8 @@ function queueErrorMessage(error: unknown): string {
   if (!message) return 'Upload failed';
   if (/selected file was empty/i.test(message)) return 'The file was empty';
   if (/network request failed|failed to fetch|timeout/i.test(message)) return 'Network issue';
-  if (/OpenAI|OCR/i.test(message)) return 'Could not read this file';
-  if (/OPENAI_API_KEY/i.test(message)) return 'Analysis is unavailable';
+  if (/OCR|could not read this file/i.test(message)) return 'Could not read this file';
+  if (/API_KEY/i.test(message)) return 'Analysis is unavailable';
   return message;
 }
 

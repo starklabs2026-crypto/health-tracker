@@ -119,7 +119,7 @@ struct AuthNativeView: View {
             }
 
             VStack(spacing: 12) {
-                TextField("HealthFolio email", text: $email)
+                TextField("Email", text: $email)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
