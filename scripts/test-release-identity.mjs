@@ -9,7 +9,7 @@ const identity = JSON.parse(read('apps/mobile/release-identity.json'));
 assert.equal(identity.iosBundleIdentifier, 'com.ORG.healthfolio');
 assert.equal(identity.androidPackage, 'com.ORG.healthfolio');
 assert.match(identity.appleTeamId, /^YOUR_/);
-assert.match(identity.ascAppId, /^YOUR_/);
+assert.equal(identity.ascAppId, '6832929860');
 assert.match(identity.easOwner, /^YOUR_/);
 assert.match(identity.easProjectId, /^YOUR_/);
 assert.equal(identity.urlScheme, 'healthfolio');

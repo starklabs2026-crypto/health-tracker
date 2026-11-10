@@ -16,7 +16,8 @@ Public pages:
 
 ## Release Identity
 
-- App Store Connect Apple ID: `6773293787`
+- App Store Connect Apple ID for this organization launch: `6832929860` (`ascAppId` in `apps/mobile/release-identity.json` and `apps/mobile/eas.json` `submit.production.ios.ascAppId`)
+- Previous individual app, not the launch target: `6773293787`
 - Bundle ID: `com.starklabs.healthfolio`
 - SKU: `HEALTHFOLIO-IOS-001`
 - Expo project: `@starklabs/healthfolio`
@@ -98,6 +99,14 @@ Saved live on project `qojdeuacwkmlxmodeabt`:
 Password reset, sign-up confirmation, magic links, and OAuth in this PR send `redirectTo` = `<urlScheme>://auth/callback` from `apps/mobile/release-identity.json`. Today that is `healthfolio://auth/callback`. A separate build requests `healthfolio://auth/callback?flow=recovery` for Forgot password. The callback handler treats `flow=recovery` the same as `type=recovery`, so either link opens Set new password.
 
 Changing `urlScheme` in `release-identity.json` requires the same scheme in the iOS URL types, `HealthFolioURLScheme`, the Expo scheme, and the Supabase fields above.
+
+## Manual iPhone test before TestFlight
+
+Install a device build of this PR and use a real HealthFolio account. Run the three checks on a `type=recovery` link, then again on a `flow=recovery` link. This PR requests `healthfolio://auth/callback`. The other build requests `healthfolio://auth/callback?flow=recovery`. Both must behave the same after the email opens the app.
+
+1. A fresh reset link opens Set new password. After saving the new password, the user is signed in.
+2. Opening that same link again, or an expired link, shows that the link is invalid or has expired. Send a new link delivers an email that can be used.
+3. A second request within 60 seconds shows the countdown. It does not show a raw 429.
 
 ## Required Functional Smoke Matrix
 
