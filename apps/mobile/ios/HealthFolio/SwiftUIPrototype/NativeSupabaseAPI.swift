@@ -68,6 +68,7 @@ actor NativeSupabaseAPI {
         let responseData = try await request(
             path: "/auth/v1/signup",
             method: "POST",
+            queryItems: [URLQueryItem(name: "redirect_to", value: NativeSupabaseConfig.authCallbackURL.absoluteString)],
             body: ["email": email, "password": password]
         )
         guard let response = try? decoder.decode(SignInResponse.self, from: responseData) else {
@@ -92,6 +93,7 @@ actor NativeSupabaseAPI {
         }
 
         let generation = await sessions.beginAuthentication()
+        clearPasswordRecoveryVerifier()
         let codeVerifier = randomURLSafeString(byteCount: 48)
         let codeChallenge = codeChallenge(for: codeVerifier)
         let callbackURL = try await startOAuth(provider: provider, codeChallenge: codeChallenge)
@@ -129,13 +131,15 @@ actor NativeSupabaseAPI {
     }
 
     func requestMagicLink(email: String) async throws {
+        let redirectTo = NativeSupabaseConfig.authCallbackURL.absoluteString
         _ = try await request(
             path: "/auth/v1/otp",
             method: "POST",
+            queryItems: [URLQueryItem(name: "redirect_to", value: redirectTo)],
             body: [
                 "email": email,
                 "create_user": false,
-                "email_redirect_to": NativeSupabaseConfig.authCallbackURL.absoluteString
+                "email_redirect_to": redirectTo
             ]
         )
     }
@@ -144,12 +148,14 @@ actor NativeSupabaseAPI {
         let codeVerifier = randomURLSafeString(byteCount: 48)
         let codeChallenge = codeChallenge(for: codeVerifier)
         do {
+            let redirectTo = NativeSupabaseConfig.authCallbackURL.absoluteString
             _ = try await request(
                 path: "/auth/v1/recover",
                 method: "POST",
-                queryItems: [URLQueryItem(name: "redirect_to", value: NativeSupabaseConfig.passwordRecoveryCallbackURL.absoluteString)],
+                queryItems: [URLQueryItem(name: "redirect_to", value: redirectTo)],
                 body: [
                     "email": email,
+                    "redirect_to": redirectTo,
                     "code_challenge": codeChallenge,
                     "code_challenge_method": "s256"
                 ]
@@ -174,15 +180,27 @@ actor NativeSupabaseAPI {
     }
 
     func isPasswordRecoveryCallback(_ url: URL) -> Bool {
-        let params = callbackParams(from: url)
-        return params["flow"] == "recovery" || params["type"] == "recovery"
+        AuthCallback.isRecoveryCallback(
+            callbackParams(from: url),
+            hasStoredRecoveryVerifier: savedPasswordRecoveryVerifier() != nil
+        )
     }
 
     func completeAuthCallback(_ url: URL) async throws -> NativeAuthCallbackResult {
         let generation = await sessions.beginAuthentication()
         let isRecovery = isPasswordRecoveryCallback(url)
         let verifier = isRecovery ? savedPasswordRecoveryVerifier() : nil
-        let session = try await session(fromCallbackURL: url, codeVerifier: verifier)
+        let session: NativeSupabaseSession
+        do {
+            session = try await session(fromCallbackURL: url, codeVerifier: verifier)
+        } catch let NativeSupabaseError.recoveryLinkExpired(message) {
+            clearPasswordRecoveryVerifier()
+            throw NativeSupabaseError.recoveryLinkExpired(message)
+        } catch let NativeSupabaseError.http(_, message)
+            where AuthCallback.isExpiredOrUsedLink(["error_description": message]) {
+            clearPasswordRecoveryVerifier()
+            throw NativeSupabaseError.recoveryLinkExpired(message)
+        }
         try await sessions.commit(session, generation: generation)
         if isRecovery {
             clearPasswordRecoveryVerifier()
@@ -884,6 +902,10 @@ actor NativeSupabaseAPI {
 
     private func session(fromCallbackURL url: URL, codeVerifier: String?) async throws -> NativeSupabaseSession {
         let params = callbackParams(from: url)
+        if AuthCallback.isExpiredOrUsedLink(params) {
+            let description = params["error_description"] ?? params["error"] ?? "Email link is invalid or has expired"
+            throw NativeSupabaseError.recoveryLinkExpired(description)
+        }
         if let errorDescription = params["error_description"], !errorDescription.isEmpty {
             throw NativeSupabaseError.backend(errorDescription)
         }
@@ -915,6 +937,9 @@ actor NativeSupabaseAPI {
             throw NativeSupabaseError.backend("The sign-in callback did not include a session.")
         }
         guard let codeVerifier else {
+            if AuthCallback.isRecovery(params) {
+                throw NativeSupabaseError.recoveryLinkExpired("This reset link is invalid or has expired")
+            }
             throw NativeSupabaseError.backend("This sign-in link needs to be opened from the current HealthFolio sign-in attempt.")
         }
         let data = try await request(

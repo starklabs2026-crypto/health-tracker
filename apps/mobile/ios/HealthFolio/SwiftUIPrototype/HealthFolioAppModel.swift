@@ -73,6 +73,9 @@ final class HealthFolioAppModel: ObservableObject {
     @Published var consentStatus: NativeConsentStatus = .missing
     @Published var isRecordingConsent = false
     @Published var isPasswordResetRequired = false
+    @Published var passwordResetEmail = ""
+    @Published var passwordResetResendAt: Date?
+    @Published var recoveryLinkError: String?
     @Published var lastUploadError: String?
     @Published var isShowingFirstLaunchGuide = false
     @Published var firstLaunchGuideStep = FirstLaunchGuideStep.profile
@@ -485,11 +488,24 @@ final class HealthFolioAppModel: ObservableObject {
             return
         }
 
+        let remaining = PasswordResetCooldown.remaining(until: passwordResetResendAt)
+        if remaining > 0 {
+            sessionMessage = "You can request another reset link in \(remaining) seconds."
+            return
+        }
+
         isLoadingData = true
         defer { isLoadingData = false }
+        passwordResetEmail = email
         do {
             try await supabase.requestPasswordReset(email: email)
+            passwordResetResendAt = Date().addingTimeInterval(TimeInterval(PasswordResetCooldown.seconds))
+            recoveryLinkError = nil
             sessionMessage = "Check your email for the HealthFolio password reset link."
+        } catch let NativeSupabaseError.http(statusCode, message)
+            where PasswordResetCooldown.isRateLimited(statusCode: statusCode, message: message) {
+            passwordResetResendAt = Date().addingTimeInterval(TimeInterval(PasswordResetCooldown.seconds))
+            sessionMessage = "You can request another reset link in \(PasswordResetCooldown.seconds) seconds."
         } catch {
             sessionMessage = friendlySessionMessage(error)
         }
@@ -508,8 +524,14 @@ final class HealthFolioAppModel: ObservableObject {
                 try await finishAuthenticatedFlow(snapshot, acceptedConsentSource: nil)
             }
             if callback.isRecovery {
+                recoveryLinkError = nil
                 sessionMessage = "Set a new password to finish account recovery."
             }
+        } catch let NativeSupabaseError.recoveryLinkExpired {
+            guard dashboardGeneration == generation else { return }
+            isPasswordResetRequired = false
+            recoveryLinkError = "This reset link is invalid or has expired."
+            sessionMessage = recoveryLinkError
         } catch {
             guard dashboardGeneration == generation else { return }
             sessionMessage = friendlySessionMessage(error)

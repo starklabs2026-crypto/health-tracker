@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 struct PasswordResetNativeView: View {
@@ -127,6 +128,72 @@ struct PasswordResetNativeView: View {
         }
         .padding(14)
         .background(HealthFolioTheme.card, in: RoundedRectangle(cornerRadius: HealthFolioTheme.controlRadius))
+    }
+}
+
+struct ExpiredRecoveryLinkView: View {
+    @EnvironmentObject private var model: HealthFolioAppModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var now = Date()
+
+    private var remaining: Int {
+        PasswordResetCooldown.remaining(until: model.passwordResetResendAt, now: now)
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Reset link expired")
+                    .font(.title2.bold())
+                    .foregroundStyle(HealthFolioTheme.ink)
+                Text(model.recoveryLinkError ?? "This reset link is invalid or has expired.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                TextField("HealthFolio email", text: $model.passwordResetEmail)
+                    .textContentType(.username)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding(14)
+                    .background(HealthFolioTheme.card, in: RoundedRectangle(cornerRadius: HealthFolioTheme.controlRadius))
+
+                Button {
+                    Task { await model.requestPasswordReset(email: model.passwordResetEmail) }
+                } label: {
+                    Text(remaining > 0 ? "Send a new link (\(remaining)s)" : "Send a new link")
+                        .bold()
+                        .frame(maxWidth: .infinity, minHeight: 54)
+                        .foregroundStyle(.white)
+                        .background(HealthFolioTheme.blue, in: RoundedRectangle(cornerRadius: HealthFolioTheme.controlRadius))
+                }
+                .buttonStyle(.plain)
+                .disabled(remaining > 0 || model.isLoadingData || model.passwordResetEmail.isEmpty)
+                .accessibilityLabel(remaining > 0 ? "Send a new link in \(remaining) seconds" : "Send a new link")
+
+                if let sessionMessage = model.sessionMessage, !sessionMessage.isEmpty {
+                    Text(sessionMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(HealthFolioTheme.background.ignoresSafeArea())
+            .keyboardAvoiding()
+            .navigationTitle("Password reset")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+            .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
+                now = date
+            }
+        }
     }
 }
 

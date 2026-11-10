@@ -88,9 +88,25 @@ Use this sequence for every future release change.
 
 15. Verify Apple processing, select the build in App Store Connect, fill every field from the form document, and perform the final human-only legal/account-holder decisions.
 
+## Supabase Auth URL settings
+
+Password reset, sign-up confirmation, magic links, and OAuth all pass `redirectTo` = `<urlScheme>://auth/callback` from `apps/mobile/release-identity.json`. Today that is `healthfolio://auth/callback`. The shipping SwiftUI app and the Expo auth module both build that URL. They do not use the Supabase Site URL as the callback.
+
+In the Supabase dashboard for project `qojdeuacwkmlxmodeabt`, open Authentication → URL Configuration and set:
+
+- Site URL: `healthfolio://auth/callback`
+- Redirect URLs: include `healthfolio://auth/callback` and `healthfolio://**`
+
+The Site URL is currently `http://localhost:3000`. A recovery email then verifies once, redirects to localhost, and the app never shows Set new password. The next tap reports that the email link is invalid or has expired.
+
+Keep the custom scheme as the Site URL. It is the link the iOS app is registered to open. Use a hosted page only if the dashboard refuses a custom-scheme Site URL. That page has to forward the query and the fragment (`code`, `token_hash`, `type`, `access_token`, `refresh_token`, and any `error` fields) to `healthfolio://auth/callback` without calling `/verify` again. The published GitHub Pages site does not run scripts, so it cannot do that hop safely.
+
+Changing `urlScheme` in `release-identity.json` requires the same scheme in the iOS URL types, `HealthFolioURLScheme`, the Expo scheme, and both Supabase fields above.
+
 ## Required Functional Smoke Matrix
 
-- New email account, Apple sign-in, and Google sign-in.
+- New email account, Apple sign-in, Google sign-in, and password reset from the emailed link through Set new password.
+- An already-used or expired reset link shows Send a new link, and a second request inside 60 seconds shows a countdown.
 - Consent acceptance, consent retry, sign out, and first-launch guide reset for a new account.
 - Manual ingestion from Files, Photos, and camera.
 - Forwarded-email ingestion with a supported attachment.

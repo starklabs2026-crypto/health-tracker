@@ -40,6 +40,8 @@
 			</array>
 		</dict>
 	</array>
+	<key>HealthFolioURLScheme</key>
+	<string>healthfolio</string>
 	<key>CFBundleVersion</key>
 	<string>76</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

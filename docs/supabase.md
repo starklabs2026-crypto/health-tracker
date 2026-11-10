@@ -28,8 +28,12 @@ Configure only project `qojdeuacwkmlxmodeabt`.
 
 Auth -> URL Configuration:
 
+The app sends an explicit `redirectTo` of `healthfolio://auth/callback` (the `urlScheme` in `apps/mobile/release-identity.json`) on sign-up, magic link, OAuth, and password reset. Supabase uses the Site URL only when that redirect is missing or not allowlisted. The live Site URL is still `http://localhost:3000`, which consumes the recovery token and never opens the app.
+
 - Site URL: `healthfolio://auth/callback`
-- Additional redirect URL: `healthfolio://auth/callback`
+- Redirect URLs: `healthfolio://auth/callback` and `healthfolio://**`
+
+Use the custom scheme as the Site URL. A hosted HTTPS page cannot forward the recovery `code` or `#access_token` fragment without client-side script, and the public site does not run scripts. Set an HTTPS Site URL only if the dashboard rejects a custom scheme, and make that page forward both the query string and the URL fragment to `healthfolio://auth/callback` before anything else calls `/verify`. Do not leave the Site URL as `http://localhost:3000`.
 
 Auth -> Providers:
 

@@ -1,33 +1,45 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
-import * as Linking from 'expo-linking';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import {
   GoogleSignin,
   isSuccessResponse,
   type SignInResponse,
 } from '@react-native-google-signin/google-signin';
+import type { EmailOtpType } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
+import identity from '../../../release-identity.json';
 import { supabase } from './client';
 import { publicRuntimeConfig } from '../config';
 import { getMe } from '../api/endpoints';
+import {
+  authCallbackUrl,
+  isExpiredOrUsedAuthLink,
+  isRecoveryAuthCallback,
+  parseAuthCallbackParams,
+} from './authRedirect';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export type OAuthProvider = 'apple' | 'google';
 
-const PRODUCTION_AUTH_CALLBACK_URL = 'healthfolio://auth/callback';
+export class RecoveryLinkExpiredError extends Error {
+  constructor() {
+    super('This reset link is invalid or has expired. Send a new link and open the newest email.');
+    this.name = 'RecoveryLinkExpiredError';
+  }
+}
+
 let googleConfigured = false;
+
+export function getAuthCallbackUrl(): string {
+  return authCallbackUrl(identity.urlScheme);
+}
 
 async function sha256Hex(value: string): Promise<string> {
   return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, value);
-}
-
-function getAuthCallbackUrl(): string {
-  return process.env.NODE_ENV === 'production'
-    ? PRODUCTION_AUTH_CALLBACK_URL
-    : Linking.createURL('/auth/callback');
 }
 
 function getCallbackParams(callbackUrl: string): URLSearchParams {
@@ -107,9 +119,103 @@ export async function signInWithPassword(email: string, password: string): Promi
 }
 
 export async function signUpWithPassword(email: string, password: string): Promise<boolean> {
-  const { data, error } = await withTransientRetry(() => supabase.auth.signUp({ email, password }));
+  const emailRedirectTo = getAuthCallbackUrl();
+  const { data, error } = await withTransientRetry(() =>
+    supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo },
+    }),
+  );
   if (error) throw error;
   return Boolean(data.session);
+}
+
+export async function signInWithMagicLink(email: string): Promise<void> {
+  const emailRedirectTo = getAuthCallbackUrl();
+  const { error } = await withTransientRetry(() =>
+    supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo, shouldCreateUser: false },
+    }),
+  );
+  if (error) throw error;
+}
+
+export async function resetPasswordForEmail(email: string): Promise<void> {
+  const redirectTo = getAuthCallbackUrl();
+  const { error } = await withTransientRetry(() =>
+    supabase.auth.resetPasswordForEmail(email, { redirectTo }),
+  );
+  if (error) throw error;
+}
+
+export async function updatePassword(password: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
+
+export async function completeAuthCallback(callbackUrl: string): Promise<{ isRecovery: boolean }> {
+  const params = parseAuthCallbackParams(callbackUrl);
+  if (isExpiredOrUsedAuthLink(params)) {
+    throw new RecoveryLinkExpiredError();
+  }
+
+  if (params.access_token && params.refresh_token) {
+    const { error } = await supabase.auth.setSession({
+      access_token: params.access_token,
+      refresh_token: params.refresh_token,
+    });
+    if (error) throw error;
+    return { isRecovery: isRecoveryAuthCallback(params) };
+  }
+
+  if (params.token_hash && params.type) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: params.token_hash,
+      type: emailOtpType(params.type),
+    });
+    if (error) throw expiredOrOriginal(error);
+    return { isRecovery: isRecoveryAuthCallback(params) };
+  }
+
+  if (params.code) {
+    const redirectType = await storedPkceRedirectType();
+    const { error } = await supabase.auth.exchangeCodeForSession(params.code);
+    if (error) throw expiredOrOriginal(error);
+    return { isRecovery: isRecoveryAuthCallback(params, redirectType) };
+  }
+
+  throw new Error('The sign-in link did not include a session.');
+}
+
+function emailOtpType(value: string): EmailOtpType {
+  const allowed: EmailOtpType[] = [
+    'signup',
+    'invite',
+    'magiclink',
+    'recovery',
+    'email_change',
+    'email',
+  ];
+  return allowed.includes(value as EmailOtpType) ? (value as EmailOtpType) : 'email';
+}
+
+function expiredOrOriginal(error: unknown): Error {
+  const message = error instanceof Error ? error.message : '';
+  if (isExpiredOrUsedAuthLink({ error_description: message })) {
+    return new RecoveryLinkExpiredError();
+  }
+  return error instanceof Error ? error : new Error('The sign-in link could not be opened.');
+}
+
+async function storedPkceRedirectType(): Promise<string | null> {
+  const supabaseUrl = publicRuntimeConfig.supabaseUrl;
+  if (!supabaseUrl) return null;
+  const host = new URL(supabaseUrl).hostname.split('.')[0];
+  const raw = await AsyncStorage.getItem(`sb-${host}-auth-token-code-verifier`);
+  const type = raw?.split('/')[1]?.trim();
+  return type || null;
 }
 
 export async function isNativeAppleSignInAvailable(): Promise<boolean> {

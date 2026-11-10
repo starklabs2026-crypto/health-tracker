@@ -10,6 +10,7 @@ enum NativeSupabaseError: LocalizedError {
     case ocrProcessing(documentId: UUID, message: String)
     case backend(String)
     case http(statusCode: Int, message: String)
+    case recoveryLinkExpired(String)
 
     var indicatesCompletedAccountDeletion: Bool {
         switch self {
@@ -42,6 +43,8 @@ enum NativeSupabaseError: LocalizedError {
             message.isEmpty ? "Supabase could not process this upload." : message
         case let .http(_, message):
             message.isEmpty ? "Supabase could not complete this request." : message
+        case .recoveryLinkExpired:
+            "This reset link is invalid or has expired. Send a new link and open the newest email."
         }
     }
 }

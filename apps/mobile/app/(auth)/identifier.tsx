@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { z } from 'zod';
 
 import {
@@ -13,11 +13,17 @@ import {
 import { TextField } from '../../src/components/ui';
 import { useAuthStore } from '../../src/lib/auth/authStore';
 import {
+  resetPasswordForEmail,
   signInWithApple,
   signInWithGoogle,
   signInWithPassword,
   signUpWithPassword,
 } from '../../src/lib/supabase/auth';
+import {
+  PASSWORD_RESET_RESEND_SECONDS,
+  isPasswordResetRateLimited,
+  passwordResetRemaining,
+} from '../../src/lib/supabase/authRedirect';
 import { colors } from '../../src/theme/tokens';
 
 const emailSchema = z.string().email();
@@ -91,9 +97,19 @@ export default function Identifier() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [resetNotice, setResetNotice] = useState<string | null>(null);
+  const [resetAvailableAt, setResetAvailableAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [loadingProvider, setLoadingProvider] = useState<AuthProvider | null>(null);
+  const resetRemaining = passwordResetRemaining(resetAvailableAt, now);
   const authAttemptRef = useRef(0);
   const isLoading = loadingProvider !== null;
+
+  useEffect(() => {
+    if (resetRemaining <= 0) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [resetRemaining]);
 
   async function runAuthAttempt(
     provider: AuthProvider,
@@ -154,6 +170,34 @@ export default function Identifier() {
     });
   }
 
+  async function sendPasswordReset(): Promise<void> {
+    const parsedEmail = emailSchema.safeParse(email.trim());
+    if (!parsedEmail.success) {
+      setResetNotice(parsedEmail.error.issues[0]?.message ?? 'Enter a valid email');
+      return;
+    }
+    if (resetRemaining > 0) {
+      setResetNotice(`You can request another reset link in ${resetRemaining} seconds.`);
+      return;
+    }
+    setResetNotice(null);
+    setLoadingProvider('email');
+    try {
+      await resetPasswordForEmail(parsedEmail.data);
+      setResetAvailableAt(Date.now() + PASSWORD_RESET_RESEND_SECONDS * 1000);
+      setResetNotice('Check your email for the HealthFolio password reset link.');
+    } catch (err) {
+      if (isPasswordResetRateLimited(err)) {
+        setResetAvailableAt(Date.now() + PASSWORD_RESET_RESEND_SECONDS * 1000);
+        setResetNotice(`You can request another reset link in ${PASSWORD_RESET_RESEND_SECONDS} seconds.`);
+        return;
+      }
+      setResetNotice(authErrorMessage(err, 'email'));
+    } finally {
+      setLoadingProvider(null);
+    }
+  }
+
   async function submitGoogle(): Promise<void> {
     await runAuthAttempt('google', async () => {
       await signInWithGoogle();
@@ -199,6 +243,23 @@ export default function Identifier() {
           placeholder=""
           errorText={error ?? undefined}
         />
+        {isSignup ? null : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              resetRemaining > 0
+                ? `Send a new link in ${resetRemaining} seconds`
+                : 'Forgot password?'
+            }
+            disabled={isLoading || resetRemaining > 0}
+            onPress={() => void sendPasswordReset()}
+          >
+            <Text style={styles.resetLink}>
+              {resetRemaining > 0 ? `Send a new link (${resetRemaining}s)` : 'Forgot password?'}
+            </Text>
+          </Pressable>
+        )}
+        {resetNotice ? <Text style={styles.resetNotice}>{resetNotice}</Text> : null}
       </View>
 
       <Button
@@ -239,4 +300,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   form: { marginBottom: 4 },
+  resetLink: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  resetNotice: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
 });

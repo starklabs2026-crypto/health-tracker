@@ -16,7 +16,7 @@ enum HealthFolioAuthCallbackRouter {
     static func route(_ url: URL) -> Bool {
         let normalizedPath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard
-            url.scheme?.lowercased() == NativeSupabaseConfig.callbackScheme,
+            url.scheme?.lowercased() == NativeSupabaseConfig.authCallbackURL.scheme?.lowercased(),
             url.host?.lowercased() == "auth",
             normalizedPath == "callback"
         else {
@@ -115,6 +115,13 @@ struct HealthFolioRootView: View {
             PasswordResetNativeView()
                 .environmentObject(model)
                 .interactiveDismissDisabled()
+        }
+        .sheet(isPresented: Binding(
+            get: { model.recoveryLinkError != nil },
+            set: { if !$0 { model.recoveryLinkError = nil } }
+        )) {
+            ExpiredRecoveryLinkView()
+                .environmentObject(model)
         }
         .onReceive(NotificationCenter.default.publisher(for: .healthFolioAuthCallbackURL)) { notification in
             guard let url = notification.userInfo?[HealthFolioAuthCallbackUserInfoKey.url] as? URL else {

@@ -44,6 +44,7 @@ assert.doesNotMatch(project, /WN432B5HS6|com\.starklabs\.healthfolio|Aditi Soman
 const infoPlist = read('apps/mobile/ios/HealthFolio/Info.plist');
 assert.match(infoPlist, /\$\(PRODUCT_BUNDLE_IDENTIFIER\)/);
 assert.match(infoPlist, /\$\(HEALTHFOLIO_GOOGLE_IOS_URL_SCHEME\)/);
+assert.match(infoPlist, new RegExp(`<key>HealthFolioURLScheme</key>\\s*<string>${identity.urlScheme}</string>`));
 assert.doesNotMatch(infoPlist, /com\.starklabs\.healthfolio|249865909043/);
 
 const swiftConfig = read('apps/mobile/ios/HealthFolio/SwiftUIPrototype/NativeSupabaseConfig.swift');

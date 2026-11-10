@@ -18,14 +18,44 @@ assert.match(
 );
 assert.match(
   api,
-  /requestPasswordReset[\s\S]*passwordRecoveryCallbackURL[\s\S]*redirect_to/,
-  'Password reset callbacks must carry an explicit recovery marker.',
+  /path: "\/auth\/v1\/signup"[\s\S]{0,500}authCallbackURL\.absoluteString/,
+  'Sign-up must send an explicit redirect and must not fall back to the Site URL.',
 );
-assert.match(config, /passwordRecoveryCallbackURL[\s\S]*flow=recovery/);
 assert.match(
   api,
-  /func isPasswordRecoveryCallback[\s\S]*params\["flow"\] == "recovery"[\s\S]*params\["type"\] == "recovery"/,
-  'Only explicitly marked recovery callbacks may consume the stored PKCE verifier.',
+  /func requestMagicLink[\s\S]{0,500}authCallbackURL\.absoluteString[\s\S]{0,400}redirect_to/,
+  'Magic links must send an explicit redirect.',
+);
+assert.match(
+  api,
+  /func requestPasswordReset[\s\S]{0,700}authCallbackURL\.absoluteString[\s\S]{0,400}redirect_to/,
+  'Password reset must send an explicit redirect.',
+);
+assert.match(
+  api,
+  /\/auth\/v1\/authorize[\s\S]{0,400}authCallbackURL\.absoluteString/,
+  'OAuth must send an explicit redirect.',
+);
+assert.match(
+  config,
+  /static func make\(urlScheme: String\)[\s\S]*scheme\):\/\/auth\/callback/,
+  'The auth callback must be built from the release-identity URL scheme.',
+);
+assert.doesNotMatch(
+  config,
+  /flow=recovery/,
+  'The redirect URL must be the bare callback so it matches the Supabase allow list.',
+);
+assert.match(
+  api,
+  /func isPasswordRecoveryCallback[\s\S]*AuthCallback\.isRecoveryCallback/,
+  'Recovery callbacks are recognized from type=recovery and the stored PKCE recovery verifier.',
+);
+assert.match(rootView, /ExpiredRecoveryLinkView/);
+assert.match(appModel, /PasswordResetCooldown\.seconds/);
+assert.match(
+  read('apps/mobile/ios/HealthFolio/SwiftUIPrototype/PasswordResetNativeView.swift'),
+  /Send a new link/,
 );
 assert.doesNotMatch(
   api,

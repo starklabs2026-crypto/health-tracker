@@ -108,6 +108,18 @@ struct SessionRegressionTests {
             _ = try await completedCoordinator.session(rejected: expired) { _ in accountB }
             preconditionFailure("Login commit must clear old-account retired-token replay eligibility")
         } catch is CancellationError {} catch { throw error }
-        print("PASS: expiry margin, refresh single-flight, 401 reuse, sign-out race, stale login, account isolation, offline preservation, revoked session")
+        let callback = AuthCallback.make(urlScheme: "healthfolio")
+        precondition(callback.absoluteString == "healthfolio://auth/callback")
+        precondition(AuthCallback.make(urlScheme: " healthfolio:// ").absoluteString == "healthfolio://auth/callback")
+        precondition(AuthCallback.isRecovery(["type": "recovery"]))
+        precondition(AuthCallback.isRecoveryCallback(["code": "abc"], hasStoredRecoveryVerifier: true))
+        precondition(!AuthCallback.isRecoveryCallback(["code": "abc", "type": "signup"], hasStoredRecoveryVerifier: true))
+        precondition(!AuthCallback.isRecoveryCallback(["code": "abc"], hasStoredRecoveryVerifier: false))
+        precondition(AuthCallback.isExpiredOrUsedLink(["error_code": "otp_expired", "error_description": "Email link is invalid or has expired"]))
+        let availableAt = Date(timeIntervalSince1970: 1_000 + Double(PasswordResetCooldown.seconds))
+        precondition(PasswordResetCooldown.remaining(until: availableAt, now: Date(timeIntervalSince1970: 1_000)) == 60)
+        precondition(PasswordResetCooldown.remaining(until: availableAt, now: availableAt.addingTimeInterval(1)) == 0)
+        precondition(PasswordResetCooldown.isRateLimited(statusCode: 429, message: "For security purposes, you can only request this after 60 seconds."))
+        print("PASS: expiry margin, refresh single-flight, 401 reuse, sign-out race, stale login, account isolation, offline preservation, revoked session, recovery callback")
     }
 }
