@@ -30,7 +30,7 @@ struct AssistantBubble: View {
             }
             .accessibilityElement(children: .combine)
 
-            Text(message.text)
+            messageBody
                 .font(.body)
                 .lineSpacing(4)
                 .foregroundStyle(HealthFolioTheme.ink)
@@ -48,41 +48,22 @@ struct AssistantBubble: View {
                 }
 
             if !sources.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Sources (\(sources.count))")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.secondary)
-                        .padding(.bottom, 4)
-
-                    ForEach(sources) { record in
-                        NavigationLink(value: AssistantSourceRoute(recordID: record.id)) {
-                            HStack(alignment: .center, spacing: 12) {
-                                Image(systemName: record.category.symbol)
-                                    .foregroundStyle(HealthFolioTheme.blue)
-                                    .frame(width: 24)
-                                    .accessibilityHidden(true)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(record.title)
-                                        .font(.subheadline.bold())
-                                        .foregroundStyle(HealthFolioTheme.ink)
-                                    Text(record.subtitle)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: 0)
-                                Image(systemName: "chevron.right")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .accessibilityHidden(true)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(sources) { record in
+                            NavigationLink(value: AssistantSourceRoute(recordID: record.id)) {
+                                Text(sourceChipLabel(record))
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(HealthFolioTheme.ink)
+                                    .lineLimit(1)
+                                    .padding(.horizontal, 12)
+                                    .frame(minHeight: 36)
+                                    .background(HealthFolioTheme.blueSoft, in: Capsule())
                             }
-                            .padding(.vertical, 12)
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(sourceChipLabel(record))
+                            .accessibilityHint("Opens the source health record")
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityHint("Opens the source health record")
-                        Divider()
                     }
                 }
             }
@@ -98,6 +79,24 @@ struct AssistantBubble: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var messageBody: Text {
+        guard !isUser, let attributed = try? AttributedString(
+            markdown: message.text,
+            options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .full)
+        ) else {
+            return Text(message.text)
+        }
+        return Text(attributed)
+    }
+
+    private func sourceChipLabel(_ record: HealthRecord) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_GB")
+        formatter.dateFormat = "d MMM yyyy"
+        let name = record.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return "Source: \(name.isEmpty ? "Record" : name) · \(formatter.string(from: record.sourceDate))"
     }
 
     private var messageHeaderLayout: AnyLayout {

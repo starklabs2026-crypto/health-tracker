@@ -39,5 +39,5 @@ The codebase has no persistent third-party advertising, tracking, analytics, or 
 ## Third-Party Processing Included In These Answers
 
 - Supabase: authentication, database, private storage, and Edge Functions.
-- OpenAI: document extraction and answers based on the user’s question and relevant data from the selected health profile.
+- OpenAI: uploaded or forwarded medical files are sent to extract text and readings. Assistant questions and relevant information from the selected health profile are sent to generate replies. Purpose is App Functionality. This is not tracking, advertising, or product personalization.
 - Apple or Google: authentication only when the user selects that provider.

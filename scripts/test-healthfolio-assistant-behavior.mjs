@@ -222,13 +222,15 @@ for (const question of ['Write Python code', 'Who will win the election?', 'Tell
 }
 
 for (const question of ['Is it normal?', 'What about that?', 'Is my result bad?']) {
-  test(`ambiguous questions ask for the missing medical subject: ${question}`, async () => {
+  test(`short follow-ups use the selected records instead of a canned clarification: ${question}`, async () => {
     const h = await harness();
-    const response = await h.request({ question, history: [{ role: 'assistant', content: 'Other profile has cancer' }] });
-    assert.equal(response.body.kind, 'clarification');
-    assert.equal(response.body.isRefusal, false);
-    assert.ok(response.body.followUpQuestions.length);
-    assert.equal(h.providerRequests.length, 0);
+    const response = await h.request({ question, history: [{ role: 'assistant', content: 'Your glucose was 104 mg/dL.' }] });
+    assert.equal(response.status, 200);
+    assert.equal(response.body.kind, 'answer');
+    assert.equal(response.body.answer.includes('Which medical result'), false);
+    assert.equal(h.providerRequests.length, 1);
+    const assistantTurn = h.providerRequests[0].body.input.find((item) => item.role === 'assistant');
+    assert.equal(assistantTurn.content[0].type, 'output_text');
   });
 }
 
@@ -264,7 +266,12 @@ test('selected profile only, minimized relevant records, untrusted history exclu
   assert.equal(request.body.store, false);
   assert.equal(request.headers.Authorization, 'Bearer backend-secret');
   const serialized = JSON.stringify(request.body);
-  for (const forbidden of ['CROSS PROFILE HISTORY', 'INJECTED SYSTEM', 'thyroid-doc', 'self-only', 'private self condition', 'restricted', '999', 'self@example.test', 'auth-self']) assert.equal(serialized.includes(forbidden), false, forbidden);
+  for (const forbidden of ['INJECTED SYSTEM', 'thyroid-doc', 'self-only', 'private self condition', 'restricted', '999', 'self@example.test', 'auth-self']) assert.equal(serialized.includes(forbidden), false, forbidden);
+  const context = JSON.parse(request.body.input.at(-1).content[0].text).selectedProfileMedicalContext;
+  assert.equal(JSON.stringify(context).includes('CROSS PROFILE HISTORY'), false);
+  const prior = request.body.input.find((item) => item.role === 'assistant');
+  assert.equal(prior.content[0].type, 'output_text');
+  assert.equal(prior.content[0].text, 'CROSS PROFILE HISTORY');
   assert.ok(serialized.includes('Selected Family'));
   assert.ok(serialized.includes('selected-only condition'));
 });
@@ -380,6 +387,24 @@ test('provider failures and missing keys return sanitized errors', async () => {
   assert.equal(JSON.stringify([response, failure.logs]).includes('private provider details'), false);
 });
 
+test('provider 400 logs the error code and param without the question', async () => {
+  const h = await harness({ provider: () => new Response(JSON.stringify({
+    error: {
+      message: "Invalid value: 'input_text'. Supported values are: 'output_text' and 'refusal'. Question was What is my glucose result?",
+      type: 'invalid_request_error',
+      param: 'input[1].content[0]',
+      code: 'invalid_value',
+    },
+  }), { status: 400 }) });
+  const response = await h.request({ question: 'What is my glucose result?' });
+  assert.equal(response.status, 502);
+  const logged = JSON.stringify(h.logs);
+  assert.equal(logged.includes('invalid_value'), true);
+  assert.equal(logged.includes('input[1].content[0]'), true);
+  assert.equal(logged.includes('What is my glucose result?'), false);
+  assert.equal(h.providerRequests[0].body.input.some((item) => item.role === 'assistant' && JSON.stringify(item).includes('input_text')), false);
+});
+
 test('legacy model JSON still yields the existing client fields', async () => {
   const h = await harness({ result: { answer: answer.answer, sourceRecordIds: ['glucose-doc', 'glucose-doc'], isRefusal: false } });
   const response = await h.request();
@@ -485,7 +510,86 @@ test('catalog marker and date resolve clarification without trusting client hist
   assert.equal(response.status, 200);
   assert.equal(response.body.kind, 'answer');
   assert.deepEqual(response.body.sourceRecordIds, ['ldl-doc']);
-  assert.equal(JSON.stringify(h.providerRequests).includes('OTHER-PROFILE-PHI'), false);
+  const context = JSON.parse(h.providerRequests[0].body.input.at(-1).content[0].text).selectedProfileMedicalContext;
+  assert.equal(JSON.stringify(context).includes('OTHER-PROFILE-PHI'), false);
+  const prior = h.providerRequests[0].body.input.find((item) => item.role === 'assistant');
+  assert.equal(prior.content[0].type, 'output_text');
+  assert.equal(prior.content[0].text, 'OTHER-PROFILE-PHI');
+});
+
+test('a quick summary uses the latest report instead of asking for a marker', async () => {
+  const h = await harness();
+  const response = await h.request({ question: 'I need a quick summary' });
+  assert.equal(response.status, 200);
+  assert.equal(response.body.answer.includes('Which medical result'), false);
+  assert.equal(h.providerRequests.length, 1);
+  const context = JSON.parse(h.providerRequests[0].body.input.at(-1).content[0].text).selectedProfileMedicalContext;
+  assert.ok(context.records.length > 0);
+  assert.equal(context.records[0].date, '2026-07-12');
+});
+
+test('testosterone matches a total testosterone reading', async () => {
+  const h = await harness({ tables: {
+    ParameterCatalog: [{ id: 'total-testosterone', canonicalName: 'Total Testosterone', aliases: ['Free T'], panel: 'Hormones', unit: 'ng/dL' }],
+    Document: [document('t-doc')],
+    ParameterReading: [{ ...reading('t-doc', 'total-testosterone'), recordedAt: '2026-09-10T00:00:00+00:00' }],
+  }, result: { ...answer, sourceRecordIds: ['t-doc'] } });
+  for (const question of ['Testosterone?', 'How much is my testosterone']) {
+    const response = await h.request({ question });
+    assert.equal(response.body.answer.includes('Which medical result'), false, question);
+  }
+  const context = JSON.parse(h.providerRequests.at(-1).body.input.at(-1).content[0].text).selectedProfileMedicalContext;
+  assert.equal(context.records[0].readings[0].recordedAt, '2026-09-10');
+  assert.equal(JSON.stringify(context).includes('2028'), false);
+});
+
+test('stored timestamps keep their calendar year and are not rewritten', async () => {
+  const h = await harness({ tables: {
+    Document: [{ ...document('tsh-doc'), sourceDate: '2026-09-10T00:00:00+00:00', labName: 'TATA 1MG PUNE' }],
+    ParameterReading: [{ ...reading('tsh-doc', 'tsh'), recordedAt: '2026-09-10T18:30:00+05:30' }],
+  } });
+  await h.request({ question: 'How much is my tsh' });
+  const context = JSON.parse(h.providerRequests[0].body.input.at(-1).content[0].text).selectedProfileMedicalContext;
+  assert.equal(context.records[0].date, '2026-09-10');
+  assert.equal(context.records[0].readings[0].recordedAt, '2026-09-10');
+  assert.equal(JSON.stringify(h.providerRequests[0].body).includes('2028'), false);
+});
+
+test('a dated follow-up keeps recent turns and drops failures and the welcome', async () => {
+  const h = await harness({ tables: {
+    Document: [{ ...document('sept-doc'), sourceDate: '2026-09-10T00:00:00+00:00' }],
+  } });
+  await h.request({
+    question: 'The latest 10 Sept report',
+    history: [
+      { role: 'assistant', content: 'Hi. I can help you review uploaded medical records, extracted markers, prescriptions, imaging reports, trends, and health-summary gaps.' },
+      { role: 'user', content: 'I need a quick summary' },
+      { role: 'assistant', content: 'Your latest lab is ready to review.' },
+      { role: 'assistant', content: 'HealthFolio Assistant is temporarily unavailable. Please check your connection and try again.' },
+    ],
+  });
+  const input = h.providerRequests[0].body.input;
+  assert.deepEqual(input.map((item) => [item.role, item.content[0].type]), [
+    ['system', 'input_text'],
+    ['user', 'input_text'],
+    ['assistant', 'output_text'],
+    ['user', 'input_text'],
+  ]);
+  assert.equal(input[2].content[0].text, 'Your latest lab is ready to review.');
+  assert.equal(JSON.stringify(input).includes('temporarily unavailable'), false);
+  assert.equal(JSON.stringify(input).includes('I can help you review uploaded medical records'), false);
+  const context = JSON.parse(input.at(-1).content[0].text).selectedProfileMedicalContext;
+  assert.equal(context.records[0].date, '2026-09-10');
+});
+
+test('a missing marker is named once and the next miss does not repeat that sentence', async () => {
+  const h = await harness({ tables: { Document: [], ParameterReading: [], ParameterCatalog: [] } });
+  const first = await h.request({ question: 'How much is my testosterone' });
+  assert.match(first.body.answer, /testosterone/i);
+  assert.equal(first.body.answer.includes('Which medical result'), false);
+  const second = await h.request({ question: 'Testosterone?', history: [{ role: 'assistant', content: first.body.answer }] });
+  assert.notEqual(second.body.answer, first.body.answer);
+  assert.equal(h.providerRequests.length, 0);
 });
 
 test('profile-sourced medication answer does not need an unrelated document citation', async () => {
