@@ -212,6 +212,14 @@ struct AuthNativeView: View {
 
     private var newAccountConsentDisclosure: some View {
         VStack(alignment: .leading, spacing: 12) {
+            Text("Uploaded files and Assistant questions are sent to an outside AI provider to extract information and generate replies.")
+                .font(.body)
+                .foregroundStyle(HealthFolioTheme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Link(destination: HealthFolioConsentPolicy.aiProcessingURL) {
+                Text("Privacy Policy details")
+                    .font(.footnote.weight(.semibold))
+            }
             Toggle(isOn: $hasAcceptedNewAccountConsent) {
                 Text("I agree to HealthFolio processing my account and health data as described in the Privacy Policy and Standard EULA.")
                     .font(.body)

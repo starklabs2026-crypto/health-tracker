@@ -71,7 +71,7 @@ struct ConsentNativeView: View {
                 .foregroundStyle(HealthFolioTheme.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("HealthFolio uses AI to extract text and readings from uploaded or forwarded files, and to answer your Assistant questions using information from the selected health profile.")
+            Text("Uploaded files and Assistant questions are sent to an outside AI provider to extract information and generate replies.")
                 .font(.body)
                 .foregroundStyle(HealthFolioTheme.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
@@ -82,8 +82,8 @@ struct ConsentNativeView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 12) {
-                Link(destination: HealthFolioConsentPolicy.privacyURL) {
-                    consentLinkLabel(title: "Privacy Policy", systemImage: "lock.doc")
+                Link(destination: HealthFolioConsentPolicy.aiProcessingURL) {
+                    consentLinkLabel(title: "Privacy Policy details", systemImage: "lock.doc")
                 }
 
                 Link(destination: HealthFolioConsentPolicy.standardEULAURL) {

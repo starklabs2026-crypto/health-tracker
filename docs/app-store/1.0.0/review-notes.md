@@ -21,6 +21,7 @@ The forwarding address is shown in Profile. Supported attachments forwarded to t
 - Support: `starklabs2026@gmail.com`
 - Privacy: `https://starklabs2026-crypto.github.io/health-tracker/privacy/`
 - Standard EULA: `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
+- Focal Labs is the operator shown in the app. Uploaded or forwarded files, and Assistant questions with relevant information from the selected profile, are sent to OpenAI to extract information and generate replies. The consent screen describes this as an outside AI provider and links to the privacy policy section that names OpenAI.
 - HealthFolio is not a regulated medical device.
 - There are no ads, cross-app tracking, purchases, or subscriptions in build 73.
 
