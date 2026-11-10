@@ -21,10 +21,10 @@ export class FamilyService {
   constructor(private readonly prisma: PrismaService) {}
 
   async invite(ownerId: string, body: CreateInviteRequest): Promise<CreateInviteResponse> {
-    // Resolve the member by email or phone
+    // Resolve the member by email
     const member = await this.prisma.user.findFirst({
       where: {
-        OR: [{ email: body.memberIdentifier }, { phone: body.memberIdentifier }],
+        email: body.memberIdentifier,
         deletedAt: null,
       },
     });

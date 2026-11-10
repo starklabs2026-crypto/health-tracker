@@ -30,10 +30,6 @@ export class AuthService {
     return Number(this.config.get('JWT_REFRESH_TTL') ?? 2_592_000);
   }
 
-  private isEmail(identifier: string): boolean {
-    return identifier.includes('@');
-  }
-
   /**
    * Called after a verified OTP. Find-or-create the user, register the device,
    * and issue an access + refresh token pair. New users get provisional profile
@@ -44,14 +40,13 @@ export class AuthService {
     deviceId: string,
     platform: string,
   ): Promise<SignupOrLoginResult> {
-    const where = this.isEmail(identifier) ? { email: identifier } : { phone: identifier };
-    let user = await this.prisma.user.findFirst({ where });
+    let user = await this.prisma.user.findFirst({ where: { email: identifier } });
     const isNewUser = !user;
 
     if (!user) {
       user = await this.prisma.user.create({
         data: {
-          ...(this.isEmail(identifier) ? { email: identifier } : { phone: identifier }),
+          email: identifier,
           name: '',
           dob: new Date(0),
           sex: 'other',

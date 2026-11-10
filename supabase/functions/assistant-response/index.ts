@@ -124,16 +124,18 @@ async function getAuthenticatedAppUser(
 async function assertCurrentConsent(admin: SupabaseClient, userId: string): Promise<void> {
   // Match the existing iOS gate and UserConsent insertion policy; managed profiles use the guardian's consent.
   const { data, error } = await admin.from('UserConsent')
-    .select('acceptedAt')
+    .select('acceptedAt, consentVersion, privacyPolicyVersion')
     .eq('userId', userId)
-    .eq('consentVersion', '2026-07-10')
-    .eq('privacyPolicyVersion', '2026-07-10')
+    .in('consentVersion', ['2026-07-10', '2026-11-10'])
     .eq('eulaType', 'apple_standard')
     .eq('healthDataProcessingAccepted', true)
+    .order('consentVersion', { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (error) throw error;
-  const consent = data as { acceptedAt: string | null } | null;
-  if (!consent?.acceptedAt || !Number.isFinite(Date.parse(consent.acceptedAt))) {
+  const consent = data as { acceptedAt: string | null; consentVersion: string; privacyPolicyVersion: string } | null;
+  if (!consent?.acceptedAt || consent.consentVersion !== consent.privacyPolicyVersion
+    || !Number.isFinite(Date.parse(consent.acceptedAt))) {
     throw new HttpError(403, 'Current health-data processing consent is required before using Assistant.');
   }
 }

@@ -16,14 +16,15 @@ For every selected type below:
 | ---------------- | ------------------ | --------------------------------------------------------------------------------------- |
 | Contact Info     | Name               | Account and health-profile display                                                      |
 | Contact Info     | Email Address      | Authentication, account recovery, and email ingestion                                   |
-| Contact Info     | Phone Number       | Optional account/profile identity when provided                                         |
 | Health & Fitness | Health             | Medical documents, readings, medications, health-profile context, and care data         |
+| User Content     | Emails or Text Messages | Sender and subject from records intentionally forwarded by email                    |
 | User Content     | Photos or Videos   | Medical document images selected by the user                                            |
 | User Content     | Other User Content | PDFs, notes, assistant questions, forwarded attachments, and share/export configuration |
 | Identifiers      | User ID            | Authentication, profile routing, access control, and account deletion                   |
 
 ## Do Not Select For Build 73
 
+- Phone Number
 - Precise or coarse location
 - Contacts
 - Purchases or payment information
@@ -38,5 +39,5 @@ The codebase has no persistent third-party advertising, tracking, analytics, or 
 ## Third-Party Processing Included In These Answers
 
 - Supabase: authentication, database, private storage, and Edge Functions.
-- OpenAI: OCR and structured extraction of user-selected medical documents.
+- OpenAI: document extraction and answers based on the user’s question and relevant data from the selected health profile.
 - Apple or Google: authentication only when the user selects that provider.

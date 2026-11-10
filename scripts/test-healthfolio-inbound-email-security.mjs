@@ -71,7 +71,8 @@ async function harness(options = {}) {
     console: { error: (...args) => logs.push(args) },
     Deno: { env: { get: (key) => ({
       SUPABASE_URL: 'https://synthetic.invalid', SUPABASE_SERVICE_ROLE_KEY: fixtureKey,
-      EMAIL_INGEST_WEBHOOK_SECRET: 'synthetic-webhook-secret', INTERNAL_FUNCTION_SECRET: 'synthetic-internal-secret',
+      EMAIL_INGEST_WEBHOOK_SECRET: 'synthetic-webhook-secret', EMAIL_INGEST_MAILBOX: 'test.healthfolio@gmail.com',
+      INTERNAL_FUNCTION_SECRET: 'synthetic-internal-secret',
       ...options.env,
     })[key] }, serve: (value) => { handler = value; } },
     fetch: async (url, init) => {
@@ -197,6 +198,13 @@ test('independent alias ingest preserves target, storage owner, and background O
   assert.equal(h.queued[0].body.appUserId, profile.id);
   assert.equal(h.queued[0].body.wait, false);
   assert.equal(h.reads.some((read) => read.table === 'FamilyLink'), false);
+});
+
+test('Asianol consent allows email forwarding without a legacy consent row', async () => {
+  const h = await harness({ tables: { UserConsent: [{
+    ...consent, consentVersion: '2026-11-10', privacyPolicyVersion: '2026-11-10',
+  }] } });
+  assert.equal((await h.request()).status, 202);
 });
 
 test('legacy id-bound Auth account still requires its own consent and ingests to itself', async () => {

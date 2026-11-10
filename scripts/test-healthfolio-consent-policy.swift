@@ -6,13 +6,13 @@ struct HealthFolioConsentPolicyTests {
         var failures: [String] = []
 
         expect(
-            HealthFolioConsentPolicy.consentVersion == "2026-07-10",
+            HealthFolioConsentPolicy.consentVersion == "2026-11-10",
             "consent version changed unexpectedly",
             failures: &failures
         )
 
         expect(
-            HealthFolioConsentPolicy.privacyPolicyVersion == "2026-07-10",
+            HealthFolioConsentPolicy.privacyPolicyVersion == "2026-11-10",
             "privacy version changed unexpectedly",
             failures: &failures
         )
@@ -44,7 +44,7 @@ struct HealthFolioConsentPolicyTests {
         )
 
         do {
-            let payload = Data(#"{"consentVersion":"2026-07-10","acceptedAt":"2026-07-10T17:57:26.123456+00:00"}"#.utf8)
+            let payload = Data(#"{"consentVersion":"2026-11-10","acceptedAt":"2026-11-10T10:00:00.123456+00:00"}"#.utf8)
             let status = try JSONDecoder().decode(NativeConsentStatus.self, from: payload)
             expect(
                 status.isCurrent,
@@ -54,6 +54,16 @@ struct HealthFolioConsentPolicyTests {
         } catch {
             failures.append("PostgREST fractional-second timestamp failed to decode: \(error)")
         }
+
+        let previousConsent = NativeConsentStatus(
+            consentVersion: "2026-07-10",
+            acceptedAt: Date()
+        )
+        expect(
+            !previousConsent.isCurrent,
+            "users who only accepted the old policy must see the new disclosure",
+            failures: &failures
+        )
 
         if failures.isEmpty {
             print("HealthFolio consent policy tests passed.")

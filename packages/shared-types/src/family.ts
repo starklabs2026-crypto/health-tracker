@@ -45,7 +45,7 @@ export interface FamilyLink {
 }
 
 export const createInviteSchema = z.object({
-  memberIdentifier: z.string().min(1), // email or phone
+  memberIdentifier: z.string().email(),
   role: familyRoleSchema.default(FamilyRole.Viewer),
   permissions: permissionsSchema.default({ docTypes: Object.values(DocType) }),
 });

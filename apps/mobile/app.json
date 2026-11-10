@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HealthFolio",
-    "owner": "YOUR_EXPO_OWNER",
+    "owner": "starklabs",
     "slug": "healthfolio",
     "scheme": "healthfolio",
     "version": "1.0.0",
@@ -18,8 +18,8 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.ORG.healthfolio",
-      "buildNumber": "76",
+      "bundleIdentifier": "com.asianol.healthfolio",
+      "buildNumber": "77",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "HealthFolio uses the camera to scan lab reports, prescriptions, and other health documents you choose to upload.",
@@ -86,7 +86,7 @@
         "inboundEmailAddressTemplate": "{alias}@records.healthfolio.app"
       },
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "b06f1d7e-8692-4995-9a4f-8641dbffadbf"
       }
     }
   }
