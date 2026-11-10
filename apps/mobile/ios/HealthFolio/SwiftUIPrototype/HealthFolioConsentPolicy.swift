@@ -53,8 +53,8 @@ struct NativeConsentStatus: Decodable, Equatable {
 }
 
 enum HealthFolioConsentPolicy {
-    static let consentVersion = "2026-07-10"
-    static let privacyPolicyVersion = "2026-07-10"
+    static let consentVersion = "2026-11-10"
+    static let privacyPolicyVersion = consentVersion
     static let privacyURL = URL(string: "https://starklabs2026-crypto.github.io/health-tracker/privacy/")!
     static let privacyChoicesURL = URL(string: "https://starklabs2026-crypto.github.io/health-tracker/privacy-choices/")!
     static let standardEULAURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!

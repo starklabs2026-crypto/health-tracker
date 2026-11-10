@@ -409,15 +409,17 @@ async function assertIndependentRecipient(admin: SupabaseClient, user: AppUser):
   if (identities.size !== 1 || !identity || identity.deletedAt != null
     || (identity.authUserId != null && identity.authUserId !== authId)) throw unavailable();
 
-  const { data: consent, error } = await admin.from('UserConsent').select('acceptedAt')
+  const { data: consent, error } = await admin.from('UserConsent').select('acceptedAt, consentVersion, privacyPolicyVersion')
     .eq('userId', user.id)
-    .eq('consentVersion', '2026-07-10')
-    .eq('privacyPolicyVersion', '2026-07-10')
+    .in('consentVersion', ['2026-07-10', '2026-11-10'])
     .eq('eulaType', 'apple_standard')
     .eq('healthDataProcessingAccepted', true)
+    .order('consentVersion', { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (error) throw error;
-  if (!consent?.acceptedAt || !Number.isFinite(Date.parse(consent.acceptedAt))) {
+  if (!consent?.acceptedAt || consent.consentVersion !== consent.privacyPolicyVersion
+    || !Number.isFinite(Date.parse(consent.acceptedAt))) {
     throw new HttpError(403, 'Current health-data processing consent is required before email forwarding.');
   }
 }

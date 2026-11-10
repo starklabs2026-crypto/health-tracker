@@ -9,17 +9,7 @@ export enum DevicePlatform {
 
 export const devicePlatformSchema = z.nativeEnum(DevicePlatform);
 
-/**
- * An identifier is either an email or an E.164-ish phone number.
- * Kept permissive at the type boundary; per-endpoint schemas tighten this.
- */
-export const identifierSchema = z
-  .string()
-  .min(3)
-  .refine(
-    (v) => v.includes('@') || /^\+?[0-9]{6,15}$/.test(v),
-    'Must be a valid email or phone number',
-  );
+export const identifierSchema = z.string().email('Must be a valid email address');
 
 export const otpRequestSchema = z.object({
   identifier: identifierSchema,

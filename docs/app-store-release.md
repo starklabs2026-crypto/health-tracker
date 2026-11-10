@@ -18,7 +18,8 @@ Public pages:
 
 - App Store Connect Apple ID for this organization launch: `6832929860` (`ascAppId` in `apps/mobile/release-identity.json` and `apps/mobile/eas.json` `submit.production.ios.ascAppId`)
 - Previous individual app, not the launch target: `6773293787`
-- Bundle ID: `com.starklabs.healthfolio`
+- Organization bundle ID: `com.asianol.healthfolio`
+- Organization Apple team: `2GVCQDUJFJ`
 - SKU: `HEALTHFOLIO-IOS-001`
 - Expo project: `@starklabs/healthfolio`
 - EAS project ID: `b06f1d7e-8692-4995-9a4f-8641dbffadbf`

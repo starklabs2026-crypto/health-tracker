@@ -51,7 +51,7 @@ export default function SupportPage() {
         <article style={s.card}>
           <h2 style={s.h2}>Account Access</h2>
           <p style={s.p}>
-            If you cannot sign in, include the email address or phone number used for your
+            If you cannot sign in, include the email address used for your
             HealthFolio account and describe what happens after requesting your sign-in code.
           </p>
         </article>

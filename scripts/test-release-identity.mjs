@@ -6,12 +6,12 @@ const root = process.cwd();
 const read = (path) => readFileSync(join(root, path), 'utf8');
 const identity = JSON.parse(read('apps/mobile/release-identity.json'));
 
-assert.equal(identity.iosBundleIdentifier, 'com.ORG.healthfolio');
+assert.equal(identity.iosBundleIdentifier, 'com.asianol.healthfolio');
 assert.equal(identity.androidPackage, 'com.ORG.healthfolio');
-assert.match(identity.appleTeamId, /^YOUR_/);
+assert.equal(identity.appleTeamId, '2GVCQDUJFJ');
 assert.equal(identity.ascAppId, '6832929860');
-assert.match(identity.easOwner, /^YOUR_/);
-assert.match(identity.easProjectId, /^YOUR_/);
+assert.equal(identity.easOwner, 'starklabs');
+assert.equal(identity.easProjectId, 'b06f1d7e-8692-4995-9a4f-8641dbffadbf');
 assert.equal(identity.urlScheme, 'healthfolio');
 assert.deepEqual(identity.associatedDomains, []);
 
@@ -34,7 +34,7 @@ const eas = JSON.parse(read('apps/mobile/eas.json'));
 assert.equal(eas.submit.production.ios.ascAppId, identity.ascAppId);
 
 const project = read('apps/mobile/ios/HealthFolio.xcodeproj/project.pbxproj');
-assert.equal([...project.matchAll(/PRODUCT_BUNDLE_IDENTIFIER = com\.ORG\.healthfolio;/g)].length, 2);
+assert.equal([...project.matchAll(/PRODUCT_BUNDLE_IDENTIFIER = com\.asianol\.healthfolio;/g)].length, 2);
 assert.equal(
   [...project.matchAll(new RegExp(`DEVELOPMENT_TEAM = ${identity.appleTeamId};`, 'g'))].length,
   2,
@@ -52,4 +52,4 @@ assert.match(swiftConfig, /absoluteSignedStorageURL/);
 assert.match(swiftConfig, /\/storage\/v1/);
 assert.doesNotMatch(swiftConfig, /249865909043/);
 
-console.log('Release identity placeholders are centralized.');
+console.log('iOS release identity matches the Asianol app and Stark Labs EAS project.');

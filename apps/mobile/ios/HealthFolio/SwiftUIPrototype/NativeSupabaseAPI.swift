@@ -192,7 +192,7 @@ actor NativeSupabaseAPI {
         let verifier = isRecovery ? savedPasswordRecoveryVerifier() : nil
         let session: NativeSupabaseSession
         do {
-            session = try await session(fromCallbackURL: url, codeVerifier: verifier)
+            session = try await self.session(fromCallbackURL: url, codeVerifier: verifier)
         } catch let NativeSupabaseError.recoveryLinkExpired(message) {
             clearPasswordRecoveryVerifier()
             throw NativeSupabaseError.recoveryLinkExpired(message)
@@ -1817,7 +1817,7 @@ actor NativeSupabaseAPI {
         if document.ocrStatus == "pending_upload" && !hasFile {
             return .failed
         }
-        switch document.ocrStatus {
+        return switch document.ocrStatus {
         case "failed": .failed
         case "ready_for_review": .ready
         case "queued", "processing", "pending_upload": .inProgress

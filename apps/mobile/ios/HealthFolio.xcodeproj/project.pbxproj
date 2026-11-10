@@ -360,7 +360,7 @@
 				LastUpgradeCheck = 1130;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
-						DevelopmentTeam = YOUR_APPLE_TEAM_ID;
+						DevelopmentTeam = 2GVCQDUJFJ;
 						LastSwiftMigration = 1250;
 						ProvisioningStyle = Automatic;
 					};
@@ -614,8 +614,8 @@
 				CODE_SIGN_ENTITLEMENTS = HealthFolio/HealthFolio.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 76;
-				DEVELOPMENT_TEAM = YOUR_APPLE_TEAM_ID;
+				CURRENT_PROJECT_VERSION = 77;
+				DEVELOPMENT_TEAM = 2GVCQDUJFJ;
 				HEALTHFOLIO_GOOGLE_IOS_URL_SCHEME = com.googleusercontent.apps.YOUR_REVERSED_IOS_CLIENT_ID;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -635,7 +635,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.ORG.healthfolio;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asianol.healthfolio;
 				PRODUCT_NAME = HealthFolio;
 				SWIFT_OBJC_BRIDGING_HEADER = "HealthFolio/HealthFolio-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -654,8 +654,8 @@
 				CODE_SIGN_ENTITLEMENTS = HealthFolio/HealthFolio.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 76;
-				DEVELOPMENT_TEAM = YOUR_APPLE_TEAM_ID;
+				CURRENT_PROJECT_VERSION = 77;
+				DEVELOPMENT_TEAM = 2GVCQDUJFJ;
 				HEALTHFOLIO_GOOGLE_IOS_URL_SCHEME = com.googleusercontent.apps.YOUR_REVERSED_IOS_CLIENT_ID;
 				INFOPLIST_FILE = HealthFolio/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -670,7 +670,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.ORG.healthfolio;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asianol.healthfolio;
 				PRODUCT_NAME = HealthFolio;
 				SWIFT_OBJC_BRIDGING_HEADER = "HealthFolio/HealthFolio-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
