@@ -41,10 +41,17 @@ assert.match(
   /static func make\(urlScheme: String\)[\s\S]*scheme\):\/\/auth\/callback/,
   'The auth callback must be built from the release-identity URL scheme.',
 );
+const callbackBuilder = config.match(/static func make\(urlScheme: String\)[\s\S]*?\n    \}/)?.[0] ?? '';
+assert.match(callbackBuilder, /auth\/callback/);
 assert.doesNotMatch(
-  config,
+  callbackBuilder,
   /flow=recovery/,
-  'The redirect URL must be the bare callback so it matches the Supabase allow list.',
+  'The shipping reset request keeps the bare callback. flow=recovery is accepted on the way back in.',
+);
+assert.match(
+  config,
+  /params\["flow"\][\s\S]*contains\("recovery"\)/,
+  'An incoming flow=recovery link opens the same Set new password path as type=recovery.',
 );
 assert.match(
   api,

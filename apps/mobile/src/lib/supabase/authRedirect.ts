@@ -21,8 +21,10 @@ export function isRecoveryAuthCallback(
   params: Record<string, string>,
   redirectType?: string | null,
 ): boolean {
-  const type = (params.type || params.flow || redirectType || '').toLowerCase();
-  return type === 'recovery';
+  const markers = [params.type, params.flow, redirectType]
+    .map((value) => (value ?? '').trim().toLowerCase())
+    .filter((value) => value.length > 0);
+  return markers.includes('recovery');
 }
 
 export function isExpiredOrUsedAuthLink(params: Record<string, string>): boolean {

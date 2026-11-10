@@ -112,6 +112,8 @@ struct SessionRegressionTests {
         precondition(callback.absoluteString == "healthfolio://auth/callback")
         precondition(AuthCallback.make(urlScheme: " healthfolio:// ").absoluteString == "healthfolio://auth/callback")
         precondition(AuthCallback.isRecovery(["type": "recovery"]))
+        precondition(AuthCallback.isRecovery(["flow": "recovery"]))
+        precondition(AuthCallback.isRecoveryCallback(["flow": "recovery", "code": "abc"], hasStoredRecoveryVerifier: false))
         precondition(AuthCallback.isRecoveryCallback(["code": "abc"], hasStoredRecoveryVerifier: true))
         precondition(!AuthCallback.isRecoveryCallback(["code": "abc", "type": "signup"], hasStoredRecoveryVerifier: true))
         precondition(!AuthCallback.isRecoveryCallback(["code": "abc"], hasStoredRecoveryVerifier: false))

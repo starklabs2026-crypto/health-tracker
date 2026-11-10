@@ -90,18 +90,14 @@ Use this sequence for every future release change.
 
 ## Supabase Auth URL settings
 
-Password reset, sign-up confirmation, magic links, and OAuth all pass `redirectTo` = `<urlScheme>://auth/callback` from `apps/mobile/release-identity.json`. Today that is `healthfolio://auth/callback`. The shipping SwiftUI app and the Expo auth module both build that URL. They do not use the Supabase Site URL as the callback.
-
-In the Supabase dashboard for project `qojdeuacwkmlxmodeabt`, open Authentication → URL Configuration and set:
+Saved live on project `qojdeuacwkmlxmodeabt`:
 
 - Site URL: `healthfolio://auth/callback`
-- Redirect URLs: include `healthfolio://auth/callback` and `healthfolio://**`
+- Redirect URLs: `healthfolio://auth/callback`, `healthfolio://auth/callback?flow=recovery`, and `healthfolio://**`
 
-The Site URL is currently `http://localhost:3000`. A recovery email then verifies once, redirects to localhost, and the app never shows Set new password. The next tap reports that the email link is invalid or has expired.
+Password reset, sign-up confirmation, magic links, and OAuth in this PR send `redirectTo` = `<urlScheme>://auth/callback` from `apps/mobile/release-identity.json`. Today that is `healthfolio://auth/callback`. A separate build requests `healthfolio://auth/callback?flow=recovery` for Forgot password. The callback handler treats `flow=recovery` the same as `type=recovery`, so either link opens Set new password.
 
-Keep the custom scheme as the Site URL. It is the link the iOS app is registered to open. Use a hosted page only if the dashboard refuses a custom-scheme Site URL. That page has to forward the query and the fragment (`code`, `token_hash`, `type`, `access_token`, `refresh_token`, and any `error` fields) to `healthfolio://auth/callback` without calling `/verify` again. The published GitHub Pages site does not run scripts, so it cannot do that hop safely.
-
-Changing `urlScheme` in `release-identity.json` requires the same scheme in the iOS URL types, `HealthFolioURLScheme`, the Expo scheme, and both Supabase fields above.
+Changing `urlScheme` in `release-identity.json` requires the same scheme in the iOS URL types, `HealthFolioURLScheme`, the Expo scheme, and the Supabase fields above.
 
 ## Required Functional Smoke Matrix
 

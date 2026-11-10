@@ -31,6 +31,14 @@ describe('auth callback redirects', () => {
     ).toMatchObject({ token_hash: 'hash', type: 'recovery' });
   });
 
+  it('treats flow=recovery the same as type=recovery', () => {
+    const params = parseAuthCallbackParams('healthfolio://auth/callback?flow=recovery&code=abc');
+    expect(params).toMatchObject({ flow: 'recovery', code: 'abc' });
+    expect(isRecoveryAuthCallback(params)).toBe(true);
+    expect(isRecoveryAuthCallback({ flow: 'recovery' })).toBe(true);
+    expect(isRecoveryAuthCallback({ type: 'signup', flow: 'recovery' })).toBe(true);
+  });
+
   it('recognizes recovery and a used or expired link', () => {
     expect(isRecoveryAuthCallback({ type: 'recovery' })).toBe(true);
     expect(isRecoveryAuthCallback({ code: 'abc' }, 'recovery')).toBe(true);

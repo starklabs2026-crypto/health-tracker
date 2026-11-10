@@ -26,14 +26,12 @@ The previously configured Codex Supabase MCP points at `gliprwhbrcfesfcmgxrp` (`
 
 Configure only project `qojdeuacwkmlxmodeabt`.
 
-Auth -> URL Configuration:
-
-The app sends an explicit `redirectTo` of `healthfolio://auth/callback` (the `urlScheme` in `apps/mobile/release-identity.json`) on sign-up, magic link, OAuth, and password reset. Supabase uses the Site URL only when that redirect is missing or not allowlisted. The live Site URL is still `http://localhost:3000`, which consumes the recovery token and never opens the app.
+Auth -> URL Configuration (saved live):
 
 - Site URL: `healthfolio://auth/callback`
-- Redirect URLs: `healthfolio://auth/callback` and `healthfolio://**`
+- Redirect URLs: `healthfolio://auth/callback`, `healthfolio://auth/callback?flow=recovery`, and `healthfolio://**`
 
-Use the custom scheme as the Site URL. A hosted HTTPS page cannot forward the recovery `code` or `#access_token` fragment without client-side script, and the public site does not run scripts. Set an HTTPS Site URL only if the dashboard rejects a custom scheme, and make that page forward both the query string and the URL fragment to `healthfolio://auth/callback` before anything else calls `/verify`. Do not leave the Site URL as `http://localhost:3000`.
+This PR sends `redirectTo` of `healthfolio://auth/callback` (the `urlScheme` in `apps/mobile/release-identity.json`) on sign-up, magic link, OAuth, and password reset. A separate build requests `healthfolio://auth/callback?flow=recovery` for Forgot password. The app treats `flow=recovery` the same as `type=recovery`, so either link opens Set new password.
 
 Auth -> Providers:
 

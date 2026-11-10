@@ -12,8 +12,10 @@ enum AuthCallback {
     }
 
     static func isRecovery(_ params: [String: String]) -> Bool {
-        let type = (params["type"] ?? params["flow"] ?? "").lowercased()
-        return type == "recovery"
+        let markers = [params["type"], params["flow"]].compactMap {
+            $0?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        }
+        return markers.contains("recovery")
     }
 
     /// PKCE recovery emails often redirect with only `code`. The recovery verifier
