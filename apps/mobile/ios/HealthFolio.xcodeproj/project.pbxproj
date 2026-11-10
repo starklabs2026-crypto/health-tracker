@@ -72,6 +72,7 @@
 		A56000000000000000000060 /* AssistantRemoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000160 /* AssistantRemoteModels.swift */; };
 		A56000000000000000000061 /* NativeSessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000161 /* NativeSessionCoordinator.swift */; };
 		A56000000000000000000062 /* TrendChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000162 /* TrendChartData.swift */; };
+		A56000000000000000000063 /* HealthFolioAppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56000000000000000000163 /* HealthFolioAppLock.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		D8283EE2BAE012C91C0440E6 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1767F486A8049873FF828C /* ExpoModulesProvider.swift */; };
 		DEA3F429A532C579FF2AC3E2 /* libPods-HealthFolio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFBCA38755207E303E86C04C /* libPods-HealthFolio.a */; };
@@ -145,6 +146,7 @@
 		A56000000000000000000160 /* AssistantRemoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantRemoteModels.swift; sourceTree = "<group>"; };
 		A56000000000000000000161 /* NativeSessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSessionCoordinator.swift; sourceTree = "<group>"; };
 		A56000000000000000000162 /* TrendChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendChartData.swift; sourceTree = "<group>"; };
+		A56000000000000000000163 /* HealthFolioAppLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthFolioAppLock.swift; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* LaunchBrand.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchBrand.storyboard; path = HealthFolio/LaunchBrand.storyboard; sourceTree = "<group>"; };
 		AFBCA38755207E303E86C04C /* libPods-HealthFolio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-HealthFolio.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
@@ -295,6 +297,7 @@
 				A56000000000000000000160 /* AssistantRemoteModels.swift */,
 				A56000000000000000000161 /* NativeSessionCoordinator.swift */,
 				A56000000000000000000162 /* TrendChartData.swift */,
+				A56000000000000000000163 /* HealthFolioAppLock.swift */,
 			);
 			path = HealthFolio/SwiftUIPrototype;
 			sourceTree = "<group>";
@@ -598,6 +601,7 @@
 				A56000000000000000000060 /* AssistantRemoteModels.swift in Sources */,
 				A56000000000000000000061 /* NativeSessionCoordinator.swift in Sources */,
 				A56000000000000000000062 /* TrendChartData.swift in Sources */,
+				A56000000000000000000063 /* HealthFolioAppLock.swift in Sources */,
 				D8283EE2BAE012C91C0440E6 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -614,9 +618,9 @@
 				CODE_SIGN_ENTITLEMENTS = HealthFolio/HealthFolio.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 77;
+				CURRENT_PROJECT_VERSION = 78;
 				DEVELOPMENT_TEAM = 2GVCQDUJFJ;
-				HEALTHFOLIO_GOOGLE_IOS_URL_SCHEME = com.googleusercontent.apps.YOUR_REVERSED_IOS_CLIENT_ID;
+				HEALTHFOLIO_GOOGLE_IOS_URL_SCHEME = com.googleusercontent.apps.326783637021-rudet3065p0a78ffq9i3q6tvvjd97mo4;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -654,9 +658,9 @@
 				CODE_SIGN_ENTITLEMENTS = HealthFolio/HealthFolio.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 77;
+				CURRENT_PROJECT_VERSION = 78;
 				DEVELOPMENT_TEAM = 2GVCQDUJFJ;
-				HEALTHFOLIO_GOOGLE_IOS_URL_SCHEME = com.googleusercontent.apps.YOUR_REVERSED_IOS_CLIENT_ID;
+				HEALTHFOLIO_GOOGLE_IOS_URL_SCHEME = com.googleusercontent.apps.326783637021-rudet3065p0a78ffq9i3q6tvvjd97mo4;
 				INFOPLIST_FILE = HealthFolio/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (

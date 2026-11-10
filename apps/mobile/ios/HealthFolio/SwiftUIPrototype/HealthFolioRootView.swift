@@ -53,8 +53,10 @@ enum HealthFolioAuthCallbackRouter {
 struct HealthFolioRootView: View {
     @State private var selectedTab = HealthFolioTab.today
     @StateObject private var model = HealthFolioAppModel()
+    @ObservedObject var appLock: HealthFolioAppLock
 
-    init() {
+    init(appLock: HealthFolioAppLock) {
+        self.appLock = appLock
         #if DEBUG
         _selectedTab = State(initialValue: Self.screenshotTabArgument())
         #endif
@@ -69,6 +71,8 @@ struct HealthFolioRootView: View {
                     .background(HealthFolioTheme.background.ignoresSafeArea())
             } else if !model.isSignedIn {
                 AuthNativeView()
+            } else if appLock.isLocked {
+                lockedView
             } else if HealthFolioConsentPolicy.requiresBlockingGate(
                 isSignedIn: model.isSignedIn,
                 hasCurrentConsent: model.hasCurrentConsent,
@@ -89,8 +93,9 @@ struct HealthFolioRootView: View {
         }
         .tint(HealthFolioTheme.blue)
         .environmentObject(model)
+        .environmentObject(appLock)
         .overlay {
-            if model.isShowingFirstLaunchGuide
+            if model.isShowingFirstLaunchGuide && !appLock.isLocked
                 && !HealthFolioConsentPolicy.requiresBlockingGate(
                     isSignedIn: model.isSignedIn,
                     hasCurrentConsent: model.hasCurrentConsent,
@@ -111,7 +116,10 @@ struct HealthFolioRootView: View {
             await model.bootstrap()
             await handlePendingAuthCallbacks()
         }
-        .sheet(isPresented: $model.isPasswordResetRequired) {
+        .sheet(isPresented: Binding(
+            get: { model.isPasswordResetRequired && (!model.isSignedIn || !appLock.isLocked) },
+            set: { if !model.isSignedIn || !appLock.isLocked { model.isPasswordResetRequired = $0 } }
+        )) {
             PasswordResetNativeView()
                 .environmentObject(model)
                 .interactiveDismissDisabled()
@@ -132,11 +140,49 @@ struct HealthFolioRootView: View {
                 await model.handleAuthCallback(url)
             }
         }
+        .onChange(of: model.isSignedIn) { isSignedIn in
+            if !isSignedIn { appLock.lock() }
+        }
         .onChange(of: model.firstLaunchGuideStep) { step in
             if step == .records || step == .addRecord || step == .upload {
                 selectedTab = .records
             }
         }
+    }
+
+    private var lockedView: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                Label("HealthFolio is locked", systemImage: "lock.shield")
+                    .font(.title2.bold())
+                    .accessibilityAddTraits(.isHeader)
+
+                Text("Use Face ID or your device passcode to open your records.")
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                if let message = appLock.message {
+                    Text(message)
+                        .font(.footnote)
+                        .multilineTextAlignment(.center)
+                }
+
+                Button("Unlock HealthFolio") {
+                    Task { await appLock.unlock() }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(appLock.isAuthenticating)
+
+                Button("Sign out") {
+                    Task { await model.signOut() }
+                }
+                .disabled(appLock.isAuthenticating)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(24)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(HealthFolioTheme.background.ignoresSafeArea())
     }
 
     private var appTabs: some View {
@@ -373,5 +419,5 @@ private extension FirstLaunchGuideStep {
 }
 
 #Preview {
-    HealthFolioRootView()
+    HealthFolioRootView(appLock: HealthFolioAppLock())
 }
