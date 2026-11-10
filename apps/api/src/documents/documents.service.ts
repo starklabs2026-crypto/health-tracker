@@ -24,28 +24,36 @@ export class DocumentsService {
   ) {}
 
   /** Create the record (pending_upload) and return a presigned upload URL. */
-  async create(
-    userId: string,
-    dto: CreateDocumentRequest,
-  ): Promise<CreateDocumentResponse> {
+  async create(userId: string, dto: CreateDocumentRequest): Promise<CreateDocumentResponse> {
     const ownerUserId = dto.ownerProfileId ?? userId;
+    const sourceDate = dto.sourceDate ? new Date(dto.sourceDate) : new Date();
     const doc = await this.prisma.document.create({
       data: {
         ownerUserId,
         uploadedByUserId: userId,
         fileType: dto.fileType,
         docType: dto.docType,
-        sourceDate: new Date(dto.sourceDate),
+        sourceDate,
         labName: dto.labName ?? null,
         orderingPhysician: dto.orderingPhysician ?? null,
         notes: dto.notes ?? null,
         ocrStatus: OcrStatus.PendingUpload,
+        ocrProgress: 0,
+        ocrStage: 'awaiting_upload',
       },
     });
 
     const fileKey = `${ownerUserId}/${doc.id}/source`;
     const { uploadUrl } = this.storage.getPresignedUploadUrl(fileKey, dto.fileType);
     return { documentId: doc.id, uploadUrl, fileKey };
+  }
+
+  async createBatch(
+    userId: string,
+    documents: CreateDocumentRequest[],
+  ): Promise<{ documents: CreateDocumentResponse[] }> {
+    const created = await Promise.all(documents.map((dto) => this.create(userId, dto)));
+    return { documents: created };
   }
 
   /** Confirm upload, mark queued, enqueue the OCR job. */
@@ -61,9 +69,28 @@ export class DocumentsService {
 
     await this.prisma.document.update({
       where: { id },
-      data: { fileUrl: fileKey, ocrStatus: OcrStatus.Queued },
+      data: {
+        fileUrl: fileKey,
+        ocrStatus: OcrStatus.Queued,
+        ocrProgress: 5,
+        ocrStage: 'queued',
+        ocrQueuedAt: new Date(),
+        ocrStartedAt: null,
+        ocrCompletedAt: null,
+        ocrError: null,
+      },
     });
     await this.queue.enqueue({ documentId: id, userId: doc.ownerUserId, fileKey });
+    return { ok: true };
+  }
+
+  async markUploadedBatch(
+    userId: string,
+    documents: Array<{ documentId: string; fileKey: string }>,
+  ): Promise<{ ok: true }> {
+    for (const doc of documents) {
+      await this.markUploaded(userId, doc.documentId, doc.fileKey);
+    }
     return { ok: true };
   }
 
@@ -112,6 +139,8 @@ export class DocumentsService {
       sourceDate: d.sourceDate.toISOString(),
       labName: d.labName,
       ocrStatus: d.ocrStatus as OcrStatus,
+      ocrProgress: d.ocrProgress,
+      ocrStage: d.ocrStage,
       createdAt: d.createdAt.toISOString(),
     }));
     return { items, page, limit, total };

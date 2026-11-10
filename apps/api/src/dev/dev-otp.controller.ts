@@ -1,6 +1,7 @@
 import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
 
 import { Public } from '../common/public.decorator.js';
+import { isDevOtpEnabled } from './dev-otp-policy.js';
 import { DevOtpStore } from './dev-otp.store.js';
 
 /**
@@ -15,7 +16,7 @@ export class DevOtpController {
   @Public()
   @Get(':identifier')
   getOtp(@Param('identifier') identifier: string): { identifier: string; code: string } {
-    if (process.env.NODE_ENV === 'production') {
+    if (!isDevOtpEnabled()) {
       throw new NotFoundException();
     }
     const code = this.store.get(identifier);

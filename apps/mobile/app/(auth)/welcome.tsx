@@ -1,24 +1,48 @@
 import { router } from 'expo-router';
-import { View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { Button, Screen, Subtitle, Title } from '../../src/components/ui';
+import {
+  BrandLockup,
+  Button,
+  CenteredScreen,
+} from '../../src/components/healthfolio';
+import { colors, spacing } from '../../src/theme/tokens';
 
 export default function Welcome() {
   return (
-    <Screen>
-      <Title>Medical Tracker</Title>
-      <Subtitle>Your medical records, unified and always with you.</Subtitle>
-      <View>
+    <CenteredScreen>
+      <BrandLockup logoSize={54} textStyle={styles.brandText} />
+      <Text style={styles.tagline}>Your reports, readings, and doctor-ready summary.</Text>
+      <View style={styles.actions}>
         <Button
-          label="Continue with Email"
-          onPress={() => router.push('/(auth)/identifier?mode=email')}
+          label="I'm new"
+          onPress={() => router.push('/(auth)/identifier?mode=signup')}
+          style={styles.welcomeButton}
+          textStyle={styles.welcomeButtonText}
         />
         <Button
-          label="Continue with Phone"
+          label="I have an account"
           variant="secondary"
-          onPress={() => router.push('/(auth)/identifier?mode=phone')}
+          onPress={() => router.push('/(auth)/identifier?mode=signin')}
+          style={styles.welcomeButton}
+          textStyle={styles.welcomeButtonText}
         />
       </View>
-    </Screen>
+    </CenteredScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  brandText: { fontSize: 26, lineHeight: 31 },
+  tagline: {
+    color: colors.textSecondary,
+    fontSize: 15,
+    lineHeight: 21,
+    marginTop: spacing.sm,
+    maxWidth: 280,
+    textAlign: 'center',
+  },
+  actions: { gap: spacing.sm, width: '100%', marginTop: spacing.lg },
+  welcomeButton: { minHeight: 50 },
+  welcomeButtonText: { fontSize: 15 },
+});

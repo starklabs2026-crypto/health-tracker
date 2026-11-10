@@ -2,11 +2,18 @@
   "name": "medical-tracker",
   "version": "0.1.0",
   "private": true,
-  "description": "Medical Tracking Application — MVP (local prototype)",
+  "description": "HealthFolio personal health record app",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
+  "overrides": {
+    "@typescript-eslint/eslint-plugin": "8.60.0",
+    "@typescript-eslint/parser": "8.60.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "zod": "3.23.8"
+  },
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
@@ -19,6 +26,39 @@
     "db:migrate": "npm -w apps/api run prisma:migrate",
     "db:seed": "npm -w apps/api run seed",
     "phi-scan": "node scripts/phi-scan.mjs",
+    "cleanup:classify": "node scripts/cleanup-pipeline.mjs classify",
+    "cleanup:scan": "node scripts/cleanup-pipeline.mjs scan",
+    "cleanup:verify": "node scripts/cleanup-pipeline.mjs verify",
+    "cleanup:verify:native": "node scripts/cleanup-pipeline.mjs verify --native",
+    "cleanup:test": "node --test scripts/cleanup-pipeline.test.mjs",
+    "test:ios-consent": "swift -frontend -interpret -sdk \"$(xcrun --sdk macosx --show-sdk-path)\" -target \"$(uname -m)-apple-macosx$(sw_vers -productVersion)\" apps/mobile/ios/HealthFolio/SwiftUIPrototype/HealthFolioConsentPolicy.swift scripts/test-healthfolio-consent-policy.swift",
+    "test:ios-consent-rest-insert": "swift -frontend -interpret -sdk \"$(xcrun --sdk macosx --show-sdk-path)\" -target \"$(uname -m)-apple-macosx$(sw_vers -productVersion)\" scripts/test-healthfolio-consent-rest-insert.swift",
+    "test:ios-account-deletion": "swift -frontend -interpret -sdk \"$(xcrun --sdk macosx --show-sdk-path)\" -target \"$(uname -m)-apple-macosx$(sw_vers -productVersion)\" apps/mobile/ios/HealthFolio/SwiftUIPrototype/NativeSupabaseError.swift scripts/test-healthfolio-account-deletion-policy.swift",
+    "test:ios-onboarding": "swift -frontend -interpret -sdk \"$(xcrun --sdk macosx --show-sdk-path)\" -target \"$(uname -m)-apple-macosx$(sw_vers -productVersion)\" apps/mobile/ios/HealthFolio/SwiftUIPrototype/HealthFolioOnboardingPolicy.swift scripts/test-healthfolio-onboarding-policy.swift",
+    "test:build72-regressions": "node scripts/test-healthfolio-build72-regressions.mjs",
+    "test:build73-regressions": "node scripts/test-healthfolio-build73-regressions.mjs",
+    "test:ocr-ingestion": "node scripts/test-healthfolio-ocr-ingestion-regressions.mjs",
+    "test:auth-assistant": "node scripts/test-healthfolio-auth-assistant-regressions.mjs",
+    "test:ios-session": "node scripts/test-healthfolio-native-behavior.mjs session",
+    "test:ios-profile": "node scripts/test-healthfolio-native-behavior.mjs profile",
+    "test:ios-trends": "node scripts/test-healthfolio-native-behavior.mjs trends",
+    "test:ios-uploads": "node scripts/test-healthfolio-upload-behavior.mjs",
+    "test:assistant-behavior": "node scripts/test-healthfolio-assistant-behavior.mjs",
+    "test:ingestion-security": "node scripts/test-healthfolio-ingestion-security.mjs",
+    "test:deletion-behavior": "node scripts/test-healthfolio-account-deletion-behavior.mjs",
+    "test:profile-document-access": "node scripts/test-profile-document-access-postgres.mjs",
+    "test:inbound-email-security": "node scripts/test-healthfolio-inbound-email-security.mjs",
+    "test:assistant-policy": "swift -frontend -interpret -sdk \"$(xcrun --sdk macosx --show-sdk-path)\" -target \"$(uname -m)-apple-macosx$(sw_vers -productVersion)\" apps/mobile/ios/HealthFolio/SwiftUIPrototype/AssistantPrompt.swift scripts/test-healthfolio-assistant-policy.swift",
+    "test:assistant-history": "swift -frontend -interpret -sdk \"$(xcrun --sdk macosx --show-sdk-path)\" -target \"$(uname -m)-apple-macosx$(sw_vers -productVersion)\" apps/mobile/ios/HealthFolio/SwiftUIPrototype/AssistantMessage.swift apps/mobile/ios/HealthFolio/SwiftUIPrototype/AssistantChatLocalStore.swift scripts/test-healthfolio-assistant-history.swift",
+    "test:backend-assistant": "node scripts/test-healthfolio-backend-assistant-regressions.mjs",
+    "test:assistant-remote-models": "swift -frontend -interpret -sdk \"$(xcrun --sdk macosx --show-sdk-path)\" -target \"$(uname -m)-apple-macosx$(sw_vers -productVersion)\" apps/mobile/ios/HealthFolio/SwiftUIPrototype/AssistantRemoteModels.swift scripts/test-healthfolio-assistant-remote-models.swift",
+    "test:account-deletion-harness": "node --test scripts/smoke-test-account-deletion.test.mjs",
+    "test:account-deletion-live": "node scripts/smoke-test-account-deletion.mjs",
+    "test:app-store-site": "node scripts/test-app-store-site.mjs",
+    "publish:app-store-site": "node scripts/publish-app-store-site.mjs",
+    "test:consent-migration": "node scripts/test-healthfolio-consent-migration.mjs",
+    "supabase:migrations": "npx --yes supabase@2.101.0 migration list",
+    "supabase:push": "npx --yes supabase@2.101.0 db push --linked --include-seed",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "devDependencies": {
@@ -28,7 +68,7 @@
     "prettier": "^3.3.3",
     "tsx": "^4.19.0",
     "turbo": "^2.1.0",
-    "typescript": "^5.5.4"
+    "typescript": "5.5.4"
   },
   "engines": {
     "node": ">=20"

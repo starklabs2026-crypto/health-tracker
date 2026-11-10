@@ -17,11 +17,11 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "zod": "^3.23.8"
+    "zod": "3.23.8"
   },
   "devDependencies": {
     "eslint-config-custom": "*",
-    "typescript": "^5.5.4",
+    "typescript": "5.5.4",
     "vitest": "^2.0.5"
   }
 }

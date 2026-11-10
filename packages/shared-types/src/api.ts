@@ -30,7 +30,7 @@ export interface OtpVerifyResponse extends AuthTokens {
   isNewUser: boolean;
 }
 
-export interface RefreshResponse extends AuthTokens {}
+export type RefreshResponse = AuthTokens;
 
 // --- Profile (Phase 1) ---
 export interface MeResponse {
@@ -53,12 +53,19 @@ export interface CreateDocumentResponse {
   fileKey: string;
 }
 
+export interface CreateDocumentBatchResponse {
+  documents: CreateDocumentResponse[];
+}
+
 export interface DocumentSummary {
   id: string;
   docType: DocType;
   sourceDate: string;
   labName: string | null;
+  notes?: string | null;
   ocrStatus: OcrStatus;
+  ocrProgress: number;
+  ocrStage: string | null;
   createdAt: string;
 }
 
@@ -71,12 +78,19 @@ export interface DocumentDetail {
 
 export interface TrendPoint {
   readingId: string;
+  documentId: string | null;
   value: number;
   unit: string;
   recordedAt: string;
   rangeFlag: RangeFlag;
   isUserVerified: boolean;
   confidenceScore: number;
+  sourceDocument: {
+    id: string;
+    docType: DocType;
+    sourceDate: string;
+    labName: string | null;
+  } | null;
 }
 
 export interface TrendResponse {
@@ -102,6 +116,10 @@ export interface FamilyMemberView {
   memberName: string;
   memberEmail: string | null;
   memberPhone: string | null;
+  memberDob: string;
+  memberSex: import('./user.js').Sex;
+  memberUnitsPreference: import('./user.js').UnitsPreference;
+  memberBloodGroup: import('./user.js').BloodGroup | null;
 }
 
 export interface FamilyMembershipView {

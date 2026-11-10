@@ -7,21 +7,21 @@
     "dev": "next dev -p 3002",
     "start": "next start -p 3002",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "next lint",
+    "lint": "eslint . --ext .ts,.tsx",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@medical-tracker/shared-types": "*",
-    "next": "^14.2.7",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "next": "^15.5.9",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
-    "@types/react": "^18.3.5",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "~19.2.10",
+    "@types/react-dom": "^19.2.3",
     "eslint": "^8.57.0",
-    "eslint-config-next": "^14.2.7",
+    "eslint-config-next": "^15.5.9",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"
   }

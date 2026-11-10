@@ -1,0 +1,2 @@
+-- Supabase RLS migration mirror. Prisma does not apply policies locally.
+-- See supabase/migrations/20260526105500_auth_email_link_policy.sql.

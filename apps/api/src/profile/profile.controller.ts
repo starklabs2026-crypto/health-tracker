@@ -42,7 +42,6 @@ export class ProfileController {
 
   @Delete()
   @HttpCode(204)
-  @AuditLog('delete', 'user')
   async deleteMe(@CurrentUser() user: AuthUser): Promise<void> {
     await this.profile.deleteMe(user.id);
   }

@@ -1,8 +1,8 @@
-# Medical Tracker
+# HealthFolio
 
-A mobile-first personal health record platform. Upload lab reports and prescriptions, extract parameters via on-device OCR, track longitudinal trends, share a scoped read-only view with your doctor, and link family members to your health data.
+A mobile-first personal health record platform. Upload lab reports and prescriptions, extract parameters through the OCR pipeline, track longitudinal trends, share a scoped read-only view with your doctor, and link family members to your health data.
 
-Built as a local prototype — all third-party services (cloud OCR, S3, SMS, push notifications) are substituted with free local equivalents behind clean interfaces, making them trivial to swap via config when going to production.
+The repository includes local development defaults for PostgreSQL, Redis, storage, OCR, and OTP delivery. Production services are swapped in through environment variables and the mobile app is configured for iOS App Store builds through Expo EAS.
 
 ---
 
@@ -27,10 +27,10 @@ Built as a local prototype — all third-party services (cloud OCR, S3, SMS, pus
 
 ```
 apps/
-  api/            NestJS 10 REST + WebSocket API    → http://localhost:3000
+  api/            NestJS 11 REST + WebSocket API    -> http://localhost:3000
   worker/         BullMQ OCR worker (Redis queue)
-  doctor-share/   Next.js 14 public share web view  → http://localhost:3002
-  mobile/         Expo 51 (React Native) client
+  doctor-share/   Next.js 15 public share web view  -> http://localhost:3002
+  mobile/         Expo 55 (React Native) client
 
 packages/
   shared-types/       Zod schemas + TypeScript types (the shared contract)
@@ -45,19 +45,20 @@ packages/
 
 | Layer | Technology |
 |---|---|
-| Mobile | Expo 51 · React Native · Expo Router · TanStack Query · Zustand |
-| API | NestJS 10 · Prisma 5 · PostgreSQL 15 · Socket.IO |
+| Mobile | Expo 55 · React Native · Expo Router · TanStack Query · Zustand |
+| API | NestJS 11 · Prisma 5 · PostgreSQL 15 · Socket.IO |
 | Worker | BullMQ · Redis 7 · Tesseract.js · pdfjs-dist |
-| Doctor Share | Next.js 14 (App Router, server components) |
+| Doctor Share | Next.js 15 (App Router, server components) |
 | Shared | TypeScript 5 strict · Zod · Turborepo · npm workspaces |
 
 ---
 
 ## Prerequisites
 
-- **Node.js 20+** and **npm 10+** (developed on Node 22 / npm 11)
+- **Node.js 20+** and **npm 10+** (developed on Node 24 / npm 11)
 - **Docker Desktop** — required for PostgreSQL 15 and Redis 7
-- **Expo Go** on a physical Android device, or an Android emulator
+- **Expo Go** for local mobile development, or a simulator/emulator
+- **Apple Developer account** and **Expo account** for iOS App Store/TestFlight builds
 
 ---
 
@@ -88,7 +89,36 @@ curl http://localhost:3000/health
 # → {"status":"ok","db":"up","redis":"up"}
 ```
 
-> **Mobile setup:** Set `EXPO_PUBLIC_API_URL` in `apps/mobile/.env` to your machine's **LAN IP address** (e.g. `http://192.168.1.10:3000`), not `localhost`. The Expo Go app on your phone must be able to reach the API over your local network.
+> **Mobile setup:** Set `EXPO_PUBLIC_API_URL` in `apps/mobile/.env` to your machine's **LAN IP address** (e.g. `http://192.168.1.10:3000`), not `localhost`, when testing on a physical device. A production iOS build must set `EXPO_PUBLIC_API_URL` in the EAS production environment.
+
+---
+
+## iOS App Store Release
+
+The mobile app is configured as:
+
+| Field | Value |
+|---|---|
+| App name | `HealthFolio` |
+| Bundle ID | `com.starklabs.healthfolio` |
+| SKU | `HEALTHFOLIO-IOS-001` |
+| EAS project | `@starklabs/healthfolio` |
+| Version | `1.0.0` |
+| EAS profiles | `development`, `preview`, `production` |
+
+Build and submit from the mobile workspace:
+
+```bash
+cd apps/mobile
+npx --yes eas-cli@19 login
+npx --yes eas-cli@19 project:info
+npx --yes eas-cli@19 env:create --name EXPO_PUBLIC_API_URL --value https://api.example.com --environment production --visibility plaintext
+npx --yes eas-cli@19 credentials:configure-build -p ios -e production
+npm run build:ios
+npm run submit:ios
+```
+
+See [docs/app-store-release.md](docs/app-store-release.md) for the full release checklist, App Store name findings, backend production environment, and review notes.
 
 ---
 
@@ -105,7 +135,13 @@ curl http://localhost:3000/health
 | `npm run db:migrate` | Apply Prisma migrations |
 | `npm run db:seed` | Seed the 80-parameter catalog and demo data |
 | `npm run db:reset` | Tear down volumes, re-up, migrate, and seed |
+| `npm run supabase:migrations` | List local/remote Supabase migration status |
+| `npm run supabase:push` | Push Supabase migrations and catalog seed to the linked project |
 | `npm run phi-scan` | Fail CI if raw `console.*` is used outside the phi-scrubber |
+| `npm run cleanup:classify` | Bucket dirty files into safe review/commit groups |
+| `npm run cleanup:scan` | Fail if dirty files include generated artifacts or likely secrets |
+| `npm run cleanup:verify` | Run the cleanup verification gate from a no-space `/tmp` snapshot |
+| `npm run cleanup:verify:native` | Run cleanup verification plus `pod install` and an unsigned simulator build |
 
 ---
 
@@ -147,11 +183,8 @@ All endpoints require `Authorization: Bearer <token>` unless marked public.
 
 ---
 
-## Windows Notes
+## Platform Notes
 
-This project was developed on Windows 11 with PowerShell. A few deviations from a typical macOS setup:
-
-- No iOS Simulator — mobile is tested via **Expo Go on a physical Android phone**.
 - Docker Desktop must be running before executing any `db:*` scripts.
 - All npm scripts use cross-platform equivalents (`wait-on`, `npm-run-all`) — no bash-isms.
 

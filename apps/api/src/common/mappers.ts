@@ -19,11 +19,16 @@ import type {
 } from '@medical-tracker/shared-types';
 import type { Document, FamilyLink, HealthProfile, ParameterReading, User } from '@prisma/client';
 
+type UserWithForwardingAlias = User & {
+  inboundEmailAlias?: string | null;
+};
+
 /** Map a Prisma User row to the shared-types User DTO (Dates -> ISO strings). */
-export function mapUser(user: User): UserDto {
+export function mapUser(user: UserWithForwardingAlias): UserDto {
   return {
     id: user.id,
     email: user.email,
+    inboundEmailAlias: user.inboundEmailAlias,
     phone: user.phone,
     name: user.name,
     dob: user.dob.toISOString(),
@@ -61,6 +66,11 @@ export function mapDocument(doc: Document): DocumentDto {
     notes: doc.notes,
     ocrStatus: doc.ocrStatus as OcrStatus,
     ocrAttempts: doc.ocrAttempts,
+    ocrProgress: doc.ocrProgress,
+    ocrStage: doc.ocrStage,
+    ocrQueuedAt: doc.ocrQueuedAt ? doc.ocrQueuedAt.toISOString() : null,
+    ocrStartedAt: doc.ocrStartedAt ? doc.ocrStartedAt.toISOString() : null,
+    ocrCompletedAt: doc.ocrCompletedAt ? doc.ocrCompletedAt.toISOString() : null,
     createdAt: doc.createdAt.toISOString(),
     deletedAt: doc.deletedAt ? doc.deletedAt.toISOString() : null,
   };

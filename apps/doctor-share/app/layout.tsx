@@ -2,8 +2,11 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Medical Tracker — Doctor Share',
-  robots: { index: false, follow: false },
+  title: {
+    default: 'HealthFolio',
+    template: '%s | HealthFolio',
+  },
+  description: 'HealthFolio personal health record support and privacy information.',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

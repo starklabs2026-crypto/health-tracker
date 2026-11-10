@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { logger } from '@medical-tracker/phi-scrubber';
 import type {
   MeResponse,
@@ -8,10 +8,14 @@ import type {
 
 import { mapHealthProfile, mapUser } from '../common/mappers.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { STORAGE_ADAPTER, type StorageAdapter } from '../storage/storage.adapter.js';
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
+  ) {}
 
   async getMe(userId: string): Promise<MeResponse> {
     const user = await this.prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
@@ -37,10 +41,7 @@ export class ProfileService {
     return this.getMe(userId);
   }
 
-  async upsertHealthProfile(
-    userId: string,
-    dto: UpdateHealthProfileRequest,
-  ): Promise<MeResponse> {
+  async upsertHealthProfile(userId: string, dto: UpdateHealthProfileRequest): Promise<MeResponse> {
     await this.prisma.healthProfile.upsert({
       where: { userId },
       create: {
@@ -64,12 +65,68 @@ export class ProfileService {
     return this.getMe(userId);
   }
 
-  /**
-   * Soft-delete: mark the account for deletion (30-day grace). The hard purge
-   * job is a stub for the MVP (playbook §1.1.3).
-   */
   async deleteMe(userId: string): Promise<void> {
-    await this.prisma.user.update({ where: { id: userId }, data: { deletedAt: new Date() } });
-    logger.info('Account marked for deletion (purge job stubbed)', { userId });
+    const managedProfiles = await this.prisma.familyLink.findMany({
+      where: {
+        ownerUserId: userId,
+        member: {
+          authUserId: null,
+          email: null,
+          phone: null,
+        },
+      },
+      select: { memberUserId: true },
+    });
+    const userIds = [
+      ...new Set([userId, ...managedProfiles.map((profile) => profile.memberUserId)]),
+    ];
+
+    const [documents, exports, user] = await Promise.all([
+      this.prisma.document.findMany({
+        where: {
+          OR: [{ ownerUserId: { in: userIds } }, { uploadedByUserId: { in: userIds } }],
+          fileUrl: { not: null },
+        },
+        select: { fileUrl: true },
+      }),
+      this.prisma.export.findMany({
+        where: { userId: { in: userIds }, fileUrl: { not: null } },
+        select: { fileUrl: true },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, phone: true },
+      }),
+    ]);
+
+    const fileKeys = [...documents, ...exports]
+      .map((row) => row.fileUrl)
+      .filter((fileUrl): fileUrl is string => {
+        if (!fileUrl) return false;
+        return !/^https?:\/\//i.test(fileUrl);
+      })
+      .map((fileUrl) => fileUrl.replace(/^storage:\/\/[^/]+\//, ''));
+
+    await Promise.all(fileKeys.map((fileKey) => this.storage.deleteObject(fileKey)));
+
+    await this.prisma.$transaction([
+      this.prisma.auditLog.deleteMany({
+        where: { OR: [{ actorUserId: { in: userIds } }, { targetUserId: { in: userIds } }] },
+      }),
+      ...(user?.email || user?.phone
+        ? [
+            this.prisma.otpCode.deleteMany({
+              where: {
+                identifier: {
+                  in: [user.email, user.phone].filter((value): value is string => Boolean(value)),
+                },
+              },
+            }),
+          ]
+        : []),
+      this.prisma.user.deleteMany({ where: { id: { in: userIds } } }),
+    ]);
+
+    logger.info('Account and associated user data deleted', { userId });
   }
 }

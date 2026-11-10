@@ -36,12 +36,15 @@ export class ResourceAccessGuard implements CanActivate {
       return true;
     }
 
-    // Check active family link (Phase 4)
+    // Match can_access_user: the actor must own the link and the target is the
+    // managed or accepted profile. Membership the other way is not access.
     const link = await this.prisma.familyLink.findFirst({
       where: {
-        ownerUserId: targetUserId,
-        memberUserId: actor.id,
+        ownerUserId: actor.id,
+        memberUserId: targetUserId,
         status: FamilyLinkStatus.Active,
+        revokedAt: null,
+        acceptedAt: { not: null },
       },
     });
     if (!link) throw new NotFoundException();

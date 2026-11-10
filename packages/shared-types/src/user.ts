@@ -39,6 +39,7 @@ export const residencyRegionSchema = z.nativeEnum(ResidencyRegion);
 export interface User {
   id: string;
   email: string | null;
+  inboundEmailAlias?: string | null;
   phone: string | null;
   name: string;
   dob: string; // ISO date

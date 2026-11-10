@@ -8,6 +8,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { OTP_DELIVERY } from './otp-delivery.js';
 import { OtpService } from './otp.service.js';
+import { resolveJwtSecret } from './jwt-secret.js';
 import { TokenService } from './token.service.js';
 
 @Module({
@@ -17,7 +18,7 @@ import { TokenService } from './token.service.js';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') ?? 'dev-insecure-secret',
+        secret: resolveJwtSecret(config.get<string>('JWT_SECRET')),
         signOptions: { expiresIn: Number(config.get('JWT_ACCESS_TTL') ?? 3600) },
       }),
     }),

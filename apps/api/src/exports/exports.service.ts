@@ -22,7 +22,13 @@ export class ExportsService {
     // Authorise: self or active family member
     if (requesterId !== targetId) {
       const link = await this.prisma.familyLink.findFirst({
-        where: { ownerUserId: targetId, memberUserId: requesterId, status: FamilyLinkStatus.Active },
+        where: {
+          ownerUserId: requesterId,
+          memberUserId: targetId,
+          status: FamilyLinkStatus.Active,
+          revokedAt: null,
+          acceptedAt: { not: null },
+        },
       });
       if (!link) throw new ForbiddenException('No access to this profile');
     }
@@ -52,7 +58,7 @@ export class ExportsService {
     doc.pipe(res);
 
     // ── Header ──────────────────────────────────────────────────────────────
-    doc.fontSize(20).fillColor('#1F4E79').text('Medical Tracker — Health Summary', { align: 'center' });
+    doc.fontSize(20).fillColor('#1F4E79').text('HealthFolio Health Summary', { align: 'center' });
     doc.moveDown(0.5);
     doc.fontSize(10).fillColor('#5C6B7A').text(
       `Generated: ${new Date().toLocaleString()}`,

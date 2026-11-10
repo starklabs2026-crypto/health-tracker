@@ -1,173 +1,311 @@
-import { PARAMETER_SEED, PANELS } from '@medical-tracker/parameter-catalog';
-import { RangeFlag, type ParameterReading } from '@medical-tracker/shared-types';
+import { formatRange, PARAMETER_SEED, PANELS } from '@medical-tracker/parameter-catalog';
+import {
+  FamilyLinkStatus,
+  RangeFlag,
+  type FamilyMemberView,
+  type ParameterReading,
+} from '@medical-tracker/shared-types';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { memo, useCallback } from 'react';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, RefreshControl, StyleSheet, Text, View } from 'react-native';
+
 import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-
-import { ProfileSwitcher } from '../../src/components/ProfileSwitcher';
-import { listReadings } from '../../src/lib/api/endpoints';
+  AppScroll,
+  Button,
+  Card,
+  EmptyState,
+  IconButton,
+  ListIcon,
+  Pill,
+  Row,
+  SearchField,
+  SelectablePill,
+  TopBar,
+  typography,
+} from '../../src/components/healthfolio';
+import { listFamilyMembers, listReadings } from '../../src/lib/api/endpoints';
 import { useProfileStore } from '../../src/lib/profile/profileStore';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { colors, spacing } from '../../src/theme/tokens';
 
-const FLAG_COLORS: Record<RangeFlag, string> = {
-  [RangeFlag.Normal]: colors.rangeNormal,
-  [RangeFlag.Low]: colors.rangeLow,
-  [RangeFlag.High]: colors.rangeHigh,
-  [RangeFlag.Critical]: colors.rangeCritical,
-  [RangeFlag.Unknown]: colors.textSecondary,
-};
-
-/** Pick the most-recent reading for each parameterId from a flat list. */
 function buildLatestMap(readings: ParameterReading[]): Map<string, ParameterReading> {
   const map = new Map<string, ParameterReading>();
-  for (const r of readings) {
-    const existing = map.get(r.parameterId);
-    if (!existing || r.recordedAt > existing.recordedAt) {
-      map.set(r.parameterId, r);
+  for (const reading of readings) {
+    const existing = map.get(reading.parameterId);
+    if (!existing || reading.recordedAt > existing.recordedAt) {
+      map.set(reading.parameterId, reading);
     }
   }
   return map;
 }
 
-/** All unique panel labels in seed order. */
-const PANEL_ORDER = Object.values(PANELS);
+function flagTone(flag?: RangeFlag): 'green' | 'amber' | 'red' | 'neutral' {
+  if (!flag || flag === RangeFlag.Unknown) return 'neutral';
+  if (flag === RangeFlag.Normal) return 'green';
+  if (flag === RangeFlag.Critical) return 'red';
+  return 'amber';
+}
 
-const ParamRow = memo(function ParamRow({
-  param,
-  reading,
-}: {
-  param: (typeof PARAMETER_SEED)[number];
-  reading: ParameterReading | undefined;
-}) {
-  const flagColor = reading
-    ? (FLAG_COLORS[reading.rangeFlag as RangeFlag] ?? colors.textSecondary)
-    : colors.border;
-  const a11yLabel = reading
-    ? `${param.canonicalName} ${reading.value} ${reading.unit} ${reading.rangeFlag}`
-    : `${param.canonicalName} no data`;
-  return (
-    <Pressable
-      style={styles.row}
-      accessibilityRole="button"
-      accessibilityLabel={a11yLabel}
-      onPress={() => router.push(`/readings/${param.id}`)}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={styles.paramName}>{param.canonicalName}</Text>
-        <Text style={styles.paramUnit}>{param.unit}</Text>
-      </View>
-      <View style={styles.valueCol}>
-        {reading ? (
-          <>
-            <Text style={[styles.value, { color: flagColor }]}>
-              {reading.value} {reading.unit}
-            </Text>
-            <Text style={[styles.flag, { color: flagColor }]}>
-              {reading.rangeFlag.toUpperCase()}
-            </Text>
-          </>
-        ) : (
-          <Text style={styles.dash}>—</Text>
-        )}
-      </View>
-      <Text style={styles.chevron}>›</Text>
-    </Pressable>
-  );
-});
+const PANEL_ORDER = Object.values(PANELS);
+const PANEL_LABELS: Record<string, string> = {
+  [PANELS.CBC]: 'CBC',
+  [PANELS.LIPID]: 'Lipids',
+  [PANELS.DIABETES]: 'Diabetes',
+  [PANELS.THYROID]: 'Thyroid',
+};
+
+type ProfileOption = {
+  id: string | null;
+  name: string;
+};
+
+function buildProfileOptions(members: FamilyMemberView[] | undefined): ProfileOption[] {
+  const managedProfiles =
+    members
+      ?.filter((member) => member.link.status === FamilyLinkStatus.Active)
+      .map((member) => ({
+        id: member.link.memberUserId,
+        name: member.memberName,
+      })) ?? [];
+
+  return [{ id: null, name: 'Me' }, ...managedProfiles];
+}
 
 export default function ReadingsScreen() {
-  const { activeProfileId } = useProfileStore();
-
+  const { activeProfileId, setActiveProfile } = useProfileStore();
+  const [query, setQuery] = useState('');
+  const [selectedPanel, setSelectedPanel] = useState<string>('all');
+  const { data: members } = useQuery({
+    queryKey: ['family', 'members'],
+    queryFn: listFamilyMembers,
+  });
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['readings', activeProfileId],
     queryFn: () =>
-      listReadings({
-        limit: 200,
-        ...(activeProfileId ? { profileId: activeProfileId } : {}),
-      }),
+      listReadings({ limit: 200, ...(activeProfileId ? { profileId: activeProfileId } : {}) }),
   });
 
+  const profileOptions = useMemo(() => buildProfileOptions(members), [members]);
+  const hasManagedProfiles = profileOptions.length > 1;
   const latest = buildLatestMap(data?.items ?? []);
-  const onRefresh = useCallback(() => void refetch(), [refetch]);
+  const latestReadings = Array.from(latest.values());
+  const searchTerm = query.trim().toLowerCase();
+  const availablePanels = PANEL_ORDER.filter((panel) =>
+    PARAMETER_SEED.some((param) => param.panel === panel && latest.has(param.id)),
+  );
+  const attentionTotal = latestReadings.filter((reading) => {
+    const flag = reading.rangeFlag as RangeFlag;
+    return flag !== RangeFlag.Normal && flag !== RangeFlag.Unknown;
+  }).length;
+  const verifiedTotal = latestReadings.filter((reading) => reading.isUserVerified).length;
 
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
-  }
+  const panelSections = useMemo(() => {
+    return availablePanels.flatMap((panel) => {
+      if (selectedPanel !== 'all' && selectedPanel !== panel) return [];
+
+      const chipLabel = PANEL_LABELS[panel] ?? panel;
+      const paramsWithData = PARAMETER_SEED.filter(
+        (param) => param.panel === panel && latest.has(param.id),
+      );
+      const panelMatchesSearch =
+        !searchTerm || `${panel} ${chipLabel}`.toLowerCase().includes(searchTerm);
+      const visibleParams = panelMatchesSearch
+        ? paramsWithData
+        : paramsWithData.filter((param) =>
+            [param.canonicalName, param.id, param.aliases.join(' '), chipLabel, panel]
+              .join(' ')
+              .toLowerCase()
+              .includes(searchTerm),
+          );
+
+      if (visibleParams.length === 0) return [];
+
+      const attention = visibleParams.filter((param) => {
+        const flag = latest.get(param.id)?.rangeFlag;
+        return flag && flag !== RangeFlag.Normal && flag !== RangeFlag.Unknown;
+      }).length;
+
+      return [
+        {
+          panel,
+          attention,
+          params: visibleParams,
+        },
+      ];
+    });
+  }, [availablePanels, latest, searchTerm, selectedPanel]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ProfileSwitcher />
-      <ScrollView
-        contentContainerStyle={styles.container}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
-      >
-        {PANEL_ORDER.map((panel) => {
-          const params = PARAMETER_SEED.filter((p) => p.panel === panel);
-          if (params.length === 0) return null;
+    <AppScroll
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+    >
+      <TopBar
+        title="Trends"
+        action={
+          <IconButton
+            icon="plus"
+            label="Add report"
+            onPress={() => router.push('/documents/new')}
+            style={styles.addButton}
+          />
+        }
+      />
+      {hasManagedProfiles ? (
+        <View style={styles.profileChips}>
+          {profileOptions.map((profile) => (
+            <SelectablePill
+              key={profile.id ?? 'me'}
+              label={profile.name}
+              selected={activeProfileId === profile.id}
+              onPress={() => setActiveProfile(profile.id, profile.id ? profile.name : null)}
+              tone="active"
+            />
+          ))}
+        </View>
+      ) : null}
+      {latest.size > 0 ? (
+        <View style={styles.metaRail}>
+          <ReadingMeta label={`${availablePanels.length}/8 panels`} tone="violet" />
+          <ReadingMeta
+            label={`${attentionTotal} watch`}
+            tone={attentionTotal > 0 ? 'amber' : 'green'}
+          />
+          <ReadingMeta label={`${verifiedTotal} verified`} tone="green" />
+        </View>
+      ) : null}
+      <SearchField value={query} onChangeText={setQuery} placeholder="Search biomarkers" />
+      <View style={styles.chips}>
+        <SelectablePill
+          label="All"
+          selected={selectedPanel === 'all'}
+          onPress={() => setSelectedPanel('all')}
+          tone="active"
+        />
+        {availablePanels.map((panel) => (
+          <SelectablePill
+            key={panel}
+            label={PANEL_LABELS[panel] ?? panel}
+            selected={selectedPanel === panel}
+            onPress={() => setSelectedPanel(panel)}
+            tone="active"
+          />
+        ))}
+      </View>
+
+      {isLoading ? (
+        <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
+      ) : latest.size === 0 ? (
+        <Card>
+          <EmptyState
+            icon="activity"
+            title={
+              hasManagedProfiles && activeProfileId === null ? 'Choose a profile' : 'No readings'
+            }
+            body={
+              hasManagedProfiles && activeProfileId === null
+                ? 'Select a profile above.'
+                : 'Upload a report.'
+            }
+            action={<Button label="Upload" onPress={() => router.push('/documents/new')} />}
+          />
+        </Card>
+      ) : panelSections.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon="search"
+            title="No matching readings"
+            body="Try another panel or marker."
+          />
+        </Card>
+      ) : (
+        panelSections.map((section) => {
           return (
-            <View key={panel} style={styles.panel}>
-              <Text style={styles.panelTitle}>{panel}</Text>
-              {params.map((param) => {
+            <Card key={section.panel} style={styles.panelCard}>
+              <View style={styles.panelHeader}>
+                <Text style={typography.h3}>{section.panel}</Text>
+                {section.attention > 0 ? (
+                  <Pill label={`${section.attention} attention`} tone="amber" />
+                ) : (
+                  <Pill label="Stable" tone="green" />
+                )}
+              </View>
+              {section.params.map((param) => {
                 const reading = latest.get(param.id);
                 return (
-                  <ParamRow key={param.id} param={param} reading={reading} />
+                  <Row
+                    key={param.id}
+                    left={<ListIcon icon="activity" />}
+                    title={param.canonicalName}
+                    subtitle={
+                      reading
+                        ? `${reading.value} ${reading.unit} - ${formatRange(param)}`
+                        : formatRange(param)
+                    }
+                    right={
+                      <Pill
+                        label={reading?.rangeFlag ?? 'unknown'}
+                        tone={flagTone(reading?.rangeFlag as RangeFlag | undefined)}
+                      />
+                    }
+                    onPress={() => router.push(`/readings/${param.id}`)}
+                  />
                 );
               })}
-            </View>
+            </Card>
           );
-        })}
-      </ScrollView>
+        })
+      )}
+    </AppScroll>
+  );
+}
+
+function ReadingMeta({ label, tone }: { label: string; tone: 'green' | 'amber' | 'violet' }) {
+  const toneStyle = {
+    green: styles.metaDotGreen,
+    amber: styles.metaDotAmber,
+    violet: styles.metaDotViolet,
+  }[tone];
+
+  return (
+    <View style={styles.metaItem}>
+      <View style={[styles.metaDot, toneStyle]} />
+      <Text style={styles.metaText}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  panel: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-    overflow: 'hidden',
+  addButton: { width: 48, height: 48, borderRadius: 24 },
+  profileChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
-  panelTitle: {
-    fontSize: 13,
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
+  metaRail: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+    paddingHorizontal: 2,
+  },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  metaDot: { width: 7, height: 7, borderRadius: 4 },
+  metaDotGreen: { backgroundColor: colors.secondary },
+  metaDotAmber: { backgroundColor: colors.amber },
+  metaDotViolet: { backgroundColor: colors.secondary },
+  metaText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    lineHeight: 15,
     fontWeight: '700',
-    color: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.background,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
-  row: {
+  panelCard: { paddingTop: spacing.sm, paddingBottom: spacing.sm },
+  panelHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
   },
-  paramName: { fontSize: 14, color: colors.textPrimary, fontWeight: '500' },
-  paramUnit: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
-  valueCol: { alignItems: 'flex-end', marginRight: spacing.sm },
-  value: { fontSize: 14, fontWeight: '600' },
-  flag: { fontSize: 11, fontWeight: '600', marginTop: 1 },
-  dash: { fontSize: 16, color: colors.border },
-  chevron: { fontSize: 18, color: colors.textSecondary, marginLeft: spacing.xs },
 });
