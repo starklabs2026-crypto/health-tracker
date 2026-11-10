@@ -14,50 +14,47 @@ struct ConsentNativeView: View {
     let onSignOut: () -> Void
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    header
-                    explanationCard
-                    acknowledgementSection
-                    actionButtons
-                }
-                .frame(maxWidth: 560)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 28)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                header
+                explanationCard
+                acknowledgementSection
+                actionButtons
             }
-            .background(HealthFolioTheme.background.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 24)
+            .frame(maxWidth: 560)
+            .frame(maxWidth: .infinity)
         }
+        .background(HealthFolioTheme.background.ignoresSafeArea())
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(HealthFolioTheme.blueSoft)
-                    .frame(width: 64, height: 64)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
                 Image(systemName: "checkmark.shield.fill")
-                    .font(.system(size: 30, weight: .semibold))
+                    .font(.title2.weight(.semibold))
                     .foregroundStyle(HealthFolioTheme.blue)
-            }
-            .accessibilityHidden(true)
+                    .frame(width: 44, height: 44)
+                    .background(HealthFolioTheme.blueSoft, in: RoundedRectangle(cornerRadius: 8))
+                    .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 8) {
                 Text("HealthFolio")
                     .font(.system(.largeTitle, design: .rounded).bold())
                     .foregroundStyle(HealthFolioTheme.ink)
-                Text("Health-data consent is required before you can continue.")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(HealthFolioTheme.ink)
-                Text(mode == .newAccount ? "Review the privacy terms for your new account." : "Review the current privacy terms to continue using your account.")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
             }
+
+            Text("Health-data consent is required before you can continue.")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(HealthFolioTheme.ink)
+
+            Text(mode == .newAccount ? "Review the privacy terms for your new account." : "Review the current privacy terms to continue using your account.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .accessibilityElement(children: .combine)
     }
 
     private var explanationCard: some View {

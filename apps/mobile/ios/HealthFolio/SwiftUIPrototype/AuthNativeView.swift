@@ -42,28 +42,24 @@ struct AuthNativeView: View {
     @State private var hasAcceptedNewAccountConsent = false
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 28) {
+        ScrollView {
+            VStack(spacing: 28) {
+                if let mode {
+                    authForm(mode)
+                } else {
                     brandHeader
-
-                    if let mode {
-                        authForm(mode)
-                    } else {
-                        welcomeActions
-                    }
-                    AuthTrustNote()
+                    welcomeActions
                 }
-                .padding(.horizontal, 28)
-                .padding(.top, 56)
-                .padding(.bottom, 32)
-                .frame(maxWidth: 540)
-                .frame(maxWidth: .infinity)
+                AuthTrustNote()
             }
-            .background(HealthFolioTheme.background.ignoresSafeArea())
-            .keyboardAvoiding()
-            .navigationBarTitleDisplayMode(.inline)
+            .padding(.horizontal, 28)
+            .padding(.top, mode == nil ? 40 : 24)
+            .padding(.bottom, 32)
+            .frame(maxWidth: 540)
+            .frame(maxWidth: .infinity)
         }
+        .background(HealthFolioTheme.background.ignoresSafeArea())
+        .keyboardAvoiding()
         .onChange(of: mode) { _ in
             hasAcceptedNewAccountConsent = false
         }
@@ -116,6 +112,7 @@ struct AuthNativeView: View {
                 Text(mode.title)
                     .font(.title2.bold())
                     .foregroundStyle(HealthFolioTheme.ink)
+                    .accessibilityAddTraits(.isHeader)
                 Text(mode.subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
