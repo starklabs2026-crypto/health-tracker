@@ -1,17 +1,17 @@
 # HealthFolio App Store Connect Form
 
-This is the authoritative fill sheet for `HealthFolio 1.0.0 (73)`.
+This is the authoritative fill sheet for `HealthFolio 1.0.0 (79)`.
 
 ## App Identity
 
 | Field              | Value                       |
 | ------------------ | --------------------------- |
-| Apple ID           | `6773293787`                |
-| Name               | `HealthFolio`               |
-| Bundle ID          | `com.starklabs.healthfolio` |
+| Apple ID           | `6832929860`                |
+| Name               | `HealthFolio: Medical Records`               |
+| Bundle ID          | `com.asianol.healthfolio` |
 | SKU                | `HEALTHFOLIO-IOS-001`       |
 | Version            | `1.0.0`                     |
-| Build              | `73`                        |
+| Build              | `79`                        |
 | Primary language   | `English (U.S.)`            |
 | Primary category   | `Medical`                   |
 | Secondary category | `Health & Fitness`          |
@@ -29,7 +29,7 @@ This is the authoritative fill sheet for `HealthFolio 1.0.0 (73)`.
 | Privacy Policy URL  | `https://starklabs2026-crypto.github.io/health-tracker/privacy/`                                                     |
 | Privacy Choices URL | `https://starklabs2026-crypto.github.io/health-tracker/privacy-choices/`                                             |
 | Description         | Paste the exact Description block from `metadata.md`                                                                 |
-| Copyright           | `[OWNER: confirm legal entity; proposed 2026 StarkLabs]`                                                             |
+| Copyright           | `2026 Focal Labs`                                                             |
 
 ## Required Declarations
 
@@ -46,8 +46,8 @@ This is the authoritative fill sheet for `HealthFolio 1.0.0 (73)`.
 ## App Review
 
 - Notes: paste `review-notes.md` excluding the owner placeholders section.
-- Contact email: `starklabs2026@gmail.com`.
-- Demo/review account: `[OWNER REQUIRED: synthetic email and password]`.
+- Review contact and dedicated demo credentials are saved privately in App Store Connect.
+- Dedicated demo login was verified against production and saved privately in App Store Connect.
 - Contact first name: `[OWNER REQUIRED]`.
 - Contact last name: `[OWNER REQUIRED]`.
 - Contact phone: `[OWNER REQUIRED]`.
@@ -57,8 +57,8 @@ Never commit reviewer credentials or a temporary password.
 
 ## Screenshots
 
-- Upload the five PNGs from `screenshots/iphone-6.9/` in manifest order.
-- iPad set: `Not applicable`; build 73 is iPhone-only.
+- Upload the four PNGs from `screenshots/iphone-6.9/` in manifest order.
+- iPad set: `Not applicable`; build 79 is iPhone-only.
 - App previews: optional; leave empty for this release.
 
 ## Availability And Release
@@ -67,14 +67,14 @@ These are account/business decisions and cannot be inferred from code:
 
 - Price: `[OWNER REQUIRED: Free or selected tier]`.
 - Countries/regions: `[OWNER REQUIRED]`.
-- Release method: `[OWNER REQUIRED: manual, automatic, or phased]`.
+- Release method: `Manual after approval`.
 - DSA trader status and public contact details: `[ACCOUNT HOLDER REQUIRED]`.
 - Korea availability/regulatory fields: `[OWNER REQUIRED if Korea selected]`.
 - Accessibility Nutrition Labels: complete only with verified claims; do not claim untested support.
 
 ## Final Upload State
 
-- EAS build URL: `[GENERATED AFTER BUILD 73]`.
+- EAS build URL: https://expo.dev/accounts/starklabs/projects/healthfolio/builds/7d1917f1-e6e3-4029-95ab-b6083baddc8c.
 - IPA URL: `[GENERATED AFTER BUILD 73]`.
-- EAS submission URL: `[GENERATED AFTER SUBMISSION]`.
+- EAS submission URL: https://expo.dev/accounts/starklabs/projects/healthfolio/submissions/47db0032-326f-4e2f-a9e5-004ee8a456ee.
 - Apple processing status: `[VERIFY AFTER SUBMISSION]`.

@@ -2,7 +2,7 @@
 
 ## Product Page
 
-- Name: `HealthFolio` (11/30 characters)
+- Name: `HealthFolio: Medical Records`
 - Subtitle: `Your health records, organized` (30/30 characters)
 - Primary category: `Medical`
 - Secondary category: `Health & Fitness`
@@ -20,7 +20,7 @@ HealthFolio is a personal health record organizer that keeps medical documents, 
 
 ORGANIZE YOUR RECORDS
 
-Add supported medical PDFs and images from Files, Photos, or the camera. Forward supported attachments to your private HealthFolio email address and track each document as it is processed.
+Add supported medical PDFs and images from Files or Photos. Forward supported attachments to your private HealthFolio email address and track each document as it is processed.
 
 REVIEW EXTRACTED READINGS
 
