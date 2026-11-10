@@ -1562,7 +1562,7 @@ actor NativeSupabaseAPI {
             name: user.name?.isEmpty == false ? user.name! : (isPrimary ? "Me" : "Profile"),
             email: user.email ?? "",
             dateOfBirth: ProfileFieldPolicy.displayedDateOfBirth(parsedDob),
-            sex: ProfileFieldPolicy.displayedSex(displaySex(user.sex), dateOfBirth: parsedDob),
+            sex: ProfileFieldPolicy.displayedSex(user.sex ?? "", dateOfBirth: parsedDob),
             bloodGroup: user.bloodGroup ?? "Not set",
             units: user.unitsPreference == "us" ? "US" : "Metric",
             forwardingAlias: user.inboundEmailAlias ?? aliasFromEmail(user.email),
@@ -1975,19 +1975,6 @@ actor NativeSupabaseAPI {
 
     private func aliasFromEmail(_ email: String?) -> String {
         email?.split(separator: "@").first.map(String.init) ?? "me"
-    }
-
-    private func displaySex(_ sex: String?) -> String {
-        switch sex?.lowercased() {
-        case "male":
-            return "Male"
-        case "female":
-            return "Female"
-        case "other":
-            return "Other"
-        default:
-            return "Not set"
-        }
     }
 
     private func normalizedAlias(_ alias: String) -> String {

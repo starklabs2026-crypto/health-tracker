@@ -9,7 +9,7 @@ const native = 'apps/mobile/ios/HealthFolio/SwiftUIPrototype/';
 const suites = {
   session: ['NativeSupabaseConfig.swift', 'NativeSupabaseError.swift', 'NativeSupabaseSession.swift', 'NativeSessionCoordinator.swift'],
   trends: ['TrendChartData.swift'],
-  profile: ['FamilyProfileRole.swift', 'HealthFolioProfile.swift'],
+  profile: ['FamilyProfileRole.swift', 'HealthFolioProfile.swift', 'ProfileEditorDraft.swift'],
 };
 const tests = { session: 'test-healthfolio-session.swift', trends: 'test-healthfolio-trend-data.swift', profile: 'test-healthfolio-profile.swift' };
 const suite = process.argv[2] ?? 'session';

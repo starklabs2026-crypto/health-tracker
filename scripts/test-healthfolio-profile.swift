@@ -19,6 +19,33 @@ struct ProfileRegressionTests {
         let realBirthday = Date(timeIntervalSince1970: 946_688_400)
         precondition(ProfileFieldPolicy.displayedDateOfBirth(realBirthday) != nil, "a later instant on 1 Jan 2000 is a real birthday")
         precondition(ProfileFieldPolicy.displayedSex("Other", dateOfBirth: realBirthday) == "Other")
-        print("Profile unknown-date and sex-mapping regressions passed")
+        precondition(ProfileFieldPolicy.displayedSex("Not selected", dateOfBirth: nil) == "Not set")
+        precondition(ProfileFieldPolicy.displayedSex("Not entered", dateOfBirth: nil) == "Not set")
+        precondition(HealthFolioProfile.backendSex(for: " Custom description ") == "Custom description")
+        precondition(ProfileFieldPolicy.displayedSex("Custom description", dateOfBirth: nil) == "Custom description")
+
+        var profile = HealthFolioProfile.signedOut
+        profile.sex = "Custom description"
+        profile.dateOfBirth = realBirthday
+        let saved = ProfileEditorDraft(profile: profile)
+        precondition(saved.sexChoice == .other && saved.otherSex == "Custom description")
+        var edited = saved
+        edited.name += " "
+        edited.alias = edited.alias.uppercased()
+        edited.otherSex += " "
+        edited.dateOfBirth = Calendar.current.startOfDay(for: realBirthday)
+        precondition(edited == saved, "Formatting and time-of-day changes must not mark the form dirty")
+        edited.otherSex = "Updated description"
+        precondition(edited != saved && edited.sex == "Updated description")
+        edited = saved
+        edited.dateOfBirth = nil
+        precondition(edited != saved, "Clearing an existing date is a real edit")
+
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = .gmt
+        edited.selectDateOfBirth(placeholder, calendar: utc)
+        precondition(edited.dateOfBirth.map { utc.isDate($0, inSameDayAs: placeholder) } == true)
+        precondition(ProfileFieldPolicy.displayedDateOfBirth(edited.dateOfBirth) != nil, "An explicit birthday must survive legacy-placeholder filtering")
+        print("Optional birthdays, custom sex values, and profile draft regressions passed")
     }
 }

@@ -72,11 +72,13 @@ struct HealthFolioProfile: Identifiable, Hashable {
     }
 
     static func backendSex(for value: String) -> String? {
-        switch value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-        case "male", "m": "male"
-        case "female", "f": "female"
-        case "other": "other"
-        default: nil
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch trimmed.lowercased() {
+        case "", "not set", "not selected", "not entered": return nil
+        case "male", "m": return "male"
+        case "female", "f": return "female"
+        case "other": return "other"
+        default: return trimmed
         }
     }
 }
@@ -100,14 +102,18 @@ enum ProfileFieldPolicy {
 
     /// "Other" paired with a creation placeholder is the untouched default, not a choice the person made.
     static func displayedSex(_ sex: String, dateOfBirth: Date?) -> String {
-        let trimmed = sex.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty || trimmed.caseInsensitiveCompare("Not set") == .orderedSame {
+        switch HealthFolioProfile.backendSex(for: sex) {
+        case nil:
             return "Not set"
+        case "male":
+            return "Male"
+        case "female":
+            return "Female"
+        case "other":
+            if let dateOfBirth, isPlaceholderDateOfBirth(dateOfBirth) { return "Not set" }
+            return "Other"
+        case let value?:
+            return value
         }
-        if trimmed.caseInsensitiveCompare("other") == .orderedSame,
-           let dateOfBirth, isPlaceholderDateOfBirth(dateOfBirth) {
-            return "Not set"
-        }
-        return trimmed
     }
 }

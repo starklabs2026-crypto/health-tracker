@@ -3,16 +3,11 @@ import SwiftUI
 struct ProfileNativeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject private var model: HealthFolioAppModel
     @EnvironmentObject private var appLock: HealthFolioAppLock
-    @State private var name = ""
-    @State private var dateOfBirth = Date.now
-    @State private var hasDateOfBirth = false
-    @State private var sex = "Not set"
-    @State private var bloodGroup = ""
-    @State private var units = ""
-    @State private var alias = ""
+    @State private var draft = ProfileEditorDraft(profile: .signedOut)
+    @State private var datePickerSelection = Date.now
+    @State private var isShowingDatePicker = false
     @State private var signInEmail = ""
     @State private var password = ""
     @State private var isPasswordVisible = false
@@ -111,6 +106,9 @@ struct ProfileNativeView: View {
                 Text("Documents, extracted readings, share/export references, and email-ingested duplicates for \(source.displayName) will move to your main profile. The duplicate profile will be hidden.")
             }
         }
+        .sheet(isPresented: $isShowingDatePicker) {
+            dateOfBirthPicker
+        }
         .sheet(isPresented: $isShowingDeleteAccount) {
             NavigationStack {
                 AccountDeletionNativeView()
@@ -146,9 +144,6 @@ struct ProfileNativeView: View {
 
     private var accountSection: some View {
         Section {
-            LabeledContent("Name", value: displayedAccountName)
-            LabeledContent("Email", value: model.isSignedIn && !signedInEmailLabel.isEmpty ? signedInEmailLabel : "Not set")
-                .privacySensitive()
             Label(model.isSignedIn ? "Signed in" : "On this device", systemImage: model.isSignedIn ? "checkmark.shield" : "iphone")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -277,16 +272,10 @@ struct ProfileNativeView: View {
         }
     }
 
-    private var displayedAccountName: String {
-        let value = (model.signedInProfile?.name ?? model.profile.name).trimmingCharacters(in: .whitespacesAndNewlines)
-        if value.isEmpty || value == "Profile" { return "Not set" }
-        return value
-    }
-
     private var profileSection: some View {
         Section {
             LabeledContent("Name") {
-                TextField("Not set", text: $name, axis: .vertical)
+                TextField("Not set", text: $draft.name, axis: .vertical)
                     .textContentType(.name)
                     .textInputAutocapitalization(.words)
                     .focused($focusedField, equals: .name)
@@ -296,32 +285,36 @@ struct ProfileNativeView: View {
             }
             LabeledContent("Email", value: model.isSignedIn && !signedInEmailLabel.isEmpty ? signedInEmailLabel : "Not set")
                 .privacySensitive()
-            Toggle("Date of birth", isOn: $hasDateOfBirth)
-            if hasDateOfBirth {
-                if dynamicTypeSize.isAccessibilitySize {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Date of birth")
-                        DatePicker("Date of birth", selection: $dateOfBirth, in: ...Date.now, displayedComponents: .date)
-                            .labelsHidden()
-                            .accessibilityLabel("Date of birth")
-                    }
-                } else {
-                    DatePicker("Date of birth", selection: $dateOfBirth, in: ...Date.now, displayedComponents: .date)
+            Button {
+                focusedField = nil
+                datePickerSelection = draft.dateOfBirth ?? Calendar.current.startOfDay(for: .now)
+                isShowingDatePicker = true
+            } label: {
+                LabeledContent("Date of birth", value: draft.dateOfBirth?.formatted(date: .abbreviated, time: .omitted) ?? "Not set")
+                    .foregroundStyle(.primary)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityHint("Opens a date picker.")
+
+            Picker("Sex", selection: $draft.sexChoice) {
+                ForEach(ProfileSexChoice.allCases, id: \.self) { choice in
+                    Text(choice.rawValue).tag(choice)
                 }
             }
-            Picker("Sex", selection: $sex) {
-                Text("Not set").tag("Not set")
-                Text("Female").tag("Female")
-                Text("Male").tag("Male")
-                Text("Other").tag("Other")
-                if !["Not set", "Female", "Male", "Other"].contains(sex) {
-                    Text(sex).tag(sex)
+            if draft.sexChoice == .other {
+                LabeledContent("Describe sex") {
+                    TextField("Optional", text: $draft.otherSex, axis: .vertical)
+                        .textInputAutocapitalization(.sentences)
+                        .focused($focusedField, equals: .otherSex)
+                        .submitLabel(.done)
+                        .onSubmit { focusedField = nil }
+                        .multilineTextAlignment(.trailing)
                 }
             }
-            Picker("Blood group", selection: $bloodGroup) {
+            Picker("Blood group", selection: $draft.bloodGroup) {
                 ForEach(bloodGroupOptions, id: \.self) { Text($0).tag($0) }
             }
-            Picker("Units", selection: $units) {
+            Picker("Units", selection: $draft.units) {
                 Text("Metric").tag("Metric")
                 Text("US").tag("US")
             }
@@ -341,15 +334,46 @@ struct ProfileNativeView: View {
         } header: {
             Text("Personal information")
         } footer: {
-            Text(hasUnsavedChanges ? "Unsaved changes for \(savedDraft?.name ?? model.profile.name)." : "Profile: \(model.profile.name)")
+            if hasUnsavedChanges {
+                Text("Unsaved changes")
+            }
         }
         .disabled(isBusy)
+    }
+
+    private var dateOfBirthPicker: some View {
+        NavigationStack {
+            Form {
+                DatePicker("Date of birth", selection: $datePickerSelection, in: ...Date.now, displayedComponents: .date)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                if draft.dateOfBirth != nil {
+                    Button("Clear date of birth", role: .destructive) {
+                        draft.dateOfBirth = nil
+                        isShowingDatePicker = false
+                    }
+                }
+            }
+            .navigationTitle("Date of birth")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { isShowingDatePicker = false }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        draft.selectDateOfBirth(datePickerSelection)
+                        isShowingDatePicker = false
+                    }
+                }
+            }
+        }
     }
 
     private var emailIngestionSection: some View {
         Section {
             LabeledContent("Handle") {
-                TextField("Not set", text: $alias)
+                TextField("Not set", text: $draft.alias)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.asciiCapable)
@@ -371,7 +395,7 @@ struct ProfileNativeView: View {
         } header: {
             Text("Email ingestion")
         } footer: {
-            if alias != savedDraft?.alias {
+            if let savedDraft, draft.normalizedAlias != savedDraft.normalizedAlias {
                 Text("Alias changes are pending until this profile is saved.")
             }
         }
@@ -508,22 +532,13 @@ struct ProfileNativeView: View {
         .disabled(isBusy)
     }
 
-    private var currentDraft: ProfileEditorDraft {
-        ProfileEditorDraft(profileID: savedDraft?.profileID ?? model.profile.id, name: name, dateOfBirth: hasDateOfBirth ? dateOfBirth : nil, sex: sex, bloodGroup: bloodGroup, units: units, alias: alias)
+    private var hasUnsavedChanges: Bool {
+        savedDraft.map { draft != $0 } ?? false
     }
-
-    private var hasUnsavedChanges: Bool { savedDraft.map { currentDraft != $0 } ?? false }
 
     private var hasProfileConflict: Bool {
         guard let savedDraft, hasUnsavedChanges else { return false }
-        let current = model.profile
-        let latest = ProfileEditorDraft(
-            profileID: current.id, name: current.name, dateOfBirth: current.dateOfBirth,
-            sex: current.sex.isEmpty ? "Not set" : current.sex,
-            bloodGroup: current.bloodGroup.isEmpty ? "Not set" : current.bloodGroup,
-            units: current.units, alias: current.forwardingAlias
-        )
-        return savedDraft != latest
+        return savedDraft != ProfileEditorDraft(profile: model.profile)
     }
 
     private var isBusy: Bool {
@@ -532,7 +547,7 @@ struct ProfileNativeView: View {
 
     private var bloodGroupOptions: [String] {
         let options = ["Not set", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
-        return options.contains(bloodGroup) ? options : options + [bloodGroup]
+        return options.contains(draft.bloodGroup) ? options : options + [draft.bloodGroup]
     }
 
     private var validationMessage: String? {
@@ -543,7 +558,7 @@ struct ProfileNativeView: View {
         if hasProfileConflict {
             return "This profile changed while you were editing. Reload its saved values before saving."
         }
-        return hasUnsavedChanges ? currentDraft.validationMessage : nil
+        return hasUnsavedChanges ? draft.validationMessage : nil
     }
 
     private func operationLabel(_ title: String, systemImage: String) -> some View {
@@ -578,14 +593,9 @@ struct ProfileNativeView: View {
     }
 
     private func populateDraft() {
-        name = model.profile.name
-        hasDateOfBirth = model.profile.dateOfBirth != nil
-        dateOfBirth = model.profile.dateOfBirth ?? Date.now
-        sex = model.profile.sex.isEmpty ? "Not set" : model.profile.sex
-        bloodGroup = model.profile.bloodGroup.isEmpty ? "Not set" : model.profile.bloodGroup
-        units = model.profile.units
-        alias = model.profile.forwardingAlias
-        savedDraft = ProfileEditorDraft(profileID: model.profile.id, name: name, dateOfBirth: model.profile.dateOfBirth, sex: sex, bloodGroup: bloodGroup, units: units, alias: alias)
+        let latest = ProfileEditorDraft(profile: model.profile)
+        draft = latest
+        savedDraft = latest
         saveError = nil
         if signInEmail.isEmpty, model.isSignedIn, model.profile.email.contains("@") {
             signInEmail = model.profile.email
@@ -600,7 +610,7 @@ struct ProfileNativeView: View {
         }
         focusedField = nil
         saveError = nil
-        let submitted = currentDraft
+        let submitted = draft
         isSavingProfile = true
         Task { @MainActor in
             let saved = await model.updateProfile(
@@ -609,11 +619,11 @@ struct ProfileNativeView: View {
                 sex: submitted.sex,
                 bloodGroup: submitted.bloodGroup,
                 units: submitted.units,
-                alias: submitted.alias.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                alias: submitted.normalizedAlias
             )
             isSavingProfile = false
             if saved {
-                savedDraft = submitted
+                populateDraft()
                 dismiss()
             } else {
                 saveError = model.sessionMessage ?? "Your changes could not be saved. Please try again."
@@ -654,30 +664,7 @@ struct ProfileNativeView: View {
 }
 
 private enum ProfileEditorField: Hashable {
-    case name, alias, email, password
-}
-
-private struct ProfileEditorDraft: Equatable {
-    let profileID: String
-    let name: String
-    let dateOfBirth: Date?
-    let sex: String
-    let bloodGroup: String
-    let units: String
-    let alias: String
-
-    var validationMessage: String? {
-        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return "Enter a name." }
-        if let dateOfBirth, dateOfBirth > Date.now { return "Date of birth cannot be in the future." }
-        if !["Metric", "US"].contains(units) { return "Choose Metric or US units." }
-        let cleanAlias = alias.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if cleanAlias.isEmpty { return "Enter a forwarding alias." }
-        let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789-")
-        if cleanAlias.unicodeScalars.contains(where: { !allowed.contains($0) }) || cleanAlias.hasPrefix("-") || cleanAlias.hasSuffix("-") || cleanAlias.contains("--") {
-            return "Use letters, numbers, and single hyphens between words for the forwarding alias."
-        }
-        return nil
-    }
+    case name, alias, email, password, otherSex
 }
 
 private struct ProfileManagementRow: View {
