@@ -1,4 +1,4 @@
-# Build 79 Submission Readiness
+# Build 80 Submission Readiness
 
 ## Completed and verified
 
@@ -18,11 +18,15 @@
 - [x] Owner-confirmed third-party content rights and non-regulated medical device declarations saved.
 - [x] Owner-confirmed DSA non-trader status saved; Apple shows Active for 27 EU storefronts.
 - [x] Live inbound-email-ingest v16 and shared HTTP helper match the reviewed branch.
+- [x] Native and Expo forwarding now display the existing Gmail bridge. The forwarding regression, 25 ingestion checks, release identity, public site checks, and workspace test suite passed.
+- [x] Public privacy policy describes Gmail forwarding and mailbox retention; live URL verified.
+- [x] EAS build 80 queued with automatic upload to the same App Store Connect app.
 
 ## Remaining before final submission
 
-- [ ] Build 79 iPhone smoke test: current consent, email/Apple/Google login, fresh and expired reset links, reset countdown, profile/DOB/custom sex, upload/OCR, Assistant, reminders, sharing/export and account deletion with synthetic data.
-- [ ] Fix the forwarding address before submission. Build 79 displays `@records.healthfolio.app`, which returns NXDOMAIN. The existing Gmail bridge is a separate test route; verify a synthetic attachment end to end before offering forwarding to users.
+- [ ] Apple processes build 80; verify Team (Expo) internal testing and replace build 79 on the App Store draft.
+- [ ] Build 80 iPhone smoke test: current consent, email/Apple/Google login, fresh and expired reset links, reset countdown, profile/DOB/custom sex, upload/OCR, Assistant, reminders, sharing/export and account deletion with synthetic data.
+- [ ] Verify the Gmail bridge end to end with a synthetic attachment on a test account after consent. Copy the Gmail address shown in build 80 and verify the attachment appears in Records.
 - [ ] Stage Add for Review and verify Apple validation passes.
 - [ ] Final Submit for Review is performed only when the owner is ready.
 

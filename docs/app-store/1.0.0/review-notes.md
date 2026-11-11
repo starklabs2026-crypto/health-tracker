@@ -14,7 +14,7 @@ HealthFolio is a personal health record organizer. The active iOS interface is n
 
 ## Email Ingestion
 
-The forwarding address is shown in Profile. Supported attachments forwarded to that address use the same OCR pipeline as manual uploads. The alias must belong to the signed-in review account.
+The Gmail forwarding address is shown in Profile. Supported attachments forwarded to that address use the same OCR pipeline as manual uploads. The alias must belong to the signed-in review account.
 
 ## Privacy And Safety
 
@@ -23,7 +23,7 @@ The forwarding address is shown in Profile. Supported attachments forwarded to t
 - Standard EULA: `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
 - Focal Labs is the operator shown in the app. Uploaded or forwarded files, and Assistant questions with relevant information from the selected profile, are sent to OpenAI to extract information and generate replies. The consent screen describes this as an outside AI provider and links to the privacy policy section that names OpenAI.
 - HealthFolio is not a regulated medical device.
-- There are no ads, cross-app tracking, purchases, or subscriptions in build 79.
+- There are no ads, cross-app tracking, purchases, or subscriptions in build 80.
 
 ## Reviewer Credentials
 

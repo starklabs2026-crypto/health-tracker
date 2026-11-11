@@ -1,6 +1,6 @@
 # HealthFolio App Store Connect Form
 
-This is the authoritative fill sheet for `HealthFolio 1.0.0 (79)`.
+This is the authoritative fill sheet for `HealthFolio 1.0.0 (80)`.
 
 ## App Identity
 
@@ -11,7 +11,7 @@ This is the authoritative fill sheet for `HealthFolio 1.0.0 (79)`.
 | Bundle ID          | `com.asianol.healthfolio` |
 | SKU                | `HEALTHFOLIO-IOS-001`       |
 | Version            | `1.0.0`                     |
-| Build              | `79`                        |
+| Build              | `80`                        |
 | Primary language   | `English (U.S.)`            |
 | Primary category   | `Medical`                   |
 | Secondary category | `Health & Fitness`          |
@@ -56,7 +56,7 @@ Never commit reviewer credentials or a temporary password.
 ## Screenshots
 
 - Upload the four PNGs from `screenshots/iphone-6.9/` in manifest order.
-- iPad set: `Not applicable`; build 79 is iPhone-only.
+- iPad set: `Not applicable`; build 80 is iPhone-only.
 - App previews: optional; leave empty for this release.
 
 ## Availability And Release
@@ -72,7 +72,7 @@ The owner confirmed these settings and they are saved in App Store Connect:
 
 ## Final Upload State
 
-- EAS build URL: https://expo.dev/accounts/starklabs/projects/healthfolio/builds/7d1917f1-e6e3-4029-95ab-b6083baddc8c.
-- EAS cloud build: `FINISHED`; source commit `d362475`.
-- EAS submission URL: https://expo.dev/accounts/starklabs/projects/healthfolio/submissions/47db0032-326f-4e2f-a9e5-004ee8a456ee.
-- EAS submission finished. Apple processed build 79; it is saved on the version 1.0.0 draft and available in Team (Expo) internal TestFlight.
+- EAS build URL: https://expo.dev/accounts/starklabs/projects/healthfolio/builds/a8de28ec-a6fd-454f-b865-b459a53abe00.
+- EAS cloud build 80: `IN_QUEUE`; source commit `7fb38e9`.
+- EAS submission URL: https://expo.dev/accounts/starklabs/projects/healthfolio/submissions/93e78ddf-a15c-490e-b755-fb7e7d23e296.
+- Build 80 auto-upload is scheduled for app 6832929860. Build 79 remains on the draft until Apple processes 80.
