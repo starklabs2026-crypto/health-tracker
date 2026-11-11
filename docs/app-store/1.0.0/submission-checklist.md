@@ -2,8 +2,8 @@
 
 ## Completed and verified
 
-- [x] EAS cloud build 1.0.0 (79) finished for com.asianol.healthfolio on team 2GVCQDUJFJ.
-- [x] EAS upload and Apple processing completed for App Store Connect app 6832929860. Build 79 is saved on draft version 1.0.0 and is Testing in the Team (Expo) internal group.
+- [x] EAS cloud build 1.0.0 (80) finished for com.asianol.healthfolio on team 2GVCQDUJFJ.
+- [x] Apple processed build 80 for app 6832929860. Build 80 is saved on draft version 1.0.0 and is Testing in Team (Expo) with the existing internal tester. All four store screenshots are still saved.
 - [x] Native profile and consent tests, release identity checks, and 83 Assistant behavior checks passed.
 - [x] Latest live assistant-response source and shared Assistant module match the release branch.
 - [x] Current consent version 2026-11-10.2 added to the production insert policy; migration history repaired for that migration only.
@@ -20,11 +20,9 @@
 - [x] Live inbound-email-ingest v16 and shared HTTP helper match the reviewed branch.
 - [x] Native and Expo forwarding now display the existing Gmail bridge. The forwarding regression, 25 ingestion checks, release identity, public site checks, and workspace test suite passed.
 - [x] Public privacy policy describes Gmail forwarding and mailbox retention; live URL verified.
-- [x] EAS build 80 queued with automatic upload to the same App Store Connect app.
 
 ## Remaining before final submission
 
-- [ ] Apple processes build 80; verify Team (Expo) internal testing and replace build 79 on the App Store draft.
 - [ ] Build 80 iPhone smoke test: current consent, email/Apple/Google login, fresh and expired reset links, reset countdown, profile/DOB/custom sex, upload/OCR, Assistant, reminders, sharing/export and account deletion with synthetic data.
 - [ ] Verify the Gmail bridge end to end with a synthetic attachment on a test account after consent. Copy the Gmail address shown in build 80 and verify the attachment appears in Records.
 - [ ] Stage Add for Review and verify Apple validation passes.

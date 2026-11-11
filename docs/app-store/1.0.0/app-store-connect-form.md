@@ -73,6 +73,6 @@ The owner confirmed these settings and they are saved in App Store Connect:
 ## Final Upload State
 
 - EAS build URL: https://expo.dev/accounts/starklabs/projects/healthfolio/builds/a8de28ec-a6fd-454f-b865-b459a53abe00.
-- EAS cloud build 80: `IN_QUEUE`; source commit `7fb38e9`.
+- EAS cloud build 80: `FINISHED`; source commit `7fb38e9`.
 - EAS submission URL: https://expo.dev/accounts/starklabs/projects/healthfolio/submissions/93e78ddf-a15c-490e-b755-fb7e7d23e296.
-- Build 80 auto-upload is scheduled for app 6832929860. Build 79 remains on the draft until Apple processes 80.
+- EAS upload and Apple processing finished. Build 80 is attached to draft version 1.0.0 and available in Team (Expo) internal TestFlight.
