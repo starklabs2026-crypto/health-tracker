@@ -17,9 +17,9 @@
 
 ## Remaining before final submission
 
-- [ ] Owner confirms price and launch countries; these are not configured yet.
-- [ ] Owner confirms necessary third-party content rights and non-regulated-medical-device declaration.
-- [ ] If EU countries are selected, account holder completes DSA trader requirements.
+- [ ] Save owner-confirmed Free pricing and worldwide availability, including the EU, after Apple sign-in is restored.
+- [ ] Save owner-confirmed content rights (`Yes, necessary rights`) and regulated medical device (`No`) declarations.
+- [ ] Asianol determines its DSA trader status and an Account Holder or Admin completes the EU compliance flow.
 - [ ] Build 79 iPhone smoke test: current consent, email/Apple/Google login, fresh and expired reset links, reset countdown, profile/DOB/custom sex, upload/OCR, Assistant, reminders, sharing/export and account deletion with synthetic data.
 - [ ] Verify email forwarding live. Deployed inbound-email-ingest predates the reviewed source; confirm recipient configuration before deployment.
 - [ ] Stage Add for Review and verify Apple validation passes.

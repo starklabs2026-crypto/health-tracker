@@ -35,10 +35,10 @@ This is the authoritative fill sheet for `HealthFolio 1.0.0 (79)`.
 
 - App Privacy: enter every answer from `privacy-label.md`.
 - Age Rating: enter every answer from `age-rating.md`; expected result is `16+`.
-- Regulated Medical Device: `No` for United States, United Kingdom, and EU/EEA.
+- Regulated Medical Device: `No`. Owner confirmed HealthFolio is not a regulated medical device in the launch regions; save the declaration in App Store Connect.
 - Export Compliance: app uses standard encrypted network connections only and has `ITSAppUsesNonExemptEncryption = false`; answer that it does not use non-exempt encryption.
 - Advertising Identifier: `No`.
-- Content Rights: HealthFolio displays documents selected by users. Confirm that the app has the necessary rights to display user-provided content under the EULA/privacy terms.
+- Content Rights: `Yes`, the app displays third-party content and has the necessary rights. Owner confirmed rights to display the records users choose to upload; save the declaration in App Store Connect.
 - Sign in with Apple: available alongside Google sign-in.
 - Account deletion: available at `Profile > Privacy & consent > Delete account and data`.
 - Custom EULA: `No`; use Apple Standard EULA.
@@ -61,12 +61,12 @@ Never commit reviewer credentials or a temporary password.
 
 ## Availability And Release
 
-These are account/business decisions and cannot be inferred from code:
+The owner confirmed these launch settings. Save them once App Store Connect is signed in again:
 
-- Price: `[OWNER REQUIRED: Free or selected tier]`.
-- Countries/regions: `[OWNER REQUIRED]`.
+- Price: `Free`.
+- Countries/regions: `Worldwide, including the EU`.
 - Release method: `Manual after approval`.
-- DSA trader status and public contact details: `[ACCOUNT HOLDER REQUIRED]`.
+- DSA trader status: `[ORGANIZATION DETERMINATION REQUIRED]`. The Account Holder or Admin completes Business → Agreements → Compliance. If trader, Apple verifies public business contact details.
 - Korea availability/regulatory fields: `[OWNER REQUIRED if Korea selected]`.
 - Accessibility Nutrition Labels: complete only with verified claims; do not claim untested support.
 
