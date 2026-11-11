@@ -67,8 +67,9 @@
             infrastructure. We send uploaded or forwarded medical files to OpenAI to extract text and
             readings. When you use Assistant, we send your question and relevant information from
             the selected health profile to OpenAI to generate a reply. Apple and Google process
-            sign-in when you choose those providers. Email infrastructure
-            processes documents you intentionally forward to your HealthFolio address.
+            sign-in when you choose those providers. Google Gmail receives messages and attachments
+            you intentionally forward to your HealthFolio address. Google Apps Script sends those
+            attachments and their email details to HealthFolio for processing.
           </p>
           <p>
             These providers process information under their own security and privacy obligations. We
@@ -113,7 +114,9 @@
             In-app account deletion permanently removes your authentication account, profile, health
             records, readings, unclaimed managed profiles, share links, exports, and stored files
             associated with the deleted account. Independently claimed family accounts and their
-            records are preserved. Limited records may remain where retention is required for legal
+            records are preserved. Account deletion does not remove copies of forwarded emails from
+            your sent mail or the Gmail forwarding mailbox. Contact support to request removal of
+            messages held in that mailbox. Limited records may remain where retention is required for legal
             compliance, security, fraud prevention, dispute resolution, or technically time-limited
             backups, and are not used for ordinary app functionality.
           </p>

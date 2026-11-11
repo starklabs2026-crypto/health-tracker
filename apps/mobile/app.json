@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.asianol.healthfolio",
-      "buildNumber": "79",
+      "buildNumber": "80",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "HealthFolio uses the camera to scan lab reports, prescriptions, and other health documents you choose to upload.",
@@ -82,8 +82,7 @@
         "supabaseAnonKey": "sb_publishable_d-pZ2zQvS-0QA5KR5EdloA_KOw1MUoI",
         "googleIosClientId": "326783637021-rudet3065p0a78ffq9i3q6tvvjd97mo4.apps.googleusercontent.com",
         "googleWebClientId": "326783637021-jjghkjheca8bmmijkib2a7opv23ku6lj.apps.googleusercontent.com",
-        "inboundEmailDomain": "records.healthfolio.app",
-        "inboundEmailAddressTemplate": "{alias}@records.healthfolio.app"
+        "inboundEmailAddressTemplate": "test.healthfolio+{alias}@gmail.com"
       },
       "eas": {
         "projectId": "b06f1d7e-8692-4995-9a4f-8641dbffadbf"
