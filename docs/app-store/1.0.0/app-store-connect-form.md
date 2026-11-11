@@ -35,10 +35,10 @@ This is the authoritative fill sheet for `HealthFolio 1.0.0 (79)`.
 
 - App Privacy: enter every answer from `privacy-label.md`.
 - Age Rating: enter every answer from `age-rating.md`; expected result is `16+`.
-- Regulated Medical Device: `No`. Owner confirmed HealthFolio is not a regulated medical device in the launch regions; save the declaration in App Store Connect.
+- Regulated Medical Device: `No`. Owner confirmed; saved in App Store Connect for all regions.
 - Export Compliance: app uses standard encrypted network connections only and has `ITSAppUsesNonExemptEncryption = false`; answer that it does not use non-exempt encryption.
 - Advertising Identifier: `No`.
-- Content Rights: `Yes`, the app displays third-party content and has the necessary rights. Owner confirmed rights to display the records users choose to upload; save the declaration in App Store Connect.
+- Content Rights: `Yes`, the app displays third-party content and has the necessary rights. Owner confirmed rights to display the records users choose to upload; saved in App Store Connect.
 - Sign in with Apple: available alongside Google sign-in.
 - Account deletion: available at `Profile > Privacy & consent > Delete account and data`.
 - Custom EULA: `No`; use Apple Standard EULA.
@@ -61,12 +61,12 @@ Never commit reviewer credentials or a temporary password.
 
 ## Availability And Release
 
-The owner confirmed these launch settings. Save them once App Store Connect is signed in again:
+The owner confirmed these settings and they are saved in App Store Connect:
 
 - Price: `Free`.
-- Countries/regions: `Worldwide, including the EU`.
+- Countries/regions: `All 175 storefronts, including the EU`.
 - Release method: `Manual after approval`.
-- DSA trader status: `[ORGANIZATION DETERMINATION REQUIRED]`. The Account Holder or Admin completes Business → Agreements → Compliance. If trader, Apple verifies public business contact details.
+- DSA trader status: `Non-trader`, confirmed by the owner and saved. Apple shows Active for 27 countries or regions.
 - Korea availability/regulatory fields: `[OWNER REQUIRED if Korea selected]`.
 - Accessibility Nutrition Labels: complete only with verified claims; do not claim untested support.
 

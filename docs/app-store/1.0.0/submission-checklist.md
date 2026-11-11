@@ -14,14 +14,15 @@
 - [x] Medical primary category, Health & Fitness secondary category, and 16+ age questionnaire saved.
 - [x] Four 1320 × 2868 native iPhone screenshots uploaded; medium slot reuses existing assets.
 - [x] Manual release after approval selected.
+- [x] Free pricing and all 175 storefronts saved, including the EU.
+- [x] Owner-confirmed third-party content rights and non-regulated medical device declarations saved.
+- [x] Owner-confirmed DSA non-trader status saved; Apple shows Active for 27 EU storefronts.
+- [x] Live inbound-email-ingest v16 and shared HTTP helper match the reviewed branch.
 
 ## Remaining before final submission
 
-- [ ] Save owner-confirmed Free pricing and worldwide availability, including the EU, after Apple sign-in is restored.
-- [ ] Save owner-confirmed content rights (`Yes, necessary rights`) and regulated medical device (`No`) declarations.
-- [ ] Asianol determines its DSA trader status and an Account Holder or Admin completes the EU compliance flow.
 - [ ] Build 79 iPhone smoke test: current consent, email/Apple/Google login, fresh and expired reset links, reset countdown, profile/DOB/custom sex, upload/OCR, Assistant, reminders, sharing/export and account deletion with synthetic data.
-- [ ] Verify email forwarding live. Deployed inbound-email-ingest predates the reviewed source; confirm recipient configuration before deployment.
+- [ ] Fix the forwarding address before submission. Build 79 displays `@records.healthfolio.app`, which returns NXDOMAIN. The existing Gmail bridge is a separate test route; verify a synthetic attachment end to end before offering forwarding to users.
 - [ ] Stage Add for Review and verify Apple validation passes.
 - [ ] Final Submit for Review is performed only when the owner is ready.
 
