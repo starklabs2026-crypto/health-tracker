@@ -75,4 +75,4 @@ The owner confirmed these settings and they are saved in App Store Connect:
 - EAS build URL: https://expo.dev/accounts/starklabs/projects/healthfolio/builds/a8de28ec-a6fd-454f-b865-b459a53abe00.
 - EAS cloud build 80: `FINISHED`; source commit `7fb38e9`.
 - EAS submission URL: https://expo.dev/accounts/starklabs/projects/healthfolio/submissions/93e78ddf-a15c-490e-b755-fb7e7d23e296.
-- EAS upload and Apple processing finished. Build 80 is attached to draft version 1.0.0 and available in Team (Expo) internal TestFlight.
+- EAS upload and Apple processing finished. Build 80 is available in Team (Expo) internal TestFlight. App Store Connect shows version 1.0.0 as Ready for Review with build 80 in the draft submission.
