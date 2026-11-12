@@ -154,7 +154,7 @@ export default function AuthCallback() {
       {phase === 'expired' ? (
         <>
           <TextField
-            label="HealthFolio email"
+            label="Email"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"

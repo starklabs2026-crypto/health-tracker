@@ -1262,7 +1262,7 @@ final class HealthFolioAppModel: ObservableObject {
         guard !trimmed.isEmpty, !isAssistantThinking else { return }
         let maxCharacters = assistantRemoteConfig?.maxQuestionCharacters ?? 2_000
         let boundedQuestion = String(trimmed.prefix(maxCharacters))
-        let previousMessages = Array(assistantMessages.suffix(6))
+        let previousMessages = Array(assistantMessages.suffix(10))
         assistantMessages.append(AssistantMessage(role: .user, text: boundedQuestion))
         persistAssistantMessages()
         isAssistantThinking = true

@@ -411,7 +411,7 @@ async function assertIndependentRecipient(admin: SupabaseClient, user: AppUser):
 
   const { data: consent, error } = await admin.from('UserConsent').select('acceptedAt, consentVersion, privacyPolicyVersion')
     .eq('userId', user.id)
-    .in('consentVersion', ['2026-07-10', '2026-11-10'])
+    .in('consentVersion', ['2026-07-10', '2026-11-10', '2026-11-10.2'])
     .eq('eulaType', 'apple_standard')
     .eq('healthDataProcessingAccepted', true)
     .order('consentVersion', { ascending: false })

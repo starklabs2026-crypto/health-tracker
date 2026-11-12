@@ -14,23 +14,19 @@ HealthFolio is a personal health record organizer. The active iOS interface is n
 
 ## Email Ingestion
 
-The forwarding address is shown in Profile. Supported attachments forwarded to that address use the same OCR pipeline as manual uploads. The alias must belong to the signed-in review account.
+The Gmail forwarding address is shown in Profile. Supported attachments forwarded to that address use the same OCR pipeline as manual uploads. The alias must belong to the signed-in review account.
 
 ## Privacy And Safety
 
 - Support: `starklabs2026@gmail.com`
 - Privacy: `https://starklabs2026-crypto.github.io/health-tracker/privacy/`
 - Standard EULA: `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
+- Focal Labs is the operator shown in the app. Uploaded or forwarded files, and Assistant questions with relevant information from the selected profile, are sent to OpenAI to extract information and generate replies. The consent screen describes this as an outside AI provider and links to the privacy policy section that names OpenAI.
 - HealthFolio is not a regulated medical device.
-- There are no ads, cross-app tracking, purchases, or subscriptions in build 73.
+- There are no ads, cross-app tracking, purchases, or subscriptions in build 80.
 
 ## Reviewer Credentials
 
-Owner must fill these immediately before submission:
-
-- Review account email: `[OWNER REQUIRED]`
-- Review account password: `[OWNER REQUIRED]`
-- Review contact first and last name: `[OWNER REQUIRED]`
-- Review contact phone: `[OWNER REQUIRED]`
+The owner-supplied dedicated demo credentials and review contact are saved privately in App Store Connect. Production password sign-in, profile creation, authenticated document access, and logout were verified. The account has no real patient data and has not accepted consent on behalf of the reviewer.
 
 Use a dedicated synthetic review account. Do not place a real user password or health record in this repository.

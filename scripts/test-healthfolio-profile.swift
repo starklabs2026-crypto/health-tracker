@@ -25,6 +25,14 @@ struct ProfileRegressionTests {
         precondition(ProfileFieldPolicy.displayedSex("Custom description", dateOfBirth: nil) == "Custom description")
 
         var profile = HealthFolioProfile.signedOut
+        profile.forwardingAlias = " hf-synthetic "
+        precondition(
+            profile.forwardingAddress == "test.healthfolio+hf-synthetic@gmail.com",
+            "The address copied by the app must deliver to the configured Gmail bridge"
+        )
+        profile.forwardingAlias = " "
+        precondition(profile.forwardingAddress == "Not set", "A missing alias must not produce a Gmail address")
+        profile.forwardingAlias = "hf-synthetic"
         profile.sex = "Custom description"
         profile.dateOfBirth = realBirthday
         let saved = ProfileEditorDraft(profile: profile)
@@ -46,6 +54,6 @@ struct ProfileRegressionTests {
         edited.selectDateOfBirth(placeholder, calendar: utc)
         precondition(edited.dateOfBirth.map { utc.isDate($0, inSameDayAs: placeholder) } == true)
         precondition(ProfileFieldPolicy.displayedDateOfBirth(edited.dateOfBirth) != nil, "An explicit birthday must survive legacy-placeholder filtering")
-        print("Optional birthdays, custom sex values, and profile draft regressions passed")
+        print("Forwarding address, optional birthdays, custom sex values, and profile draft regressions passed")
     }
 }

@@ -1,17 +1,12 @@
 # App Store Screenshot Manifest
 
-## Required Device Family
+Build 79 is iPhone-only. These four real SwiftUI screenshots use synthetic Demo User data and were uploaded to the large Dynamic Island iPhone slot. App Store Connect reuses them for the medium slot.
 
-- Build 73 target: iPhone only (`TARGETED_DEVICE_FAMILY = 1`, `supportsTablet = false`).
-- Required set: 6.9-inch iPhone at an accepted `1320 x 2868` portrait size.
-- iPad: not applicable for this binary. Apple requires the 13-inch `2064 x 2752` set only when the app runs natively on iPad.
+| Order | File | Dimensions | SHA-256 |
+| --- | --- | --- | --- |
+| 1 | `iphone-6.9/01-today.png` | 1320 × 2868 | `1c1dc96c5a4c2ce1b00df19b0ad487854c02f6b243a03ca2beaff3159860450e` |
+| 2 | `iphone-6.9/02-records.png` | 1320 × 2868 | `0f46e689336daf2aa6280764188322950cabc633d1f5785e8b1ee63faf65f05c` |
+| 3 | `iphone-6.9/03-trends.png` | 1320 × 2868 | `a1a172b5e54bdbc7e518285ed704c89c19131610e73c163acbf640ff9f37027b` |
+| 4 | `iphone-6.9/04-care.png` | 1320 × 2868 | `f88a700334fcdd494cc95afeb63944621b7e5838fe2eb282dd49c5723fb3efb0` |
 
-## Planned Order
-
-1. `01-today-1320x2868.png` - health record overview and score context.
-2. `02-records-1320x2868.png` - organized records and processing states.
-3. `03-trends-1320x2868.png` - readable status bars and reference ranges.
-4. `04-care-1320x2868.png` - medicines, follow-ups, and reminders.
-5. `05-assistant-1320x2868.png` - records-grounded answer with source context.
-
-All screenshots must come from the real SwiftUI app in Debug screenshot mode with fictional data only. The capture script replaces this file with validated dimensions and SHA-256 hashes.
+Captured from the release branch native views in a simulator harness. Social authentication was stubbed for rendering; the screenshots are not evidence of live sign-in testing. iPad screenshots and preview videos are not included.

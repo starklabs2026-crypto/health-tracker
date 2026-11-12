@@ -151,7 +151,7 @@ struct ExpiredRecoveryLinkView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                TextField("HealthFolio email", text: $model.passwordResetEmail)
+                TextField("Email", text: $model.passwordResetEmail)
                     .textContentType(.username)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)

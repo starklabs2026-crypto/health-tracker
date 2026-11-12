@@ -167,7 +167,7 @@ struct ProfileNativeView: View {
                 }
                 .disabled(isBusy)
             } else {
-                TextField("HealthFolio email", text: $signInEmail)
+                TextField("Email", text: $signInEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -395,6 +395,7 @@ struct ProfileNativeView: View {
         } header: {
             Text("Email ingestion")
         } footer: {
+            Text("Forwarded messages are received in Gmail. You can also add files directly from Records.")
             if let savedDraft, draft.normalizedAlias != savedDraft.normalizedAlias {
                 Text("Alias changes are pending until this profile is saved.")
             }

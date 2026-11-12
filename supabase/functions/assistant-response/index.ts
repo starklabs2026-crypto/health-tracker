@@ -6,13 +6,20 @@ import {
   assistantConfig,
   assistantErrorResponse,
   assistantResponseSchema,
+  providerErrorLog,
   ASSISTANT_SAFETY_PROMPT,
   assistantSubjectWords,
   bearerToken,
   containsAssistantTerm,
+  calendarDate,
+  historyInput,
+  isProfileOverview,
   localAssistantResult,
   localQuestionResponse,
+  markerMatches,
+  missingEvidenceAnswer,
   outputText,
+  sanitizeHistory,
   parseAssistantResult,
   type AssistantEvidenceSource,
   type AssistantResult,
@@ -126,7 +133,7 @@ async function assertCurrentConsent(admin: SupabaseClient, userId: string): Prom
   const { data, error } = await admin.from('UserConsent')
     .select('acceptedAt, consentVersion, privacyPolicyVersion')
     .eq('userId', userId)
-    .in('consentVersion', ['2026-07-10', '2026-11-10'])
+    .in('consentVersion', ['2026-07-10', '2026-11-10', '2026-11-10.2'])
     .eq('eulaType', 'apple_standard')
     .eq('healthDataProcessingAccepted', true)
     .order('consentVersion', { ascending: false })
@@ -169,6 +176,7 @@ async function assertProfileAccess(
 function parseRequest(raw: unknown, maxQuestionCharacters: number): {
   profileId: string | null;
   question: string;
+  history: ReturnType<typeof sanitizeHistory>;
 } {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new HttpError(400, 'Request must be a JSON object');
   const body = raw as AssistantRequest;
@@ -185,9 +193,7 @@ function parseRequest(raw: unknown, maxQuestionCharacters: number): {
   }
   const profileId = typeof body.profileId === 'string' ? body.profileId.trim() : null;
 
-  // Old clients may still send history. It has no server-verifiable profile provenance,
-  // so never transmit its medical facts or promote its assistant turns to trusted input.
-  return { profileId, question };
+  return { profileId, question, history: sanitizeHistory(body.history, 8) };
 }
 
 async function loadContext(
@@ -259,11 +265,11 @@ export function buildMedicalContext(
   catalog: CatalogRow[],
   healthProfile: HealthProfileRow | null,
 ): { text: string; documentIds: Set<string>; hasEvidence: boolean; allowedEvidence: Set<AssistantEvidenceSource> } {
-  const terms = assistantSubjectWords(question);
-  const overview = terms.length === 0;
-  const matches = (text: string) => terms.some((term) => containsAssistantTerm(text, term));
-  const parameterIds = new Set(catalog.filter((entry) => [entry.canonicalName, entry.panel, ...(entry.aliases ?? [])]
-    .some((name) => assistantSubjectWords(name).length > 0 && (containsAssistantTerm(question, name) || matches(name)))).map((entry) => entry.id));
+  const terms = assistantSubjectWords(question).filter((term) => !/^\d+$/.test(term) && !isMonthWord(term));
+  const overview = isProfileOverview(question) || terms.length === 0;
+  const matches = (text: string) => terms.some((term) => containsAssistantTerm(text, term) || markerMatches(question, text));
+  const parameterIds = new Set(catalog.filter((entry) => [entry.canonicalName, entry.panel, ...(entry.aliases ?? []), entry.id]
+    .some((name) => markerMatches(question, name))).map((entry) => entry.id));
   const requestedTypes = new Set<string>();
   const typeTerms: Record<string, string[]> = {
     prescription: ['prescription', 'prescriptions', 'medication', 'medications', 'medicine', 'medicines', 'dose', 'dosage'],
@@ -280,7 +286,7 @@ export function buildMedicalContext(
     && (reading.documentId === null || documentIds.has(reading.documentId))
     && (typeof reading.value === 'number' || (typeof reading.value === 'string' && reading.value.trim() !== ''))
     && Number.isFinite(Number(reading.value)));
-  const relevantReadings = validReadings.filter((reading) => overview || parameterIds.has(reading.parameterId));
+  const relevantReadings = validReadings.filter((reading) => overview || parameterIds.has(reading.parameterId) || markerMatches(question, reading.parameterId));
   const matchingDocuments = new Set(relevantReadings.map((reading) => reading.documentId));
   const selectedDocuments = documents.filter((document) => documentIds.has(document.id)
     && (overview
@@ -314,7 +320,7 @@ export function buildMedicalContext(
       panel: text(entry?.panel),
       value: Number(reading.value),
       unit: text(reading.unit || entry?.unit || ''),
-      recordedAt: text(reading.recordedAt),
+      recordedAt: calendarDate(reading.recordedAt),
       status: text(reading.status),
       rangeFlag: text(reading.rangeFlag),
       confidenceScore: Number.isFinite(reading.confidenceScore) ? reading.confidenceScore : null,
@@ -339,7 +345,7 @@ export function buildMedicalContext(
     records: selectedDocuments.map((document) => ({
       recordId: document.id,
       type: documentTypeLabel(document.docType),
-      date: text(document.sourceDate),
+      date: calendarDate(document.sourceDate),
       labName: text(document.labName),
       notes: text(document.notes, 2_000),
       ocrStatus: text(document.ocrStatus),
@@ -368,9 +374,14 @@ export function buildMedicalContext(
   };
 }
 
+function isMonthWord(value: string): boolean {
+  return /^(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)$/.test(value);
+}
+
 async function callOpenAI(
   config: ReturnType<typeof assistantConfig>,
   question: string,
+  history: ReturnType<typeof sanitizeHistory>,
   context: string,
   authorizedDocumentIds: Set<string>,
   allowedEvidence: Set<AssistantEvidenceSource>,
@@ -384,11 +395,16 @@ async function callOpenAI(
       content: [{ type: 'input_text', text: config.systemPrompt === ASSISTANT_SAFETY_PROMPT
         ? ASSISTANT_SAFETY_PROMPT : `${config.systemPrompt}\n\n${ASSISTANT_SAFETY_PROMPT}` }],
     },
+    ...historyInput(history),
     {
       role: 'user',
       content: [{
         type: 'input_text',
-        text: JSON.stringify({ question, selectedProfileMedicalContext: JSON.parse(context) }),
+        text: JSON.stringify({
+          question,
+          dateRule: 'Quote recordedAt and date exactly as YYYY-MM-DD. Never invent or change a year.',
+          selectedProfileMedicalContext: JSON.parse(context),
+        }),
       }],
     },
   ];
@@ -420,7 +436,8 @@ async function callOpenAI(
     });
 
     if (!response.ok) {
-      console.error('Assistant provider request failed', { status: response.status });
+      const bodyText = await response.text().catch(() => '');
+      console.error('Assistant provider request failed', providerErrorLog(response.status, bodyText, [question, context, ...history.map((item) => item.content)]));
       throw new HttpError(502, 'Assistant is temporarily unavailable.');
     }
 
@@ -468,9 +485,15 @@ Deno.serve(async (req: Request) => {
       const context = await loadContext(admin, targetId, access.allowedDocTypes, catalog);
       const medicalContext = buildMedicalContext(request.question, context.profile, context.documents, context.readings, context.catalog, context.healthProfile);
       const authorizedDocumentIds = medicalContext.documentIds;
+      const previous = [...request.history].reverse().find((item) => item.role === 'assistant')?.content ?? '';
       result = medicalContext.hasEvidence
-        ? await callOpenAI(config, request.question, medicalContext.text, authorizedDocumentIds, medicalContext.allowedEvidence)
-        : localAssistantResult('insufficient_context');
+        ? await callOpenAI(config, request.question, request.history, medicalContext.text, authorizedDocumentIds, medicalContext.allowedEvidence)
+        : {
+          ...localAssistantResult('insufficient_context'),
+          answer: missingEvidenceAnswer(request.question, previous),
+          limitations: [],
+          followUpQuestions: [],
+        };
     }
 
     return jsonResponse({

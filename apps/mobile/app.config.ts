@@ -26,7 +26,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: false,
     bundleIdentifier: identity.iosBundleIdentifier,
-    buildNumber: '78',
+    buildNumber: '80',
     usesAppleSignIn: identity.usesAppleSignIn,
     associatedDomains: identity.associatedDomains,
     infoPlist: {
@@ -90,8 +90,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       supabaseAnonKey: 'sb_publishable_d-pZ2zQvS-0QA5KR5EdloA_KOw1MUoI',
       googleIosClientId: identity.googleIosClientId,
       googleWebClientId: identity.googleWebClientId,
-      inboundEmailDomain: 'records.healthfolio.app',
-      inboundEmailAddressTemplate: '{alias}@records.healthfolio.app',
+      inboundEmailAddressTemplate: 'test.healthfolio+{alias}@gmail.com',
     },
     eas: {
       projectId: identity.easProjectId,
