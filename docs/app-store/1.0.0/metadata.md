@@ -18,22 +18,35 @@
 
 HealthFolio is a personal health record organizer that keeps medical documents, readings, reminders, and shareable summaries together.
 
-ORGANIZE YOUR RECORDS
-Add supported medical PDFs and images from Files or Photos. Forward supported attachments to your private HealthFolio address and see when each document is ready.
+Organize your records
 
-REVIEW EXTRACTED READINGS
-See readings extracted from supported records alongside source dates, units, and reference ranges. Always verify the results against the original document.
+Add supported medical PDFs and images from Files or Photos. Forward supported attachments to your private HealthFolio email address and track each document as it is processed.
 
-FOLLOW TRENDS
-Compare readings over time and open the records behind them.
+Review extracted readings
 
-MANAGE CARE REMINDERS
-Set reminders for medications, tests, and visits. Keep schedules and notes together.
+HealthFolio uses OCR to extract readings from supported records. See source dates, units, reference ranges, confidence, and items that may need review. Always verify extracted information against the original document.
 
-ASK ABOUT YOUR RECORDS
-Ask Assistant to summarize or find information in your uploaded records. Check the sources and verify any information before using it.
+Follow trends
 
-CONTROL SHARING AND PRIVACY
-Keep records separated by profile, export a summary, and create revocable share links. Optional Face ID or device passcode helps protect access. Review your privacy choices and delete your account from Profile.
+Compare available readings over time with clear status bars and source details. HealthFolio keeps chronological age separate from report-based record signals.
 
-HealthFolio is a record organizer. It does not provide diagnosis, treatment, or emergency services. Automated extraction and summaries can be incomplete or incorrect. Consult a qualified healthcare professional before making medical decisions.
+Manage care reminders
+
+Create medication, test, and visit reminders with dosage, timing, instructions, and links back to source records. Share a concise care summary when you choose.
+
+Ask from your records
+
+The HealthFolio assistant answers from uploaded records and shows its sources. Clear local chat history at any time.
+
+Control sharing and profiles
+
+Keep records separated by profile, manage family profiles, export a health summary, and create revocable doctor-share links. Sharing is initiated by you.
+
+Privacy controls
+
+HealthFolio requires explicit consent for account and health-data processing. Privacy choices, consent status, support, export, sharing controls, and permanent in-app account deletion are available from Profile.
+
+HealthFolio is not a medical device and does not provide diagnosis, treatment, emergency services, dosing decisions, or clinical decision support. OCR and generated summaries can be incomplete or incorrect. Consult a qualified healthcare professional before making medical decisions.
+
+https://starklabs2026-crypto.github.io/health-tracker/privacy/
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
